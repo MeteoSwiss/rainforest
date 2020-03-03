@@ -122,7 +122,7 @@
 <li class="toctree-l3"><a class="reference internal" href="rainforest.database.html">rainforest.database package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-radar-data-module">rainforest.database.retrieve_radar_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
 </ul>
@@ -146,7 +146,7 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Common submodule</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#module-rainforest.common.io_data">rainforest.common.io_data module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#rainforest-common-radarprocessing-module">rainforest.common.radarprocessing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rainforest.common.constants">rainforest.common.constants module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rainforest.common.graphics">rainforest.common.graphics module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-rainforest.common.lookup">rainforest.common.lookup module</a></li>
@@ -228,7 +228,7 @@
 <p>This module provides routines that are used throughout the library.</p>
 <p><a class="reference internal" href="#module-rainforest.common.io_data" title="rainforest.common.io_data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.common.io_data</span></code></a> : read various MCH data formats</p>
 <p><a class="reference internal" href="#module-rainforest.common.retrieve_data" title="rainforest.common.retrieve_data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.common.retrieve_data</span></code></a> : retrieve MCH files (COSMO, polar, Cartesian) from storage</p>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.common.radarprocessing</span></code> : radar processing routines</p>
+<p><a class="reference internal" href="#module-rainforest.common.radarprocessing" title="rainforest.common.radarprocessing"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.common.radarprocessing</span></code></a> : radar processing routines</p>
 <p><a class="reference internal" href="#module-rainforest.common.constants" title="rainforest.common.constants"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.common.constants</span></code></a> : define constants used throughout the code</p>
 <p><a class="reference internal" href="#module-rainforest.common.graphics" title="rainforest.common.graphics"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.common.graphics</span></code></a> : creating plots for QPE realization and evaluation</p>
 <p><a class="reference internal" href="#module-rainforest.common.lookup" title="rainforest.common.lookup"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.common.lookup</span></code></a> : computing and reading lookup tables that are used for interpolation and geolocalization of data</p>
@@ -505,8 +505,168 @@ retrieved, if not specified all available sweeps will be retrieved</p></li>
 </dd></dl>
 
 </div>
-<div class="section" id="rainforest-common-radarprocessing-module">
-<h2>rainforest.common.radarprocessing module<a class="headerlink" href="#rainforest-common-radarprocessing-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-rainforest.common.radarprocessing">
+<span id="rainforest-common-radarprocessing-module"></span><h2>rainforest.common.radarprocessing module<a class="headerlink" href="#module-rainforest.common.radarprocessing" title="Permalink to this headline">¶</a></h2>
+<p>Created on Mon Dec 16 17:38:52 2019</p>
+<p>&#64;author: wolfensb</p>
+<dl class="class">
+<dt id="rainforest.common.radarprocessing.Radar">
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">Radar</code><span class="sig-paren">(</span><em class="sig-param">radname</em>, <em class="sig-param">polfiles</em>, <em class="sig-param">statusfile=None</em>, <em class="sig-param">vprfile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class that contains polar radar data and performs some pre-processing
+before adding that data to the database or computing the QPE product
+The different elevations are stored in a dictionary rather as in a
+single pyart radar instance as this was found to be faster in practice</p>
+<p>Creates an Radar class instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radname</strong> (<em>char</em>) – Name of the radar, either ‘A’,’D’,’L’,’P’ or ‘W’</p></li>
+<li><p><strong>polfiles</strong> (<em>list of str</em>) – List of full filepaths of the radar files for a given timestemp,
+one file for every elevation, typically obtained with
+the retrieve_prod function in the common submodule</p></li>
+<li><p><strong>statusfile</strong> (<em>str</em><em> (</em><em>optional</em><em>)</em>) – Full path of the status file that corresponds to this particular
+radar and timestep, used to compute noise estimates</p></li>
+<li><p><strong>vprfile</strong> (<em>str</em><em>(</em><em>optional</em><em>)</em>) – Full path of the vpr xml file that corresponds to this particular
+radar and timestep, used to compute VPR correction</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="rainforest.common.radarprocessing.Radar.add_cosmo_data">
+<code class="sig-name descname">add_cosmo_data</code><span class="sig-paren">(</span><em class="sig-param">cosmo_data</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar.add_cosmo_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds COSMO data to the radar instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cosmo_data</strong> (<em>dict</em>) – <p>dict of COSMO data at polar coordinates obtained from the
+get_COSMO_variables function in the common submodule
+this dict must have the following format</p>
+<blockquote>
+<div><p>dic[variable][sweep]</p>
+</div></blockquote>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.common.radarprocessing.Radar.compute_hydro">
+<code class="sig-name descname">compute_hydro</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar.compute_hydro" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the hydrometeor classification using Nikola Besic’
+algorithm, all necessary fields
+ZH, ZDR, RHOHV, KDP, T (COSMO) must be available</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.common.radarprocessing.Radar.compute_kdp">
+<code class="sig-name descname">compute_kdp</code><span class="sig-paren">(</span><em class="sig-param">dscfg</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar.compute_kdp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes KDP using the simple moving least-square algorithm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dscfg</strong> (<em>dict</em>) – dictionary containing the following fields
+RMIN:
+RMAX:
+RWIND:
+ZMIN:
+ZMAX:</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.common.radarprocessing.Radar.compute_noise">
+<code class="sig-name descname">compute_noise</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar.compute_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a noise estimate from a status file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.common.radarprocessing.Radar.correct_attenuation">
+<code class="sig-name descname">correct_attenuation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar.correct_attenuation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Corrects for attenuation using the ZPHI algorithm (Testud et al.)
+using the COSMO temperature to identify liquid precipitation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.common.radarprocessing.Radar.get_field">
+<code class="sig-name descname">get_field</code><span class="sig-paren">(</span><em class="sig-param">sweep</em>, <em class="sig-param">field_name</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar.get_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a radar variable at given elevation (sweep)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sweep</strong> (<em>int</em>) – Sweep number from 1 to 20</p></li>
+<li><p><strong>field_name</strong> (<em>str</em>) – name of the variable, e.g. ZH, ZDR, RHOHV, SW, …</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.common.radarprocessing.Radar.snr_mask">
+<code class="sig-name descname">snr_mask</code><span class="sig-paren">(</span><em class="sig-param">snr_threshold</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar.snr_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Masks the radar data at low SNR</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>snr_threshold</strong> (<em>float</em>) – Minimal SNR to consider in dB</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.common.radarprocessing.Radar.visib_mask">
+<code class="sig-name descname">visib_mask</code><span class="sig-paren">(</span><em class="sig-param">min_visib</em>, <em class="sig-param">max_visib_corr</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.Radar.visib_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Masks the radar data at low visibility and corrects the reflectivity
+for visibility</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>min_visib</strong> (<em>int</em>) – Minimal visibility below which the data is masked</p></li>
+<li><p><strong>max_visib_corr</strong> (<em>float</em>) – Maximum visibility correction factor, the visibility correction
+is 100/VISIB (with VISIB in %) and can be thresholded with this
+parameter. This is usually set to 2 at MeteoSwiss</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="rainforest.common.radarprocessing.hydroClass_single">
+<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=&lt;Mock name='mock.array()' id='46912667756640'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the hydrometeor classes for columnar data, note that all input
+arrays except weights must have the same length</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radars</strong> (<em>ndarray of char</em>) – Array of radar IDs, (‘A’,’D’,’L’,’P’,’W’)</p></li>
+<li><p><strong>zh</strong> (<em>ndarray</em>) – Array of radar reflectivity in dBZ</p></li>
+<li><p><strong>zdr</strong> (<em>ndarray</em>) – Array of diff. reflectivity in dB</p></li>
+<li><p><strong>kdp</strong> (<em>ndarray</em>) – Array of specific phase shift on propagation in deg / km</p></li>
+<li><p><strong>rhohv</strong> (<em>ndarray</em>) – Array of copolar correlation coefficient</p></li>
+<li><p><strong>temp</strong> (<em>ndarray</em>) – Array of radar temperature in Celcius</p></li>
+<li><p><strong>weights</strong> (<em>ndarray</em><em> (</em><em>optional</em><em>)</em>) – The weight of every input feature, zh, zdr, kdp, rhohv, temp in the
+hydrometeor classification</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>The hydrometeor classes as ndarray with values from 0 to 8, corresponding to</em></p></li>
+<li><p><em>the classes</em> – 0 : no data
+1 : aggregates (AG)
+2 : light rain (LR)
+3 : ice crystals (CR)
+4 : rimed particles (RP)
+5 : rain (RN)
+6 : vertically aligned ice (VI)
+7 : wet snow (WS)
+8 : melting hail (MH)
+9: dry hail / high density graupel (IH/HDG)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 <div class="section" id="module-rainforest.common.constants">
 <span id="rainforest-common-constants-module"></span><h2>rainforest.common.constants module<a class="headerlink" href="#module-rainforest.common.constants" title="Permalink to this headline">¶</a></h2>
@@ -1070,7 +1230,7 @@ dictionary PYART_NAMES_MAPPING in the constants.py module</p>
 
 <dl class="function">
 <dt id="rainforest.common.utils.stack_uneven">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912668087576'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912667546232'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fits mmltiple into a single numpy array, even if they are
 different sizes, assigning a fill_value to parts with no data</p>
 <dl class="field-list simple">

@@ -121,8 +121,8 @@
 <li class="toctree-l3"><a class="reference internal" href="reference/rainforest.database.html">rainforest.database package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.database.html#rainforest-database-retrieve-radar-data-module">rainforest.database.retrieve_radar_data module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.database.html#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
 </ul>
 </li>
@@ -145,7 +145,7 @@
 <li class="toctree-l2"><a class="reference internal" href="reference/common.html">Common submodule</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="reference/common.html#module-rainforest.common.io_data">rainforest.common.io_data module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference/common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="reference/common.html#rainforest-common-radarprocessing-module">rainforest.common.radarprocessing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reference/common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference/common.html#module-rainforest.common.constants">rainforest.common.constants module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference/common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="reference/common.html#module-rainforest.common.lookup">rainforest.common.lookup module</a></li>
@@ -228,6 +228,7 @@
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
@@ -246,6 +247,8 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.add_cosmo_data">add_cosmo_data() (rainforest.common.radarprocessing.Radar method)</a>
+</li>
       <li><a href="reference/rainforest.database.html#rainforest.database.database.Database.add_tables">add_tables() (rainforest.database.database.Database method)</a>
 </li>
   </ul></td>
@@ -266,8 +269,6 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSlat">CHtoWGSlat() (rainforest.common.wgs84_ch1903.GPSConverter method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSlng">CHtoWGSlng() (rainforest.common.wgs84_ch1903.GPSConverter method)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.utils.chunks">chunks() (in module rainforest.common.utils)</a>
@@ -276,7 +277,17 @@
         <li><a href="reference/rainforest.ml.html#rainforest.ml.utils.chunks">(in module rainforest.ml.utils)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.compute_hydro">compute_hydro() (rainforest.common.radarprocessing.Radar method)</a>
+</li>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.compute_kdp">compute_kdp() (rainforest.common.radarprocessing.Radar method)</a>
+</li>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.compute_noise">compute_noise() (rainforest.common.radarprocessing.Radar method)</a>
+</li>
       <li><a href="reference/rainforest.database.html#rainforest.database.database.Database.config_file">config_file() (rainforest.database.database.Database property)</a>
+</li>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.correct_attenuation">correct_attenuation() (rainforest.common.radarprocessing.Radar method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -324,19 +335,31 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater.get_agg_operators">get_agg_operators() (rainforest.database.retrieve_radar_data.Updater method)</a>
+</li>
       <li><a href="reference/common.html#rainforest.common.retrieve_data.get_COSMO_T">get_COSMO_T() (in module rainforest.common.retrieve_data)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.retrieve_data.get_COSMO_variables">get_COSMO_variables() (in module rainforest.common.retrieve_data)</a>
 </li>
-      <li><a href="reference/common.html#rainforest.common.lookup.get_lookup">get_lookup() (in module rainforest.common.lookup)</a>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.get_field">get_field() (rainforest.common.radarprocessing.Radar method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/common.html#rainforest.common.lookup.get_lookup">get_lookup() (in module rainforest.common.lookup)</a>
+</li>
       <li><a href="reference/common.html#rainforest.common.utils.get_qpe_files">get_qpe_files() (in module rainforest.common.utils)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter">GPSConverter (class in rainforest.common.wgs84_ch1903)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.utils.group_by_tstep">group_by_tstep() (in module rainforest.common.utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.hydroClass_single">hydroClass_single() (in module rainforest.common.radarprocessing)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -416,11 +439,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/common.html#rainforest.common.utils.perfscores">perfscores() (in module rainforest.common.utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.utils.plot_crossval_stats">plot_crossval_stats() (in module rainforest.ml.utils)</a>
 </li>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.prepare_input">prepare_input() (rainforest.ml.rf.RFTraining method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater.process_all_timesteps">process_all_timesteps() (rainforest.database.retrieve_radar_data.Updater method)</a>
+
+      <ul>
+        <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_reference_data.Updater.process_all_timesteps">(rainforest.database.retrieve_reference_data.Updater method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater.process_single_timestep">process_single_timestep() (rainforest.database.retrieve_radar_data.Updater method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -446,6 +477,8 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar">Radar (class in rainforest.common.radarprocessing)</a>
+</li>
       <li><a href="reference/rainforest.html#module-rainforest">rainforest (module)</a>
 </li>
       <li><a href="reference/common.html#module-rainforest.common.constants">rainforest.common.constants (module)</a>
@@ -455,6 +488,8 @@
       <li><a href="reference/common.html#module-rainforest.common.io_data">rainforest.common.io_data (module)</a>
 </li>
       <li><a href="reference/common.html#module-rainforest.common.lookup">rainforest.common.lookup (module)</a>
+</li>
+      <li><a href="reference/common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing (module)</a>
 </li>
       <li><a href="reference/common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data (module)</a>
 </li>
@@ -466,6 +501,10 @@
 </li>
       <li><a href="reference/rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate (module)</a>
 </li>
+      <li><a href="reference/rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data (module)</a>
+</li>
+      <li><a href="reference/rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data (module)</a>
+</li>
       <li><a href="reference/rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf (module)</a>
 </li>
       <li><a href="reference/rainforest.ml.rf_models.html#module-rainforest.ml.rf_models">rainforest.ml.rf_models (module)</a>
@@ -476,10 +515,10 @@
 </li>
       <li><a href="reference/rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils (module)</a>
 </li>
-      <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation (module)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation (module)</a>
+</li>
       <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation (module)</a>
 </li>
       <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot (module)</a>
@@ -506,9 +545,13 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.utils.rename_fields">rename_fields() (in module rainforest.common.utils)</a>
 </li>
+      <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_reference_data.Updater.retrieve_cart_files">retrieve_cart_files() (rainforest.database.retrieve_reference_data.Updater method)</a>
+</li>
       <li><a href="reference/common.html#rainforest.common.retrieve_data.retrieve_CPCCV">retrieve_CPCCV() (in module rainforest.common.retrieve_data)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.retrieve_data.retrieve_prod">retrieve_prod() (in module rainforest.common.retrieve_data)</a>
+</li>
+      <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater.retrieve_radar_files">retrieve_radar_files() (rainforest.database.retrieve_radar_data.Updater method)</a>
 </li>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining">RFTraining (class in rainforest.ml.rf)</a>
 </li>
@@ -525,6 +568,8 @@
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter.SexAngleToSeconds">SexAngleToSeconds() (rainforest.common.wgs84_ch1903.GPSConverter method)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter.SexToDecAngle">SexToDecAngle() (rainforest.common.wgs84_ch1903.GPSConverter method)</a>
+</li>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.snr_mask">snr_mask() (rainforest.common.radarprocessing.Radar method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -560,12 +605,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/rainforest.database.html#rainforest.database.database.Database.update_radar_data">update_radar_data() (rainforest.database.database.Database method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/rainforest.database.html#rainforest.database.database.Database.update_reference_data">update_reference_data() (rainforest.database.database.Database method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/rainforest.database.html#rainforest.database.database.Database.update_station_data">update_station_data() (rainforest.database.database.Database method)</a>
 </li>
+      <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater">Updater (class in rainforest.database.retrieve_radar_data)</a>
+
+      <ul>
+        <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_reference_data.Updater">(class in rainforest.database.retrieve_reference_data)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -573,6 +624,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.utils.vert_aggregation">vert_aggregation() (in module rainforest.ml.utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.visib_mask">visib_mask() (rainforest.common.radarprocessing.Radar method)</a>
 </li>
   </ul></td>
 </tr></table>

@@ -16,10 +16,9 @@ Daniel Wolfensberger, LTE-MeteoSwiss, 2020
 import numpy as np
 import pandas as pd
 import datetime
-import yaml
 import logging
 
-from pysteps import motion
+import pysteps
 
 logging.basicConfig(level=logging.INFO)
 import os
@@ -145,7 +144,7 @@ class Updater(object):
         
          
         # For motion vectors
-        oflow_method = motion.get_method(self.ref_config['MV_METHOD'])
+        oflow_method = pysteps.motion.get_method(self.ref_config['MV_METHOD'])
         
         colnames = ['TIMESTAMP','STATION','NX','NY']
         colnames.extend(self.products)
