@@ -11,9 +11,7 @@ Command line interface to the database
 import datetime
 import os
 from pathlib import Path
-from textwrap import dedent
 from prompt_toolkit.shortcuts import prompt
-from prompt_toolkit.formatted_text import HTML, ANSI, FormattedText
 from prompt_toolkit.styles import Style
 from prompt_toolkit import print_formatted_text
 import json
