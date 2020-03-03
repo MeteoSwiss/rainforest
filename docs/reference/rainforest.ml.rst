@@ -38,7 +38,7 @@ rainforest.ml.rfdefinitions module
    :show-inheritance:
 
 
-rainforest.ml.utilities module
+rainforest.ml.utils module
 ----------------------------------------
 
 .. automodule:: rainforest.ml.utils
