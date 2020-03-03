@@ -91,7 +91,6 @@ def perfscores(est_data, ref_data, bounds = None, array = False):
         a dictionary containing all the scores, organized in the following way
         all_metrics[bound][score] 
     """
-    
     all_metrics = OrderedDict()
     
     est = est_data

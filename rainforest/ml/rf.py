@@ -407,20 +407,24 @@ class RFTraining(object):
             'RF_hpol':['RADAR', 'zh_VISIB_mean','T', 'HEIGHT','VISIB_mean']}
             will compare a model of RF with polarimetric info to a model
             with only horizontal polarization
-         
         output_folder : str
             Location where to store the output plots
-        
         intercomparison_config : str
             Location of the intercomparison configuration file, which
             is a yaml file that gives for every model key of features_dic which
             parameters of the training you want to use (see the file 
             intercomparison_config_example.yml in this module for an example)
-            
         reference_products : list of str
             Name of the reference products to which the RF will be compared
             they need to be in the reference table of the database
-        
+        bounds10 : list of float
+            list of precipitation bounds for which to compute scores separately
+            at 10 min time resolution
+            [0,2,10,100] will give scores in range [0-2], [2-10] and [10-100]
+        bounds60 : list of float
+            list of precipitation bounds for which to compute scores separately
+            at hourly time resolution
+            [0,1,10,100] will give scores in range [0-1], [1-10] and [10-100]
         K : int
             Number of splits in iterations do perform in the K fold cross-val
                     

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>rainforest.database package &mdash; QPE_library  documentation</title>
+  <title>rainforest.database package &mdash; Rainforest QPE library  documentation</title>
   
 
   
@@ -25,6 +25,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -50,7 +51,7 @@
           
 
           
-            <a href="../index.html" class="icon icon-home"> QPE_library
+            <a href="../index.html" class="icon icon-home"> Rainforest QPE library
           
 
           
@@ -98,10 +99,10 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-module">rainforest.qpe.qpe module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-evaluation-module">rainforest.qpe.qpe_evaluation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-plot-module">rainforest.qpe.qpe_plot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a></li>
 </ul>
 </li>
 </ul>
@@ -120,7 +121,7 @@
 </li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">rainforest.database package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.database.database">rainforest.database.database module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#rainforest-database-db-populate-module">rainforest.database.db_populate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-rainforest.database.db_populate">rainforest.database.db_populate module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest-database-retrieve-radar-data-module">rainforest.database.retrieve_radar_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
@@ -135,9 +136,9 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-rf-train-module">rainforest.ml.rf_train module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-utilities-module">rainforest.ml.utilities module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils module</a></li>
 </ul>
 </li>
 </ul>
@@ -145,7 +146,7 @@
 <li class="toctree-l2"><a class="reference internal" href="common.html">Common submodule</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.io_data">rainforest.common.io_data module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#rainforest-common-radarprocessing-module">rainforest.common.radarprocessing module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.constants">rainforest.common.constants module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.lookup">rainforest.common.lookup module</a></li>
@@ -170,7 +171,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">QPE_library</a>
+          <a href="../index.html">Rainforest QPE library</a>
         
       </nav>
 
@@ -228,7 +229,7 @@
 <h1>rainforest.database package<a class="headerlink" href="#rainforest-database-package" title="Permalink to this headline">¶</a></h1>
 <p>This module provides routines used for database management.</p>
 <p><a class="reference internal" href="#module-rainforest.database.database" title="rainforest.database.database"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.database</span></code></a> : main database class, used as an entry-point to the database</p>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.db_populate</span></code> : command-line script used to add data to database</p>
+<p><a class="reference internal" href="#module-rainforest.database.db_populate" title="rainforest.database.db_populate"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.db_populate</span></code></a> : command-line script used to add data to database</p>
 <p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.retrieve_radar_data</span></code> : functions used to add new radar data to database</p>
 <p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.retrieve_reference_data</span></code> : functions used to add new Cartesian reference data to database</p>
 <p><a class="reference internal" href="#dwh"><span class="std std-ref">rainforest.database.retrieve_dwh_data R module</span></a> : R functions used to add new gauge data to database</p>
@@ -238,17 +239,6 @@
 specific data</p>
 <p>Note that I use spark because there is currently no way to use SQL queries
 with dask</p>
-<dl class="class">
-<dt id="rainforest.database.database.DataFrameWithInfo">
-<em class="property">class </em><code class="sig-prename descclassname">rainforest.database.database.</code><code class="sig-name descname">DataFrameWithInfo</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">df</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.DataFrameWithInfo" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pyspark.sql.dataframe.DataFrame</span></code></p>
-<dl class="method">
-<dt id="rainforest.database.database.DataFrameWithInfo.info">
-<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#rainforest.database.database.DataFrameWithInfo.info" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
 <dl class="class">
 <dt id="rainforest.database.database.Database">
 <em class="property">class </em><code class="sig-prename descclassname">rainforest.database.database.</code><code class="sig-name descname">Database</code><span class="sig-paren">(</span><em class="sig-param">config_file=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.Database" title="Permalink to this definition">¶</a></dt>
@@ -392,8 +382,15 @@ calls createOrReplaceTempView once a table has been added to the dict</p>
 </dd></dl>
 
 </div>
-<div class="section" id="rainforest-database-db-populate-module">
-<h2>rainforest.database.db_populate module<a class="headerlink" href="#rainforest-database-db-populate-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-rainforest.database.db_populate">
+<span id="rainforest-database-db-populate-module"></span><h2>rainforest.database.db_populate module<a class="headerlink" href="#module-rainforest.database.db_populate" title="Permalink to this headline">¶</a></h2>
+<p>Command line script to add new data to the database</p>
+<p>see <a class="reference internal" href="db_cmd.html"><span class="doc">Database command-line tool</span></a></p>
+<dl class="function">
+<dt id="rainforest.database.db_populate.main">
+<code class="sig-prename descclassname">rainforest.database.db_populate.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.db_populate.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="rainforest-database-retrieve-radar-data-module">
 <h2>rainforest.database.retrieve_radar_data module<a class="headerlink" href="#rainforest-database-retrieve-radar-data-module" title="Permalink to this headline">¶</a></h2>

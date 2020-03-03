@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from prompt_toolkit.shortcuts import prompt
 from prompt_toolkit.styles import Style
+from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit import print_formatted_text
 import json
 import yaml
@@ -131,8 +132,8 @@ QPE menu
             ('',': run a new query \n'),
             ('class:command','populate'),
             ('',': populate the database with new data \n'),
-            ('class:command','info'),
-            ('',': displays info on a loaded table \n')])
+            ('class:command','display <name_of_table> n'),
+            ('',': displays n rows of a loaded table \n')])
     
     info['qpe'] = FormattedText([
             ('class:command','compute'),
@@ -166,7 +167,23 @@ QPE menu
             # Populate
             ########
             if current_menu == 'db':
-                if code == 'populate':
+                if 'display' in code:
+                    nametab = code.split(' ')[1]
+                    try:
+                        nrows = int(code.split(' ')[2])
+                    except:
+                        print('Invalid number of rows, using 10',
+                              style = style_warning)
+                        nrows = 10
+                        
+                    if nametab not in dbase.tables.keys():
+                        print('Table name {:s} is not in loaded table names: {:s}'.format(
+                            nametab, ','.join(list(dbase.tables.keys()))), 
+                              style = style_warning)
+                    else:
+                        dbase.tables[nametab].show(nrows)
+
+                elif code == 'populate':
     
                     n = prompt_check('With which type of data would you like to populate the database: "gauge", "radar" or "reference"? ',
                                      ['gauge','radar','reference'])
@@ -224,18 +241,18 @@ QPE menu
                 ########
                 # Load
                 ########
-                if code == 'load_cscs':
+                elif code == 'load_cscs':
                     dic = {'gauge': RADAR_DB_PATH + 'gauge/*.csv.gz',
                            'radar' : RADAR_DB_PATH + 'radar/*.parquet',
                            'reference': RADAR_DB_PATH + 'reference/*.parquet'}
                     try:
                         dbase.add_tables(dic)
-                        print('The CSCS tables, radar/reference/gauge were successfully added', style = style_ok)
+                        print('The CSCS tables, "radar" "reference" and "gauge" were successfully added', style = style_ok)
                     except Exception as e:
                         print('Could not CSCS add table!', style = style_warning)
                         print(e, style = style_warning)
                         
-                if code == 'load':
+                elif code == 'load':
                     n = prompt('Enter name of table(s) (you choose), use comma to separate multiple entries: ', default = 'radar')
                     if n == 'gauge':
                         default_suf = '*.csv.gz'
@@ -254,7 +271,7 @@ QPE menu
                         print('Could not add table!', style = style_warning)
                         print(e, style = style_warning)
                  
-                if code == 'query':
+                elif code == 'query':
                     q =  prompt('Enter your SQL query: ')
                     try:
                         current_query = dbase.query(q, to_memory = False)
@@ -276,7 +293,7 @@ QPE menu
                             elif 'parquet' in f:
                                 current_query.toPandas().to_parquet(compression = 'GZIP')
                                 
-                        txt = 'Enter name if you want to add query as a table to the dataset, leave empty to pass'
+                        txt = 'Enter name if you want to add query as a table to the dataset, leave empty to pass: '
                         a =  prompt(txt)
                         if a != '':
                              dbase.tables[a] = DataFrameWithInfo(a, current_query)

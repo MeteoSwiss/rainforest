@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>rainforest.ml package &mdash; QPE_library  documentation</title>
+  <title>rainforest.ml package &mdash; Rainforest QPE library  documentation</title>
   
 
   
@@ -25,6 +25,7 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -50,7 +51,7 @@
           
 
           
-            <a href="../index.html" class="icon icon-home"> QPE_library
+            <a href="../index.html" class="icon icon-home"> Rainforest QPE library
           
 
           
@@ -98,10 +99,10 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-module">rainforest.qpe.qpe module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-evaluation-module">rainforest.qpe.qpe_evaluation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-plot-module">rainforest.qpe.qpe_plot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a></li>
 </ul>
 </li>
 </ul>
@@ -120,7 +121,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.database.html">rainforest.database package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-db-populate-module">rainforest.database.db_populate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-radar-data-module">rainforest.database.retrieve_radar_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
@@ -135,9 +136,9 @@
 </li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">rainforest.ml package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.rf">rainforest.ml.rf module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#rainforest-ml-rf-train-module">rainforest.ml.rf_train module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#rainforest-ml-utilities-module">rainforest.ml.utilities module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.utils">rainforest.ml.utils module</a></li>
 </ul>
 </li>
 </ul>
@@ -145,7 +146,7 @@
 <li class="toctree-l2"><a class="reference internal" href="common.html">Common submodule</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.io_data">rainforest.common.io_data module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#rainforest-common-radarprocessing-module">rainforest.common.radarprocessing module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.constants">rainforest.common.constants module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.lookup">rainforest.common.lookup module</a></li>
@@ -170,7 +171,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">QPE_library</a>
+          <a href="../index.html">Rainforest QPE library</a>
         
       </nav>
 
@@ -229,8 +230,8 @@
 <p>This submodule deals with the training and evaluation of machine learning QPE methods. It also allows to read them from pickle files stored in the <em>rf_models</em> subfolder.</p>
 <p><a class="reference internal" href="#module-rainforest.ml.rf" title="rainforest.ml.rf"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.rf</span></code></a> : main module used to train RF regressors</p>
 <p><a class="reference internal" href="#module-rainforest.ml.rfdefinitions" title="rainforest.ml.rfdefinitions"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.rfdefinitions</span></code></a> : reference module that contains definitions of the RF regressors and allows to load them from files</p>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.rf_train</span></code> : command-line utility to train RF models and prepare input features</p>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.utils</span></code> : small utilities used in this module only (for example for  vertical aggregation)</p>
+<p><a class="reference internal" href="#module-rainforest.ml.rf_train" title="rainforest.ml.rf_train"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.rf_train</span></code></a> : command-line utility to train RF models and prepare input features</p>
+<p><a class="reference internal" href="#module-rainforest.ml.utils" title="rainforest.ml.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.utils</span></code></a> : small utilities used in this module only (for example for  vertical aggregation)</p>
 <div class="section" id="module-rainforest.ml.rf">
 <span id="rainforest-ml-rf-module"></span><h2>rainforest.ml.rf module<a class="headerlink" href="#module-rainforest.ml.rf" title="Permalink to this headline">¶</a></h2>
 <p>Main module to</p>
@@ -307,6 +308,12 @@ parameters of the training you want to use (see the file
 intercomparison_config_example.yml in this module for an example)</p></li>
 <li><p><strong>reference_products</strong> (<em>list of str</em>) – Name of the reference products to which the RF will be compared
 they need to be in the reference table of the database</p></li>
+<li><p><strong>bounds10</strong> (<em>list of float</em>) – list of precipitation bounds for which to compute scores separately
+at 10 min time resolution
+[0,2,10,100] will give scores in range [0-2], [2-10] and [10-100]</p></li>
+<li><p><strong>bounds60</strong> (<em>list of float</em>) – list of precipitation bounds for which to compute scores separately
+at hourly time resolution
+[0,1,10,100] will give scores in range [0-1], [1-10] and [10-100]</p></li>
 <li><p><strong>K</strong> (<em>int</em>) – Number of splits in iterations do perform in the K fold cross-val</p></li>
 </ul>
 </dd>
@@ -347,8 +354,15 @@ QPE</p>
 </dd></dl>
 
 </div>
-<div class="section" id="rainforest-ml-rf-train-module">
-<h2>rainforest.ml.rf_train module<a class="headerlink" href="#rainforest-ml-rf-train-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-rainforest.ml.rf_train">
+<span id="rainforest-ml-rf-train-module"></span><h2>rainforest.ml.rf_train module<a class="headerlink" href="#module-rainforest.ml.rf_train" title="Permalink to this headline">¶</a></h2>
+<p>Command line script to prepare input features and train RF models</p>
+<p>see <a class="reference internal" href="ml_cmd.html#rf-train"><span class="std std-ref">rf_train</span></a></p>
+<dl class="function">
+<dt id="rainforest.ml.rf_train.main">
+<code class="sig-prename descclassname">rainforest.ml.rf_train.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf_train.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-rainforest.ml.rfdefinitions">
 <span id="rainforest-ml-rfdefinitions-module"></span><h2>rainforest.ml.rfdefinitions module<a class="headerlink" href="#module-rainforest.ml.rfdefinitions" title="Permalink to this headline">¶</a></h2>
@@ -377,84 +391,6 @@ needed.  Both arguments passed are str objects.</p>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="rainforest.ml.rfdefinitions.RandomForestRegressorBC">
-<em class="property">class </em><code class="sig-prename descclassname">rainforest.ml.rfdefinitions.</code><code class="sig-name descname">RandomForestRegressorBC</code><span class="sig-paren">(</span><em class="sig-param">variables</em>, <em class="sig-param">beta</em>, <em class="sig-param">degree=1</em>, <em class="sig-param">bctype='cdf'</em>, <em class="sig-param">n_estimators=100</em>, <em class="sig-param">criterion='mse'</em>, <em class="sig-param">max_depth=None</em>, <em class="sig-param">min_samples_split=2</em>, <em class="sig-param">min_samples_leaf=1</em>, <em class="sig-param">min_weight_fraction_leaf=0.0</em>, <em class="sig-param">max_features='auto'</em>, <em class="sig-param">max_leaf_nodes=None</em>, <em class="sig-param">min_impurity_decrease=0.0</em>, <em class="sig-param">min_impurity_split=None</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">oob_score=False</em>, <em class="sig-param">n_jobs=None</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">verbose=0</em>, <em class="sig-param">warm_start=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.ensemble.forest.RandomForestRegressor</span></code></p>
-<p>This is an extension of the RandomForestRegressor regressor class of
-sklearn that does additional bias correction, is able
-to apply a rounding function to the outputs on the fly and adds a
-bit of metadata:</p>
-<blockquote>
-<div><p><em>bc_type</em> : type of bias correction method
-<em>variables</em> : name of input features
-<em>beta</em> : weighting factor in vertical aggregation
-<em>degree</em> : order of the polyfit used in some bias-correction methods</p>
-</div></blockquote>
-<p>For <em>bc_type</em> tHe available methods are currently “raw”:
-simple linear fit between prediction and observation, “cdf”: linear fit
-between sorted predictions and sorted observations and “spline” :
-spline fit between sorted predictions and sorted observations. Any
-new method should be added in this class in order to be used.</p>
-<p>For any information regarding the sklearn parent class see</p>
-<p><a class="reference external" href="https://github.com/scikit-learn/scikit-learn/blob/b194674c4/sklearn/ensemble/_forest.py#L1150">https://github.com/scikit-learn/scikit-learn/blob/b194674c4/sklearn/ensemble/_forest.py#L1150</a></p>
-<dl class="method">
-<dt id="rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit">
-<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">y</em>, <em class="sig-param">sample_weight=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fit both estimator and a-posteriori bias correction
-:param X: The input samples. Use <code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code> for maximum</p>
-<blockquote>
-<div><p>efficiency. Sparse matrices are also supported, use sparse
-<code class="docutils literal notranslate"><span class="pre">csc_matrix</span></code> for maximum efficiency.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>sample_weight</strong> (<em>array-like of shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em><em>, </em><em>default=None</em>) – Sample weights. If None, then samples are equally weighted. Splits
-that would create child nodes with net zero or negative weight are
-ignored while searching for a split in each node. In the case of
-classification, splits are also ignored if they would result in any
-single class carrying a negative weight in either child node.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>self</strong></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>object</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict">
-<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">round_func=None</em>, <em class="sig-param">bc=True</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Predict regression target for X.
-The predicted regression target of an input sample is computed as the
-mean predicted regression targets of the trees in the forest.
-:param X: The input samples. Internally, its dtype will be converted to</p>
-<blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>round_func</strong> (<em>lambda function</em>) – Optional function to apply to outputs (for example to discretize them
-using MCH lookup tables). If not provided f(x) = x will be applied
-(i.e. no function)</p></li>
-<li><p><strong>bc</strong> (<em>bool</em>) – if True the bias correction function will be applied</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><strong>y</strong> – The predicted values.</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>array-like of shape (n_samples,) or (n_samples, n_outputs)</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="function">
 <dt id="rainforest.ml.rfdefinitions.read_rf">
 <code class="sig-prename descclassname">rainforest.ml.rfdefinitions.</code><code class="sig-name descname">read_rf</code><span class="sig-paren">(</span><em class="sig-param">rf_name</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.read_rf" title="Permalink to this definition">¶</a></dt>
@@ -477,8 +413,87 @@ must be defined in the script ml/rf_definitions.py</p>
 </dd></dl>
 
 </div>
-<div class="section" id="rainforest-ml-utilities-module">
-<h2>rainforest.ml.utilities module<a class="headerlink" href="#rainforest-ml-utilities-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-rainforest.ml.utils">
+<span id="rainforest-ml-utils-module"></span><h2>rainforest.ml.utils module<a class="headerlink" href="#module-rainforest.ml.utils" title="Permalink to this headline">¶</a></h2>
+<p>Utility functions for the ML submodule</p>
+<dl class="function">
+<dt id="rainforest.ml.utils.chunks">
+<code class="sig-prename descclassname">rainforest.ml.utils.</code><code class="sig-name descname">chunks</code><span class="sig-paren">(</span><em class="sig-param">l</em>, <em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cuts list l into maximum n chunks of similar sizes</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="rainforest.ml.utils.nesteddictvalues">
+<code class="sig-prename descclassname">rainforest.ml.utils.</code><code class="sig-name descname">nesteddictvalues</code><span class="sig-paren">(</span><em class="sig-param">d</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.nesteddictvalues" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="rainforest.ml.utils.plot_crossval_stats">
+<code class="sig-prename descclassname">rainforest.ml.utils.</code><code class="sig-name descname">plot_crossval_stats</code><span class="sig-paren">(</span><em class="sig-param">stats</em>, <em class="sig-param">output_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.plot_crossval_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the results of a crossvalidation intercomparion as performed in
+the rf.py module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stats</strong> (<em>dict</em>) – dictionary containing the result statistics</p></li>
+<li><p><strong>output_folder</strong> (<em>str</em>) – where to store the plots</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rainforest.ml.utils.split_event">
+<code class="sig-prename descclassname">rainforest.ml.utils.</code><code class="sig-name descname">split_event</code><span class="sig-paren">(</span><em class="sig-param">timestamps</em>, <em class="sig-param">n=5</em>, <em class="sig-param">threshold_hr=12</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.split_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits the dataset into n subsets by separating the observations into
+separate precipitation events and attributing these events randomly
+to the subsets</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>timestamps</strong> (<em>int array</em>) – array containing the UNIX timestamps of the precipitation observations</p></li>
+<li><p><strong>n</strong> (<em>int</em>) – number of subsets to create</p></li>
+<li><p><strong>threshold_hr</strong> (<em>int</em>) – threshold in hours to distinguish precip events. Two timestamps are
+considered to belong to a different event if there is a least
+threshold_hr hours of no observations (no rain) between them.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>split_idx</strong> – array containing the subset grouping, with values from 0 to n - 1</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="rainforest.ml.utils.vert_aggregation">
+<code class="sig-prename descclassname">rainforest.ml.utils.</code><code class="sig-name descname">vert_aggregation</code><span class="sig-paren">(</span><em class="sig-param">radar_data</em>, <em class="sig-param">vert_weights</em>, <em class="sig-param">grp_vertical</em>, <em class="sig-param">visib_weight=True</em>, <em class="sig-param">visib=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.vert_aggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs vertical aggregation of radar observations aloft to the ground
+using a weighted average. Categorical variables such as ‘RADAR’,
+‘HYDRO’, ‘TCOUNT’, will be assigned dummy variables and these dummy
+variables will be aggregated, resulting in columns such as RADAR_propA
+giving the weighted proportion of radar observation aloft that were
+obtained with the Albis radar</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radar_data</strong> (<em>Pandas DataFrame</em>) – A Pandas DataFrame containing all required input features aloft as
+explained in the rf.py module</p></li>
+<li><p><strong>vert_weights</strong> (<em>np.array of float</em>) – vertical weights to use for every observation in radar, must have
+the same len as radar_data</p></li>
+<li><p><strong>grp_vertical</strong> (<em>np.array of int</em>) – grouping index for the vertical aggregation. It must have the same
+len as radar_data. All observations corresponding to the same
+timestep must have the same label</p></li>
+<li><p><strong>visib_weight</strong> (<em>bool</em>) – if True the input features will be weighted by the visibility
+when doing the vertical aggregation to the ground</p></li>
+<li><p><strong>visib</strong> (<em>np array</em>) – visibily of every observation, required only if visib_weight = True</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 </div>
 

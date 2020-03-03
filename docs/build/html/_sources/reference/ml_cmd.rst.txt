@@ -85,24 +85,20 @@ The configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/Y
 
 The parameters are the following
 
--   **TMP_FOLDER** : A directory where to store intermediate files generated during the processing, this is not important and */tmp/* can be used as well
--   **KDP_PARAMETERS** : set of parameters used in the computation of KDP using the moving least-square method. 
+-   **FILTERING** : a set of parameters used to filter the input data on which the algorithm is trained
 
-    -   **RMIN** : minimum range where to look for continuous precipitation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
-    -   **RMAX** :  maximum range where to look for continuous precipitation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
-    -   **ZMIN**  : minimum reflectivity to consider it a rain cell, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
-    -   **ZMAX**  : maximum reflectivity to consider it a rain cell, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
-    -   **RWIND** : size of the moving window in meters used in the PSIDP filtering and KDP estimation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/retrieve/kdp_proc.py>`_
--   **SNR_THRESHOLD** : minimum SNR in dB below which the radar data is masked 
--   **ZH_THRESHOLD** : minimum ZH below which radar data is masked
--   **VISIB_CORR** : set of parameters for visibility correction
+    -   **STA_TO_REMOVE** : list of problematic stations to remove
+    -   **CONSTRAINT_MIN_ZH** : constraint on minimum reflectivity, the first value if the precip. intensity, the second the minimum value required value of ZH. For example for [0.5,20] all rows where ZH < 20 dBZ if R >= 0.5 mm/h will be removed. This is to reduce the effect of large spatial and temporal offset between radar and gauge.
+    -   **CONSTRAINT_MAX_ZH** : constraint on maximum reflectivity, the first value if the precip. intensity, the second the minimum value required value of ZH. 
+-   **RANDOMFORESTREGRESSOR_PARAMS** : set of parameters for the `sklearn random forest regressor <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html>`_ . You can add as many as you want, as long as they are valid parameters for this class
 
-    -   **MIN_VISIB** : minimum visibility below which the data is masked
-    -   **MAX_CORR** : maximum visibility correction for ZH (in linear)
--   **SWEEPS** : which radar sweeps (elevations) to use, e.g. [1,2,3,4] for the 4 first, 'all' uses all 20 sweeps 
--   **RADARS** : which radars to consider, e.g. ['A','D'], 'all' uses all five radars
--   **OUTLIER_REMOVAL** : if set to 1, a local outlier filtering will be applied (e.g. remove values with z-scores in 3 x 3 window above +3 or below -3)
--   **GAUSSIAN_SIGMA** : size in pixels of the Gaussian smoothing that is applied on the QPE product, if set to 0 no smoothing is used
--   **ADVECTION_CORRECTION** : if set to 1, the QPE will be corrected for advection using `this method <https://journals.ametsoc.org/doi/pdf/10.1175/1520-0426%281999%29016%3C0198%3ARTRREP%3E2.0.CO%3B2>`_ with two consecutive timesteps
+    -   **max_depth** : max depth of the threes
+    -   **n_estimators** : number of trees
+-   **VERTAGG_PARAMS** : set of parameters for the vertical aggregation of radar data to the ground
+
+    -   **BETA** : the parameter used in the exponential weighting :math:`\exp(-\beta \cdot h)`, where *h* is the height of every observation. *BETA* should be negative, since lower observation should have a larger weight.
+    -   **VISIB_WEIGHTING** : if set to 1, the observations will also be weighted proportionally to their visibility
+-   **BIAS_CORR** : type of bias-correction to be applied *a-posteriori*. It can be either 'raw' in which case a simple linear regression of prediction vs observation is used, 'cdf' in which a simple linear regression on *sorted* prediction vs *sorted* observation is used and 'spline' which is the same as 'cdf' except that a 1D spline is used instead.
+
 
 
