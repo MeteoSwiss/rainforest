@@ -41,7 +41,7 @@ rainforest.ml.rfdefinitions module
 rainforest.ml.utilities module
 ----------------------------------------
 
-.. automodule:: rainforest.ml.u
+.. automodule:: rainforest.ml.utils
    :members:
    :undoc-members:
    :show-inheritance:
