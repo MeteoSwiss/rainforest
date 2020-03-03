@@ -86,13 +86,16 @@ The configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/Y
 The parameters are the following
 
 -   **FILTERING** : a set of parameters used to filter the input data on which the algorithm is trained
+
     -   **STA_TO_REMOVE** : list of problematic stations to remove
     -   **CONSTRAINT_MIN_ZH** : constraint on minimum reflectivity, the first value if the precip. intensity, the second the minimum value required value of ZH. For example for [0.5,20] all rows where ZH < 20 dBZ if R >= 0.5 mm/h will be removed. This is to reduce the effect of large spatial and temporal offset between radar and gauge.
     -   **CONSTRAINT_MAX_ZH** : constraint on maximum reflectivity, the first value if the precip. intensity, the second the minimum value required value of ZH. 
 -   **RANDOMFORESTREGRESSOR_PARAMS** : set of parameters for the `sklearn random forest regressor <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html>`_ . You can add as many as you want, as long as they are valid parameters for this class
+
     -   **max_depth** : max depth of the threes
     -   **n_estimators** : number of trees
 -   **VERTAGG_PARAMS** : set of parameters for the vertical aggregation of radar data to the ground
+
     -   **BETA** : the parameter used in the exponential weighting :math:`\exp(-\beta \cdot h)`, where *h* is the height of every observation. *BETA* should be negative, since lower observation should have a larger weight.
     -   **VISIB_WEIGHTING** : if set to 1, the observations will also be weighted proportionally to their visibility
 -   **BIAS_CORR** : type of bias-correction to be applied *a-posteriori*. It can be either 'raw' in which case a simple linear regression of prediction vs observation is used, 'cdf' in which a simple linear regression on *sorted* prediction vs *sorted* observation is used and 'spline' which is the same as 'cdf' except that a 1D spline is used instead.
