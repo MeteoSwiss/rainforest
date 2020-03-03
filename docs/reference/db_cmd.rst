@@ -1,7 +1,7 @@
 Database command-line tool
 ==========================================
 
-The *database* submodule has only a command-line tool to populate (update) the database. For SQL queries please use the command-line :ref:`interface` .
+The *database* submodule has only a command-line tool to populate (update) the database. For SQL queries please use the command-line :ref:`Interface`.
 
 .. _db_populate:
 
