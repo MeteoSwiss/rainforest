@@ -10,6 +10,7 @@ daniel.wolfensberger@epfl.ch
 December 2019
 """
 
+# Global imports
 import pickle
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
