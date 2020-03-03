@@ -17,8 +17,8 @@ sys.path.insert(0, os.path.abspath('../'))
 
 import mock
  
-MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'matplotlib.pyplot', 'scipy.interpolate','pyart','pyspark','imageio','prompt_toolkit','matplotlib.colors','scipy.spatial',
-'sklearn','scipy.stats','scipy.ndimage','dask','pandas','yaml','sklearn.ensemble']
+MOCK_MODULES = ['numpy', 'netCDF4','prompt_toolkit.shortcuts','scipy','pyart.aux_io','matplotlib', 'matplotlib.pyplot', 'scipy.interpolate','pyart','pyspark','imageio','prompt_toolkit','matplotlib.colors','scipy.spatial',
+'sklearn','scipy.stats','scipy.ndimage','dask','pandas','yaml','sklearn.ensemble','scipy.signal','shapefile','scipy.spatial.distance']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
