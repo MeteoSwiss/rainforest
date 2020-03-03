@@ -1,0 +1,9 @@
+Name of variables,Definition,Units
+TIMESTAMP,Timestamp in UNIX standard,-
+STATION,Abbbreviation of the SMN/Pluvio station (see 1),-
+TRE200SO,Temperature at the station,°C
+PRESTAS0,Pressure at the station,hPa
+URE200S0,Relative humidity at the station,%
+RRE150Z0,Total precipitation in 10 min,mm
+DKL010Z0,Wind direction,°
+FKL010Z0,Wind magnitude,m/s

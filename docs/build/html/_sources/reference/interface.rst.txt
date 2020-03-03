@@ -1,0 +1,6 @@
+.. _Interface:
+
+Interface
+=======================================
+
+The library provides a command-line interface that can be called by typing *interface_qpe* in the console

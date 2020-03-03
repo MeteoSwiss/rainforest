@@ -1,0 +1,43 @@
+Name of variables,,Definition,Units
+Suffix,_max,"Value of variable at the location of the gate with maximum ZH that falls within Cartesian pixel, except for KDP where the max of KDP is used instead",
+,_min,"Value of variable at the location of the gate with minimum ZH that falls within Cartesian pixel, except for KDP where the min of KDP is used instead",
+,_mean,"Average value within Cartesian pixel, averaging is done in linear z for ZH, ZV, ZDR",
+Prefix,TIMESTAMP,Timestamp in UNIX standard,-
+,STATION,Abbbreviation of the SMN/Pluvio station (see 1),-
+,RADAR,"Radar name, A = Albis, D = Dole, L = Lema, W = Weissfluhjoch, P = Plaine-Morte",-
+,SWEEP,"Sweep number, from 1 to 20, 1 = -0.2° elevation, 20 = 40°elevation",-
+,NX,"Indicates the neighbour of the pixel where there is the SMN/Pluvio in Swiss X-direction (from south to north), NX = -1: pixel in the south",-
+,NY,"Indicates the neighbour of the pixel where there is the SMN/Pluvio in Swiss Y-direction (from west to east),  NY = -1 pixel in the west, NX = 0 = NY corresponds to the location of the station",-
+,HEIGHT,Height a.s.l of the observation,m
+,VPR,Vertical profile of reflectivity correction at the location,-
+,RADPRECIP,Estimated precipitation intensity at radar site (for radome attenuation),mm/h
+,T,COSMO temperature,°C
+,U,Eastward component of wind from COSMO,m/s
+,V,Northward component of wind from COSMO,m/s
+,W,Vertical component of wind from COSMO,m/s
+,P,COSMO pressure,Pa
+,QV,COSMO water vapour mass fraction,kg vapour/m3 air
+,ZH,Raw reflectivity at horizontal polarization,dBZ
+,ZH_VISIB,"Reflectivity at horizontal polarization corrected for visibility (masking below 37% visib and linear proportional correction above 37%)",dBZ
+,ZV,Raw reflectivity at vertical polarization,dBZ
+,ZV_VISIB,"Reflectivity at vertical polarization corrected for visibility (masking below 37% visib and linear proportional correction above 37%)",dBZ
+,ZDR,Differential reflectivity (independent of visibility),dB
+,KDP,"Specific differential phase shift on propagation, estimated using rolling least-square
+estimation",°/km
+,RHOHV,Copolar correlation coefficient,-
+,SW,Spectral width (i.e. standard deviation of Doppler velocities),m/s
+,RVEL,Mean Doppler (radial) velocity,m/s
+,AH,"Specific attenuation coefficient at horizontal polarization obtained with ZPHI
+Method",dB/km
+,ZH_CORR,"Reflectivity at horizontal polarization corrected for attenuation using the ZPHI
+Method",dBZ
+,ZV_CORR,"Reflectivity at vertical polarization corrected for attenuation using the ZPHI
+Method",dBZ
+,ZDR_CORR,"Differential reflecitivity corrected for attenuation using the ZPHI
+Method",dB
+,VISIB,"Visibility, 0 indicates complete blocking, 100 no blocking at all, statically computed from DEM and scanning strategy (not dynamic!)",%
+,NH,Estimated noise at horizontal polarization,dB
+,NV,Estimated noise at horizontal polarization,dB
+,HYDRO,"Hydrometeor classification using 2
+0 = no data, 1 = aggregates, 2 = light rain, 3 = ice crystals, 4 = rimed particles 5 = rain, 6 = vert. aligned ice, 7 = wet snow, 8 = melting hail, 9 = dry hail/high Density graupel",-
+,TCOUNT,"Code to indicate which radar 5min radar observations have been aggregated to 10 min station resolution, 1 = only first 5 min period, 2 = only second 5 min period, 3 = both",-

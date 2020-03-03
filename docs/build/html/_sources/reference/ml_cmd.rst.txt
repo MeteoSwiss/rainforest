@@ -1,0 +1,108 @@
+Machine-learning command-line tool
+==========================================
+
+The *ml* submodule has only a command-line tool to update the input data for the RF QPE algorithm and for training new RF models. For more sophisticated procedures please use :ref:`ml_module`.
+
+.. _rf_train:
+
+*rf_train*
+-----------------
+
+Updates any of the three tables of the database *gauge*, *radar* and *reference* with new data. 
+
+**rf_train [options]**
+
+
+Options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --outputfolder=OUTPUT
+                        Path of the output folder, default is the ml/rf_models
+                        folder in the current library
+  -d DBFOLDER, --dbfolder=DBFOLDER
+                        Path of the database main folder, default is
+                        /store/msrad/radar/radar_database/
+  -i DBFOLDER, --inputfolder=DBFOLDER
+                        Path where the homogeneized input files for the RF
+                        algorithm are stored, default is the subfolder
+                        'rf_input_data' within the database folder
+  -s START, --start=START
+                        Specify the start time in the format YYYYddmmHHMM, if
+                        not provided the first timestamp in the database will
+                        be used
+  -e END, --end=END     Specify the end time in the format YYYYddmmHHMM, if
+                        not provided the last timestamp in the database will
+                        be used
+  -c CONFIG, --config=CONFIG
+                        Path of the config file, the default will be
+                        default_config.yml in the database module
+  -m MODELS, --models=MODELS
+                        Specify which models you want to use in the form of a
+                        json line of a dict, the keys are names you give to
+                        the models, the values the input features they
+                        require, for example '{"RF_dualpol": ["RADAR",
+                        "zh_visib_mean",
+                        "zv_visib_mean","KDP_mean","RHOHV_mean","T",
+                        "HEIGHT","VISIB_mean"]}', please note the double and
+                        single quotes, which are requiredIMPORTANT: if no
+                        model is provided only the ml input data will be
+                        recomputed from the database, but no model will be
+                        computedTo simplify three aliases are proposed:
+                        "dualpol_default" = '{"RF_dualpol": ["RADAR",
+                        "zh_visib_mean",
+                        "zv_visib_mean","KDP_mean","RHOHV_mean","T",
+                        "HEIGHT","VISIB_mean"]}'"vpol_default" = '{"RF_vpol":
+                        ["RADAR", "zv_visib_mean","T",
+                        "HEIGHT","VISIB_mean"]}'"hpol_default" = '{"RF_hpol":
+                        ["RADAR", "zh_visib_mean","T",
+                        "HEIGHT","VISIB_mean"]}'You can combine them for
+                        example "vpol_default, hpol_default, dualpol_default,
+                        will compute all three"
+  -g MODELS, --generate_inputs=MODELS
+                        If set to 1 (default), the input parquet files
+                        (homogeneized tables) for the ml routines will be
+                        recomputed from the current database rowsThis takes a
+                        bit of time but is needed if you updated the database
+                        and want to use the new data in the training
+                        
+                        
+
+The configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/YAML/>`_, the default file has the following structure:
+
+.. code-block:: yaml
+
+    FILTERING: # conditions to remove some observations
+        STA_TO_REMOVE : ['TIT','GSB','GRH','PIL','SAE','AUB']
+        CONSTRAINT_MIN_ZH : [0.5,20] # min 20 dBZ if R > 0.5 mm/h
+        CONSTRAINT_MAX_ZH : [0,20] # max 20 dBZ if R = 0 mm/h
+    RANDOMFORESTREGRESSOR_PARAMS: # parameters to sklearn's class
+        max_depth : 20
+        n_estimators : 10
+    VERTAGG_PARAMS:
+        BETA : -0.5 # weighting factor to use in the exponential weighting
+        VISIB_WEIGHTING : 1 # whether to weigh or not observations by their visib
+    BIAS_CORR : 'raw' # type of bias correction 'raw', 'cdf' or 'spline'
+
+
+The parameters are the following
+
+-   **TMP_FOLDER** : A directory where to store intermediate files generated during the processing, this is not important and */tmp/* can be used as well
+-   **KDP_PARAMETERS** : set of parameters used in the computation of KDP using the moving least-square method. 
+
+    -   **RMIN** : minimum range where to look for continuous precipitation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
+    -   **RMAX** :  maximum range where to look for continuous precipitation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
+    -   **ZMIN**  : minimum reflectivity to consider it a rain cell, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
+    -   **ZMAX**  : maximum reflectivity to consider it a rain cell, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
+    -   **RWIND** : size of the moving window in meters used in the PSIDP filtering and KDP estimation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/retrieve/kdp_proc.py>`_
+-   **SNR_THRESHOLD** : minimum SNR in dB below which the radar data is masked 
+-   **ZH_THRESHOLD** : minimum ZH below which radar data is masked
+-   **VISIB_CORR** : set of parameters for visibility correction
+
+    -   **MIN_VISIB** : minimum visibility below which the data is masked
+    -   **MAX_CORR** : maximum visibility correction for ZH (in linear)
+-   **SWEEPS** : which radar sweeps (elevations) to use, e.g. [1,2,3,4] for the 4 first, 'all' uses all 20 sweeps 
+-   **RADARS** : which radars to consider, e.g. ['A','D'], 'all' uses all five radars
+-   **OUTLIER_REMOVAL** : if set to 1, a local outlier filtering will be applied (e.g. remove values with z-scores in 3 x 3 window above +3 or below -3)
+-   **GAUSSIAN_SIGMA** : size in pixels of the Gaussian smoothing that is applied on the QPE product, if set to 0 no smoothing is used
+-   **ADVECTION_CORRECTION** : if set to 1, the QPE will be corrected for advection using `this method <https://journals.ametsoc.org/doi/pdf/10.1175/1520-0426%281999%29016%3C0198%3ARTRREP%3E2.0.CO%3B2>`_ with two consecutive timesteps
+
+

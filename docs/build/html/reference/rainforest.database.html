@@ -1,0 +1,472 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>rainforest.database package &mdash; QPE_library  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ML submodule" href="ml.html" />
+    <link rel="prev" title="Database command-line tool" href="db_cmd.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> QPE_library
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#access-library">Access library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-database-up-to-date">Keeping database up-to-date</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-randomforest-model-up-to-date">Keeping randomForest model up-to-date</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="interface.html">Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qpe.html">QPE submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="qpe_cmd.html">QPE command-line tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-compute"><em>qpe_compute</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-plot"><em>qpe_plot</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-evaluation"><em>qpe_evaluation</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-evaluation-module">rainforest.qpe.qpe_evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-plot-module">rainforest.qpe.qpe_plot module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="db.html">Database submodule</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="db_structure.html">Database structure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#gauge-table"><em>Gauge table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#reference-table"><em>Reference table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#radar-table"><em>Radar table</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="db_options.html">Database configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="db_cmd.html">Database command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_cmd.html#db-populate"><em>db_populate</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">rainforest.database package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-rainforest.database.database">rainforest.database.database module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rainforest-database-db-populate-module">rainforest.database.db_populate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rainforest-database-retrieve-radar-data-module">rainforest.database.retrieve_radar_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml.html">ML submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_cmd.html">Machine-learning command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ml_cmd.html#rf-train"><em>rf_train</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-rf-train-module">rainforest.ml.rf_train module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-utilities-module">rainforest.ml.utilities module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="common.html">Common submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.io_data">rainforest.common.io_data module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.constants">rainforest.common.constants module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.lookup">rainforest.common.lookup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.utils">rainforest.common.utils module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.wgs84_ch1903">rainforest.common.wgs84_ch1903 module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QPE_library</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Reference</a> &raquo;</li>
+        
+          <li><a href="db.html">Database submodule</a> &raquo;</li>
+        
+      <li>rainforest.database package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/reference/rainforest.database.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="rainforest-database-package">
+<h1>rainforest.database package<a class="headerlink" href="#rainforest-database-package" title="Permalink to this headline">¶</a></h1>
+<p>This module provides routines used for database management.</p>
+<p><a class="reference internal" href="#module-rainforest.database.database" title="rainforest.database.database"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.database</span></code></a> : main database class, used as an entry-point to the database</p>
+<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.db_populate</span></code> : command-line script used to add data to database</p>
+<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.retrieve_radar_data</span></code> : functions used to add new radar data to database</p>
+<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.database.retrieve_reference_data</span></code> : functions used to add new Cartesian reference data to database</p>
+<p><a class="reference internal" href="#dwh"><span class="std std-ref">rainforest.database.retrieve_dwh_data R module</span></a> : R functions used to add new gauge data to database</p>
+<div class="section" id="module-rainforest.database.database">
+<span id="rainforest-database-database-module"></span><h2>rainforest.database.database module<a class="headerlink" href="#module-rainforest.database.database" title="Permalink to this headline">¶</a></h2>
+<p>Main class to update the RADAR/STATION database and run queries to retrieve
+specific data</p>
+<p>Note that I use spark because there is currently no way to use SQL queries
+with dask</p>
+<dl class="class">
+<dt id="rainforest.database.database.DataFrameWithInfo">
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.database.database.</code><code class="sig-name descname">DataFrameWithInfo</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">df</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.DataFrameWithInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pyspark.sql.dataframe.DataFrame</span></code></p>
+<dl class="method">
+<dt id="rainforest.database.database.DataFrameWithInfo.info">
+<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#rainforest.database.database.DataFrameWithInfo.info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rainforest.database.database.Database">
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.database.database.</code><code class="sig-name descname">Database</code><span class="sig-paren">(</span><em class="sig-param">config_file=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.Database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Creates a Database instance that can be used to load data, update
+new data, run queries, etc</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config_file</strong> (<em>str</em><em> (</em><em>optional</em><em>)</em>) – Path of the configuration file that you want to use, can also
+be provided later and is needed only if you want to update the
+database with new data</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="rainforest.database.database.Database.add_tables">
+<code class="sig-name descname">add_tables</code><span class="sig-paren">(</span><em class="sig-param">filepaths_dic</em>, <em class="sig-param">get_summaries=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.Database.add_tables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a set of data contained in a folder as a Spark DataFrame and
+adds them to the database instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>filepaths_dic</strong> (<em>dict</em>) – <p>Dictionary where the keys are the name of the dataframes to add
+and the values are the wildcard patterns poiting to the files
+for example {‘gauge’: ‘/mainfolder/gauge/<a href="#id1"><span class="problematic" id="id2">*</span></a>.csv’,</p>
+<blockquote>
+<div><p>’radar’ : ‘/mainfolder/radar/<em>.csv’,
+‘reference’ : /mainfolder/reference/</em>.parquet’}</p>
+</div></blockquote>
+<p>will add the three tables ‘gauge’, ‘radar’ and ‘reference’ to the
+database</p>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.database.database.Database.config_file">
+<em class="property">property </em><code class="sig-name descname">config_file</code><a class="headerlink" href="#rainforest.database.database.Database.config_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="rainforest.database.database.Database.query">
+<code class="sig-name descname">query</code><span class="sig-paren">(</span><em class="sig-param">sql_query</em>, <em class="sig-param">to_memory=True</em>, <em class="sig-param">output_file=''</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.Database.query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs an SQL query on the database and returns the result and if
+wanted writes it to a file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sql_query</strong> (<em>str</em>) – Valid SQL query, all tables refered to in the query must be included
+in the tables attribute of the database (i.e. they must first
+be added with the add_tables command)</p></li>
+<li><p><strong>memory</strong> (<em>to</em>) – If true will try to put the result into ram in the form of a pandas
+dataframe, if the predicted size of the query is larger than
+the parameter WARNING_RAM in common.constants this will be ignored</p></li>
+<li><p><strong>output_file</strong> (<em>str</em><em> (</em><em>optional</em><em>)</em>) – Full path of an output file where the query will be dumped into.
+Must end either with .csv, .gz.csv, or .parquet, this will
+determine the output format</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>If the result fits in memory, it returns a pandas DataFrame, otherwise</em></p></li>
+<li><p><em>a cached Spark DataFrame</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.database.database.Database.update_radar_data">
+<code class="sig-name descname">update_radar_data</code><span class="sig-paren">(</span><em class="sig-param">gauge_table_name</em>, <em class="sig-param">output_folder</em>, <em class="sig-param">t0=None</em>, <em class="sig-param">t1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.Database.update_radar_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the radar table using timesteps from the gauge table</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><dl class="simple">
+<dt>gauge_table_name: str</dt><dd><p>name of the gauge table, must be included in the tables of
+the database, i.e. you must first add it with load_tables(..)</p>
+</dd>
+<dt>output_folder: str</dt><dd><p>directory where to store the computed radar tables</p>
+</dd>
+<dt>t0: start time in YYYYMMDD(HHMM) (optional)</dt><dd><p>starting time of the retrieval, by default all timesteps
+that are in the gauge table will be used</p>
+</dd>
+<dt>t1: end time in YYYYMMDD(HHMM) (optional)</dt><dd><p>ending time of the retrieval, by default all timesteps
+that are in the gauge table will be used</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.database.database.Database.update_reference_data">
+<code class="sig-name descname">update_reference_data</code><span class="sig-paren">(</span><em class="sig-param">gauge_table_name</em>, <em class="sig-param">output_folder</em>, <em class="sig-param">t0=None</em>, <em class="sig-param">t1=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.Database.update_reference_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the reference product table using timesteps from the gauge table</p>
+<dl class="simple">
+<dt>Inputs:</dt><dd><dl class="simple">
+<dt>gauge_table_name: str</dt><dd><p>name of the gauge table, must be included in the tables of
+the database, i.e. you must first add it with load_tables(..)</p>
+</dd>
+<dt>output_folder: str</dt><dd><p>directory where to store the computed radar tables</p>
+</dd>
+<dt>t0: start time in YYYYMMDD(HHMM) (optional)</dt><dd><p>starting time of the retrieval, by default all timesteps
+that are in the gauge table will be used</p>
+</dd>
+<dt>t1: end time in YYYYMMDD(HHMM) (optional)</dt><dd><p>ending time of the retrieval, by default all timesteps
+that are in the gauge table will be used</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.database.database.Database.update_station_data">
+<code class="sig-name descname">update_station_data</code><span class="sig-paren">(</span><em class="sig-param">t0</em>, <em class="sig-param">t1</em>, <em class="sig-param">output_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.database.database.Database.update_station_data" title="Permalink to this definition">¶</a></dt>
+<dd><dl>
+<dt>Populates the csv files that contain the point measurement data,</dt><dd><p>that serve as base to update the database. A different file will
+be created for every station. If the file is already present the
+new data will be
+appended to the file.</p>
+</dd>
+<dt>inputs:</dt><dd><p>t0: start time in YYYYMMDD(HHMM) format (HHMM) is optional
+t1: end time in YYYYMMDD(HHMM) format (HHMM) is optional
+output_folder: where the files should be stored. If the directory</p>
+<blockquote>
+<div><p>is not empty, the new data will be merged with existing files
+if relevant</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="rainforest.database.database.TableDict">
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.database.database.</code><code class="sig-name descname">TableDict</code><a class="headerlink" href="#rainforest.database.database.TableDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+<p>This is an extension of the classic python dict that automatically
+calls createOrReplaceTempView once a table has been added to the dict</p>
+</dd></dl>
+
+</div>
+<div class="section" id="rainforest-database-db-populate-module">
+<h2>rainforest.database.db_populate module<a class="headerlink" href="#rainforest-database-db-populate-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="rainforest-database-retrieve-radar-data-module">
+<h2>rainforest.database.retrieve_radar_data module<a class="headerlink" href="#rainforest-database-retrieve-radar-data-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="rainforest-database-retrieve-reference-data-module">
+<h2>rainforest.database.retrieve_reference_data module<a class="headerlink" href="#rainforest-database-retrieve-reference-data-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="rainforest-database-retrieve-dwh-data-r-module">
+<span id="dwh"></span><h2>rainforest.database.retrieve_dwh_data R module<a class="headerlink" href="#rainforest-database-retrieve-dwh-data-r-module" title="Permalink to this headline">¶</a></h2>
+<p>Main routine for retrieving station data This is meant to be run as a command line command from a slurm script</p>
+<p>i.e. Rscript retrieve_dwh_data.r &lt;t0&gt; &lt;t1&gt; &lt;threshold&gt; &lt;stations&gt; &lt;variables&gt; &lt;output_folder&gt; &lt;missing_value overwrite&gt;</p>
+<p>IMPORTANT: this function is called by the main routine in database.py so you should never have to call it manually</p>
+<p><strong>retrieve_dwh_data.R [options]</strong></p>
+<p>Options:</p>
+<ul class="simple">
+<li><p><strong>t0</strong> (<em>str</em>)  - start time in YYYYMMDDHHMM format</p></li>
+<li><p><strong>t1</strong> (<em>str</em>)  - end time in YYYYMMDDHHMM format</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>)  - minimum value of hourly precipitation for the entire hour to be included in the database (i.e. all 6 10min timesteps)</p></li>
+<li><p><strong>variables</strong> (<em>str</em>)  - list of variables to retrieve, using the DWH names, for example “tre200s0,prestas0,ure200s0,rre150z0,dkl010z0,fkl010z0”</p></li>
+<li><p><strong>output_folder</strong> (<em>str</em>)  -  directory where to store the csv files containing the retrieved data</p></li>
+<li><p><strong>output_folder</strong> (<em>float</em>)  -  directory where to store the csv files containing the retrieved data</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em>)  - whether or not to overwrite already existing data in the output_folder</p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="ml.html" class="btn btn-neutral float-right" title="ML submodule" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="db_cmd.html" class="btn btn-neutral float-left" title="Database command-line tool" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Daniel Wolfensherger
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,664 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Database structure &mdash; QPE_library  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Database configuration" href="db_options.html" />
+    <link rel="prev" title="Database submodule" href="db.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> QPE_library
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#access-library">Access library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-database-up-to-date">Keeping database up-to-date</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-randomforest-model-up-to-date">Keeping randomForest model up-to-date</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="interface.html">Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qpe.html">QPE submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="qpe_cmd.html">QPE command-line tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-compute"><em>qpe_compute</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-plot"><em>qpe_plot</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-evaluation"><em>qpe_evaluation</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-evaluation-module">rainforest.qpe.qpe_evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-plot-module">rainforest.qpe.qpe_plot module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="db.html">Database submodule</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Database structure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gauge-table"><em>Gauge table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#reference-table"><em>Reference table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#radar-table"><em>Radar table</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="db_options.html">Database configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="db_cmd.html">Database command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_cmd.html#db-populate"><em>db_populate</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.database.html">rainforest.database package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-db-populate-module">rainforest.database.db_populate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-radar-data-module">rainforest.database.retrieve_radar_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml.html">ML submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_cmd.html">Machine-learning command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ml_cmd.html#rf-train"><em>rf_train</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-rf-train-module">rainforest.ml.rf_train module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-utilities-module">rainforest.ml.utilities module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="common.html">Common submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.io_data">rainforest.common.io_data module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.constants">rainforest.common.constants module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.lookup">rainforest.common.lookup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.utils">rainforest.common.utils module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.wgs84_ch1903">rainforest.common.wgs84_ch1903 module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QPE_library</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Reference</a> &raquo;</li>
+        
+          <li><a href="db.html">Database submodule</a> &raquo;</li>
+        
+      <li>Database structure</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/reference/db_structure.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="database-structure">
+<h1>Database structure<a class="headerlink" href="#database-structure" title="Permalink to this headline">¶</a></h1>
+<p>The database is divided into three tables</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#gaugetab"><span class="std std-ref">Gauge table</span></a> table which contains data from the SwissMetNet stations and pluviometers</p></li>
+<li><p><a class="reference internal" href="#reftab"><span class="std std-ref">Reference table</span></a> table which contains Cartesian data from MeteoSwiss such as CPC, RZC, MZC, at the location of the stations</p></li>
+<li><p><a class="reference internal" href="#radtab"><span class="std std-ref">Radar table</span></a> table which contains polar radar data interpolated above the stations</p></li>
+</ol>
+<p>Currently these tables are stored in <em>/store/msrad/radar/radar_database/</em> with a subfolder for every table. Note that the tables are spread over many files, namely one single  <a class="reference external" href="https://fr.wikipedia.org/wiki/Apache_Parquet">parquet</a> file for every different day in the <em>reference</em> and <em>radar</em> tables and one single GZIP compressed CSV file for every SwissMetNet/Pluvio station in the <em>gauge</em> table. These files can easily be read in batch as a single dataframe using either <a class="reference external" href="https://spark.apache.org/docs/latest/api/python/index.html">pyspark</a> or <a class="reference external" href="https://dask.org/">dask</a></p>
+<p>All tables share two attributes <strong>STATION</strong> (the identifier of the SwissMetNet/Pluvio) and <strong>TIMESTAMP</strong> (Unix timestamp), together they form a identifier that can be used to join the tables using <a class="reference internal" href="interface.html"><span class="doc">SQL queries</span></a> or the <em>query</em> command in the <em>Database</em> class.</p>
+<div class="section" id="gauge-table">
+<span id="gaugetab"></span><h2><em>Gauge table</em><a class="headerlink" href="#gauge-table" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default" id="id1">
+<caption><span class="caption-text">Gauge</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 80%" />
+<col style="width: 10%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name of variables</p></th>
+<th class="head"><p>Definition</p></th>
+<th class="head"><p>Units</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TIMESTAMP</p></td>
+<td><p>Timestamp in UNIX standard</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>STATION</p></td>
+<td><p>Abbbreviation of the SMN/Pluvio station (see 1)</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>TRE200SO</p></td>
+<td><p>Temperature at the station</p></td>
+<td><p>°C</p></td>
+</tr>
+<tr class="row-odd"><td><p>PRESTAS0</p></td>
+<td><p>Pressure at the station</p></td>
+<td><p>hPa</p></td>
+</tr>
+<tr class="row-even"><td><p>URE200S0</p></td>
+<td><p>Relative humidity at the station</p></td>
+<td><p>%</p></td>
+</tr>
+<tr class="row-odd"><td><p>RRE150Z0</p></td>
+<td><p>Total precipitation in 10 min</p></td>
+<td><p>mm</p></td>
+</tr>
+<tr class="row-even"><td><p>DKL010Z0</p></td>
+<td><p>Wind direction</p></td>
+<td><p>°</p></td>
+</tr>
+<tr class="row-odd"><td><p>FKL010Z0</p></td>
+<td><p>Wind magnitude</p></td>
+<td><p>m/s</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="reference-table">
+<span id="reftab"></span><h2><em>Reference table</em><a class="headerlink" href="#reference-table" title="Permalink to this headline">¶</a></h2>
+<table class="colwidths-given docutils align-default" id="id2">
+<caption><span class="caption-text">Reference</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 80%" />
+<col style="width: 10%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name of variables</p></th>
+<th class="head"><p>Definition</p></th>
+<th class="head"><p>Units</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>TIMESTAMP</p></td>
+<td><p>Timestamp in UNIX standard</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>STATION</p></td>
+<td><p>Abbbreviation of the SMN/Pluvio station (see 1)</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>NX</p></td>
+<td><p>Indicates the neighbour of the pixel where there is the SMN/Pluvio in Swiss X-direction (from south to north), NX = -1: pixel in the south</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>NY</p></td>
+<td><p>Indicates the neighbour of the pixel where there is the SMN/Pluvio in Swiss Y-direction (from west to east),  NY = -1 pixel in the west, NX = 0 = NY corresponds to the location of the station</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>RZC</p></td>
+<td><p>Cartesian RZC product (radar QPE product) in given  pixel</p></td>
+<td><p>mm / h</p></td>
+</tr>
+<tr class="row-odd"><td><p>CPCH</p></td>
+<td><p>Cartesian Combiprecip product (radar + gauge merging) in given pixel</p></td>
+<td><p>mm / h</p></td>
+</tr>
+<tr class="row-even"><td><p>BZC</p></td>
+<td><p>Cartesian POH product (probability of hail product) in given pixel</p></td>
+<td><p>%</p></td>
+</tr>
+<tr class="row-odd"><td><p>MZC</p></td>
+<td><p>Cartesian max. expected severe hail size (MESHS) product in given pixel</p></td>
+<td><p>mm</p></td>
+</tr>
+<tr class="row-even"><td><p>MVRZC_x</p></td>
+<td><p>X component of the motion vectors derived from two consecutive RZC maps, using optical flow (Lukas-Kanade)</p></td>
+<td><p>m / s</p></td>
+</tr>
+<tr class="row-odd"><td><p>MVRZC_y</p></td>
+<td><p>Y component of the motion vectors derived from two consecutive RZC maps, using optical flow (Lukas-Kanade)</p></td>
+<td><p>m / s</p></td>
+</tr>
+<tr class="row-even"><td><p>MVCPCH_x</p></td>
+<td><p>X component of the motion vectors derived from two consecutive CPCH maps, using optical flow (Lukas-Kanade)</p></td>
+<td><p>m / s</p></td>
+</tr>
+<tr class="row-odd"><td><p>MVCPC_y</p></td>
+<td><p>Y component of the motion vectors derived from two consecutive CPCH maps, using optical flow (Lukas-Kanade)</p></td>
+<td><p>m / s</p></td>
+</tr>
+<tr class="row-even"><td><p>CPC.CV</p></td>
+<td><p>CPC cross-validation product (i.e. CPC obtained by leaving out one station), available only every hour and for 
+NX = NY = 0 (location of gauge)</p></td>
+<td><p>mm /hr</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="radar-table">
+<span id="radtab"></span><h2><em>Radar table</em><a class="headerlink" href="#radar-table" title="Permalink to this headline">¶</a></h2>
+<p>In the radar table if different <a class="reference internal" href="db_options.html"><span class="doc">aggregation methods</span></a> have been used, a given variable will be present multiple times with different suffixes, i.e. <em>ZH_mean</em>, <em>ZH_max</em>.</p>
+<table class="colwidths-given docutils align-default" id="id3">
+<caption><span class="caption-text">Radar</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 9%" />
+<col style="width: 73%" />
+<col style="width: 9%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name of variables</p></th>
+<th class="head"></th>
+<th class="head"><p>Definition</p></th>
+<th class="head"><p>Units</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Suffix</p></td>
+<td><p>_max</p></td>
+<td><p>Value of variable at the location of the gate with maximum ZH that falls within Cartesian pixel, except for KDP where the max of KDP is used instead</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>_min</p></td>
+<td><p>Value of variable at the location of the gate with minimum ZH that falls within Cartesian pixel, except for KDP where the min of KDP is used instead</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>_mean</p></td>
+<td><p>Average value within Cartesian pixel, averaging is done in linear z for ZH, ZV, ZDR</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Prefix</p></td>
+<td><p>TIMESTAMP</p></td>
+<td><p>Timestamp in UNIX standard</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>STATION</p></td>
+<td><p>Abbbreviation of the SMN/Pluvio station (see 1)</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>RADAR</p></td>
+<td><p>Radar name, A = Albis, D = Dole, L = Lema, W = Weissfluhjoch, P = Plaine-Morte</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>SWEEP</p></td>
+<td><p>Sweep number, from 1 to 20, 1 = -0.2° elevation, 20 = 40°elevation</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>NX</p></td>
+<td><p>Indicates the neighbour of the pixel where there is the SMN/Pluvio in Swiss X-direction (from south to north), NX = -1: pixel in the south</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>NY</p></td>
+<td><p>Indicates the neighbour of the pixel where there is the SMN/Pluvio in Swiss Y-direction (from west to east),  NY = -1 pixel in the west, NX = 0 = NY corresponds to the location of the station</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>HEIGHT</p></td>
+<td><p>Height a.s.l of the observation</p></td>
+<td><p>m</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>VPR</p></td>
+<td><p>Vertical profile of reflectivity correction at the location</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>RADPRECIP</p></td>
+<td><p>Estimated precipitation intensity at radar site (for radome attenuation)</p></td>
+<td><p>mm/h</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>T</p></td>
+<td><p>COSMO temperature</p></td>
+<td><p>°C</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>U</p></td>
+<td><p>Eastward component of wind from COSMO</p></td>
+<td><p>m/s</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>V</p></td>
+<td><p>Northward component of wind from COSMO</p></td>
+<td><p>m/s</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>W</p></td>
+<td><p>Vertical component of wind from COSMO</p></td>
+<td><p>m/s</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>P</p></td>
+<td><p>COSMO pressure</p></td>
+<td><p>Pa</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>QV</p></td>
+<td><p>COSMO water vapour mass fraction</p></td>
+<td><p>kg vapour/m3 air</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>ZH</p></td>
+<td><p>Raw reflectivity at horizontal polarization</p></td>
+<td><p>dBZ</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>ZH_VISIB</p></td>
+<td><p>Reflectivity at horizontal polarization corrected for visibility (masking below 37% visib and linear proportional correction above 37%)</p></td>
+<td><p>dBZ</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>ZV</p></td>
+<td><p>Raw reflectivity at vertical polarization</p></td>
+<td><p>dBZ</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>ZV_VISIB</p></td>
+<td><p>Reflectivity at vertical polarization corrected for visibility (masking below 37% visib and linear proportional correction above 37%)</p></td>
+<td><p>dBZ</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>ZDR</p></td>
+<td><p>Differential reflectivity (independent of visibility)</p></td>
+<td><p>dB</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>KDP</p></td>
+<td><p>Specific differential phase shift on propagation, estimated using rolling least-square
+estimation</p></td>
+<td><p>°/km</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>RHOHV</p></td>
+<td><p>Copolar correlation coefficient</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>SW</p></td>
+<td><p>Spectral width (i.e. standard deviation of Doppler velocities)</p></td>
+<td><p>m/s</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>RVEL</p></td>
+<td><p>Mean Doppler (radial) velocity</p></td>
+<td><p>m/s</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>AH</p></td>
+<td><p>Specific attenuation coefficient at horizontal polarization obtained with ZPHI
+Method</p></td>
+<td><p>dB/km</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>ZH_CORR</p></td>
+<td><p>Reflectivity at horizontal polarization corrected for attenuation using the ZPHI
+Method</p></td>
+<td><p>dBZ</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>ZV_CORR</p></td>
+<td><p>Reflectivity at vertical polarization corrected for attenuation using the ZPHI
+Method</p></td>
+<td><p>dBZ</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>ZDR_CORR</p></td>
+<td><p>Differential reflecitivity corrected for attenuation using the ZPHI
+Method</p></td>
+<td><p>dB</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>VISIB</p></td>
+<td><p>Visibility, 0 indicates complete blocking, 100 no blocking at all, statically computed from DEM and scanning strategy (not dynamic!)</p></td>
+<td><p>%</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>NH</p></td>
+<td><p>Estimated noise at horizontal polarization</p></td>
+<td><p>dB</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>NV</p></td>
+<td><p>Estimated noise at horizontal polarization</p></td>
+<td><p>dB</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>HYDRO</p></td>
+<td><p>Hydrometeor classification using 2
+0 = no data, 1 = aggregates, 2 = light rain, 3 = ice crystals, 4 = rimed particles 5 = rain, 6 = vert. aligned ice, 7 = wet snow, 8 = melting hail, 9 = dry hail/high Density graupel</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>TCOUNT</p></td>
+<td><p>Code to indicate which radar 5min radar observations have been aggregated to 10 min station resolution, 1 = only first 5 min period, 2 = only second 5 min period, 3 = both</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="db_options.html" class="btn btn-neutral float-right" title="Database configuration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="db.html" class="btn btn-neutral float-left" title="Database submodule" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Daniel Wolfensherger
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

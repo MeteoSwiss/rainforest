@@ -1,0 +1,15 @@
+Name of variables,Definition,Units
+TIMESTAMP,Timestamp in UNIX standard,-
+STATION,Abbbreviation of the SMN/Pluvio station (see 1),-
+NX,"Indicates the neighbour of the pixel where there is the SMN/Pluvio in Swiss X-direction (from south to north), NX = -1: pixel in the south",-
+NY,"Indicates the neighbour of the pixel where there is the SMN/Pluvio in Swiss Y-direction (from west to east),  NY = -1 pixel in the west, NX = 0 = NY corresponds to the location of the station",
+RZC,Cartesian RZC product (radar QPE product) in given  pixel,mm / h
+CPCH,Cartesian Combiprecip product (radar + gauge merging) in given pixel,mm / h
+BZC,Cartesian POH product (probability of hail product) in given pixel,%
+MZC,Cartesian max. expected severe hail size (MESHS) product in given pixel,mm
+MVRZC_x,"X component of the motion vectors derived from two consecutive RZC maps, using optical flow (Lukas-Kanade)",m / s
+MVRZC_y,"Y component of the motion vectors derived from two consecutive RZC maps, using optical flow (Lukas-Kanade)",m / s
+MVCPCH_x,"X component of the motion vectors derived from two consecutive CPCH maps, using optical flow (Lukas-Kanade)",m / s
+MVCPC_y,"Y component of the motion vectors derived from two consecutive CPCH maps, using optical flow (Lukas-Kanade)",m / s
+CPC.CV,"CPC cross-validation product (i.e. CPC obtained by leaving out one station), available only every hour and for 
+NX = NY = 0 (location of gauge)",mm /hr

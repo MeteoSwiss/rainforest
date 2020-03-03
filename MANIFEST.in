@@ -1,0 +1,5 @@
+recursive-include rainforest/common/ *
+include rainforest/database/retrieve_dwh_data.r
+include rainforest/database/default_config.yml
+include rainforest/ml/rf_models/*
+include rainforest/qpe/default_config.yml

@@ -1,0 +1,391 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Machine-learning command-line tool &mdash; QPE_library  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="rainforest.ml package" href="rainforest.ml.html" />
+    <link rel="prev" title="ML submodule" href="ml.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> QPE_library
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#access-library">Access library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-database-up-to-date">Keeping database up-to-date</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-randomforest-model-up-to-date">Keeping randomForest model up-to-date</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="interface.html">Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qpe.html">QPE submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="qpe_cmd.html">QPE command-line tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-compute"><em>qpe_compute</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-plot"><em>qpe_plot</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-evaluation"><em>qpe_evaluation</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-evaluation-module">rainforest.qpe.qpe_evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-plot-module">rainforest.qpe.qpe_plot module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="db.html">Database submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="db_structure.html">Database structure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#gauge-table"><em>Gauge table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#reference-table"><em>Reference table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#radar-table"><em>Radar table</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="db_options.html">Database configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="db_cmd.html">Database command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_cmd.html#db-populate"><em>db_populate</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.database.html">rainforest.database package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-db-populate-module">rainforest.database.db_populate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-radar-data-module">rainforest.database.retrieve_radar_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="ml.html">ML submodule</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Machine-learning command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#rf-train"><em>rf_train</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-rf-train-module">rainforest.ml.rf_train module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-utilities-module">rainforest.ml.utilities module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="common.html">Common submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.io_data">rainforest.common.io_data module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.constants">rainforest.common.constants module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.lookup">rainforest.common.lookup module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.utils">rainforest.common.utils module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.wgs84_ch1903">rainforest.common.wgs84_ch1903 module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QPE_library</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Reference</a> &raquo;</li>
+        
+          <li><a href="ml.html">ML submodule</a> &raquo;</li>
+        
+      <li>Machine-learning command-line tool</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/reference/ml_cmd.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="machine-learning-command-line-tool">
+<h1>Machine-learning command-line tool<a class="headerlink" href="#machine-learning-command-line-tool" title="Permalink to this headline">¶</a></h1>
+<p>The <em>ml</em> submodule has only a command-line tool to update the input data for the RF QPE algorithm and for training new RF models. For more sophisticated procedures please use <span class="xref std std-ref">ml_module</span>.</p>
+<div class="section" id="rf-train">
+<span id="id1"></span><h2><em>rf_train</em><a class="headerlink" href="#rf-train" title="Permalink to this headline">¶</a></h2>
+<p>Updates any of the three tables of the database <em>gauge</em>, <em>radar</em> and <em>reference</em> with new data.</p>
+<p><strong>rf_train [options]</strong></p>
+<dl>
+<dt>Options:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>show this help message and exit</p>
+</dd>
+<dt><kbd><span class="option">-o <var>OUTPUT</var></span>, <span class="option">--outputfolder=<var>OUTPUT</var></span></kbd></dt>
+<dd><p>Path of the output folder, default is the ml/rf_models
+folder in the current library</p>
+</dd>
+<dt><kbd><span class="option">-d <var>DBFOLDER</var></span>, <span class="option">--dbfolder=<var>DBFOLDER</var></span></kbd></dt>
+<dd><p>Path of the database main folder, default is
+/store/msrad/radar/radar_database/</p>
+</dd>
+<dt><kbd><span class="option">-i <var>DBFOLDER</var></span>, <span class="option">--inputfolder=<var>DBFOLDER</var></span></kbd></dt>
+<dd><p>Path where the homogeneized input files for the RF
+algorithm are stored, default is the subfolder
+‘rf_input_data’ within the database folder</p>
+</dd>
+<dt><kbd><span class="option">-s <var>START</var></span>, <span class="option">--start=<var>START</var></span></kbd></dt>
+<dd><p>Specify the start time in the format YYYYddmmHHMM, if
+not provided the first timestamp in the database will
+be used</p>
+</dd>
+<dt><kbd><span class="option">-e <var>END</var></span>, <span class="option">--end=<var>END</var></span></kbd></dt>
+<dd><p>Specify the end time in the format YYYYddmmHHMM, if
+not provided the last timestamp in the database will
+be used</p>
+</dd>
+<dt><kbd><span class="option">-c <var>CONFIG</var></span>, <span class="option">--config=<var>CONFIG</var></span></kbd></dt>
+<dd><p>Path of the config file, the default will be
+default_config.yml in the database module</p>
+</dd>
+<dt><kbd><span class="option">-m <var>MODELS</var></span>, <span class="option">--models=<var>MODELS</var></span></kbd></dt>
+<dd><p>Specify which models you want to use in the form of a
+json line of a dict, the keys are names you give to
+the models, the values the input features they
+require, for example ‘{“RF_dualpol”: [“RADAR”,
+“zh_visib_mean”,
+“zv_visib_mean”,”KDP_mean”,”RHOHV_mean”,”T”,
+“HEIGHT”,”VISIB_mean”]}’, please note the double and
+single quotes, which are requiredIMPORTANT: if no
+model is provided only the ml input data will be
+recomputed from the database, but no model will be
+computedTo simplify three aliases are proposed:
+“dualpol_default” = ‘{“RF_dualpol”: [“RADAR”,
+“zh_visib_mean”,
+“zv_visib_mean”,”KDP_mean”,”RHOHV_mean”,”T”,
+“HEIGHT”,”VISIB_mean”]}‘“vpol_default” = ‘{“RF_vpol”:
+[“RADAR”, “zv_visib_mean”,”T”,
+“HEIGHT”,”VISIB_mean”]}‘“hpol_default” = ‘{“RF_hpol”:
+[“RADAR”, “zh_visib_mean”,”T”,
+“HEIGHT”,”VISIB_mean”]}’You can combine them for
+example “vpol_default, hpol_default, dualpol_default,
+will compute all three”</p>
+</dd>
+<dt><kbd><span class="option">-g <var>MODELS</var></span>, <span class="option">--generate_inputs=<var>MODELS</var></span></kbd></dt>
+<dd><p>If set to 1 (default), the input parquet files
+(homogeneized tables) for the ml routines will be
+recomputed from the current database rowsThis takes a
+bit of time but is needed if you updated the database
+and want to use the new data in the training</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>The configuration file must be written in <a class="reference external" href="https://fr.wikipedia.org/wiki/YAML/">YAML</a>, the default file has the following structure:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">FILTERING</span><span class="p">:</span> <span class="c1"># conditions to remove some observations</span>
+    <span class="nt">STA_TO_REMOVE </span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;TIT&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;GSB&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;GRH&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;PIL&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;SAE&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;AUB&#39;</span><span class="p p-Indicator">]</span>
+    <span class="nt">CONSTRAINT_MIN_ZH </span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0.5</span><span class="p p-Indicator">,</span><span class="nv">20</span><span class="p p-Indicator">]</span> <span class="c1"># min 20 dBZ if R &gt; 0.5 mm/h</span>
+    <span class="nt">CONSTRAINT_MAX_ZH </span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="nv">0</span><span class="p p-Indicator">,</span><span class="nv">20</span><span class="p p-Indicator">]</span> <span class="c1"># max 20 dBZ if R = 0 mm/h</span>
+<span class="nt">RANDOMFORESTREGRESSOR_PARAMS</span><span class="p">:</span> <span class="c1"># parameters to sklearn&#39;s class</span>
+    <span class="nt">max_depth </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span>
+    <span class="nt">n_estimators </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="nt">VERTAGG_PARAMS</span><span class="p">:</span>
+    <span class="nt">BETA </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">-0.5</span> <span class="c1"># weighting factor to use in the exponential weighting</span>
+    <span class="nt">VISIB_WEIGHTING </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span> <span class="c1"># whether to weigh or not observations by their visib</span>
+<span class="nt">BIAS_CORR </span><span class="p">:</span> <span class="s">&#39;raw&#39;</span> <span class="c1"># type of bias correction &#39;raw&#39;, &#39;cdf&#39; or &#39;spline&#39;</span>
+</pre></div>
+</div>
+<p>The parameters are the following</p>
+<ul class="simple">
+<li><p><strong>TMP_FOLDER</strong> : A directory where to store intermediate files generated during the processing, this is not important and <em>/tmp/</em> can be used as well</p></li>
+<li><p><strong>KDP_PARAMETERS</strong> : set of parameters used in the computation of KDP using the moving least-square method.</p>
+<ul>
+<li><p><strong>RMIN</strong> : minimum range where to look for continuous precipitation, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py">pyart code</a></p></li>
+<li><p><strong>RMAX</strong> :  maximum range where to look for continuous precipitation, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py">pyart code</a></p></li>
+<li><p><strong>ZMIN</strong>  : minimum reflectivity to consider it a rain cell, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py">pyart code</a></p></li>
+<li><p><strong>ZMAX</strong>  : maximum reflectivity to consider it a rain cell, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py">pyart code</a></p></li>
+<li><p><strong>RWIND</strong> : size of the moving window in meters used in the PSIDP filtering and KDP estimation, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/retrieve/kdp_proc.py">pyart code</a></p></li>
+</ul>
+</li>
+<li><p><strong>SNR_THRESHOLD</strong> : minimum SNR in dB below which the radar data is masked</p></li>
+<li><p><strong>ZH_THRESHOLD</strong> : minimum ZH below which radar data is masked</p></li>
+<li><p><strong>VISIB_CORR</strong> : set of parameters for visibility correction</p>
+<ul>
+<li><p><strong>MIN_VISIB</strong> : minimum visibility below which the data is masked</p></li>
+<li><p><strong>MAX_CORR</strong> : maximum visibility correction for ZH (in linear)</p></li>
+</ul>
+</li>
+<li><p><strong>SWEEPS</strong> : which radar sweeps (elevations) to use, e.g. [1,2,3,4] for the 4 first, ‘all’ uses all 20 sweeps</p></li>
+<li><p><strong>RADARS</strong> : which radars to consider, e.g. [‘A’,’D’], ‘all’ uses all five radars</p></li>
+<li><p><strong>OUTLIER_REMOVAL</strong> : if set to 1, a local outlier filtering will be applied (e.g. remove values with z-scores in 3 x 3 window above +3 or below -3)</p></li>
+<li><p><strong>GAUSSIAN_SIGMA</strong> : size in pixels of the Gaussian smoothing that is applied on the QPE product, if set to 0 no smoothing is used</p></li>
+<li><p><strong>ADVECTION_CORRECTION</strong> : if set to 1, the QPE will be corrected for advection using <a class="reference external" href="https://journals.ametsoc.org/doi/pdf/10.1175/1520-0426%281999%29016%3C0198%3ARTRREP%3E2.0.CO%3B2">this method</a> with two consecutive timesteps</p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="rainforest.ml.html" class="btn btn-neutral float-right" title="rainforest.ml package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ml.html" class="btn btn-neutral float-left" title="ML submodule" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Daniel Wolfensherger
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
