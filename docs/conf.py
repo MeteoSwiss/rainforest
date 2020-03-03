@@ -19,7 +19,8 @@ import mock
  
 MOCK_MODULES = ['numpy', 'netCDF4','prompt_toolkit.shortcuts','scipy','pyart.aux_io','matplotlib', 'matplotlib.pyplot', 'scipy.interpolate','pyart','pyspark','imageio','prompt_toolkit','matplotlib.colors','scipy.spatial',
 'sklearn','scipy.stats','scipy.ndimage','dask','pandas','yaml','sklearn.ensemble','scipy.signal','shapefile','scipy.spatial.distance',
-'dask.dataframe','dateutil','pyart.map','pyspark.sql','prompt_toolkit.formatted_text','pyart.retrieve','pyart.map.polar_to_cartesian','pyart.util','pyart.map.polar_to_cartesian']
+'dask.dataframe','dateutil','pyart.map','pyspark.sql','prompt_toolkit.formatted_text','pyart.retrieve','pyart.map.polar_to_cartesian',
+'pyart.util','pyart.map.polar_to_cartesian']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
@@ -37,6 +38,7 @@ author = 'Daniel Wolfensherger'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.napoleon']
+master_doc = 'index'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
