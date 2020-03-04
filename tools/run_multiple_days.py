@@ -17,7 +17,7 @@ days = ['20190610','20190806','20190922','20191015','20191124','20200129']
 models = '{"RF_dualpol":"dualpol_model_BC_spline.p"}'
 outputfolder = '/scratch/wolfensb/qpe_runs/'
 gauge = "'/store/msrad/radar/radar_database/gauge/*.csv.gz'" # beeware of quotes!
-
+config = '~/config.yml'
 # %%
 # Compute QPE
 

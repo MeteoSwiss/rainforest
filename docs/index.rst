@@ -14,6 +14,8 @@ This python library provides a set of tools and lookup tables to
 - Train the RandomForest algorithm using data from that database (:ref:`ml module <ml>`)
 - Perform various operations on MeteoSwiss data such as read and plot file or retrieve COSMO or radar data from archive (:ref:`common module <common>`)
 
+as well as a command line (:ref:`interface <Interface>`) to run most of the commands interactively.
+
 :ref:`Usage`
 ~~~~~~~~~~~~~~~~~
 

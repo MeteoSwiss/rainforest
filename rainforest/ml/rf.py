@@ -539,7 +539,7 @@ class RFTraining(object):
         idx_testtrain = split_event(gaugetab['TIMESTAMP'].values, K)
         
         
-        modelnames.append(reference_products)
+        modelnames.extend(reference_products)
         for k in range(K):
             logging.info('Run {:d}/{:d} of cross-validation'.format(k + 1, K))
             test = idx_testtrain == k

@@ -19,7 +19,8 @@ Which will load the appropriate anaconda *virtualenv*, you can then directly use
 
     import rainforest
     
-   
+Note that on Kesch the radar database is stored in */store/msrad/radar/radar_database/*
+
 Keeping database up-to-date
 --------------------------------------
 
