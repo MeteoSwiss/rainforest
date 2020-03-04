@@ -99,8 +99,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-module">rainforest.qpe.qpe module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_compute">rainforest.qpe.qpe_compute module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a></li>
 </ul>
@@ -632,7 +632,7 @@ parameter. This is usually set to 2 at MeteoSwiss</p></li>
 
 <dl class="function">
 <dt id="rainforest.common.radarprocessing.hydroClass_single">
-<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=&lt;Mock name='mock.array()' id='46912667501960'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=&lt;Mock name='mock.array()' id='46912667506000'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the hydrometeor classes for columnar data, note that all input
 arrays except weights must have the same length</p>
 <dl class="field-list simple">
@@ -1059,7 +1059,7 @@ it will return 1 Jan 2020 10:00</p>
 <dl class="function">
 <dt id="rainforest.common.utils.perfscores">
 <code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">perfscores</code><span class="sig-paren">(</span><em class="sig-param">est_data</em>, <em class="sig-param">ref_data</em>, <em class="sig-param">bounds=None</em>, <em class="sig-param">array=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.perfscores" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes a set of performance scores, on different data ranges.
+<dd><p>Computes a set of precipitation performance scores, on different data ranges.
 The scores are</p>
 <blockquote>
 <div><ul class="simple">
@@ -1189,7 +1189,7 @@ dictionary PYART_NAMES_MAPPING in the constants.py module</p>
 
 <dl class="function">
 <dt id="rainforest.common.utils.stack_uneven">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912668907280'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912670056064'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fits mmltiple into a single numpy array, even if they are
 different sizes, assigning a fill_value to parts with no data</p>
 <dl class="field-list simple">

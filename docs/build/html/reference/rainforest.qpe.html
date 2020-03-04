@@ -99,8 +99,8 @@
 </li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">rainforest.qpe package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#rainforest-qpe-qpe-module">rainforest.qpe.qpe module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-rainforest.qpe.qpe_compute">rainforest.qpe.qpe_compute module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a></li>
 </ul>
@@ -228,8 +228,8 @@
   <div class="section" id="rainforest-qpe-package">
 <h1>rainforest.qpe package<a class="headerlink" href="#rainforest-qpe-package" title="Permalink to this headline">¶</a></h1>
 <p><a class="reference internal" href="#module-rainforest.qpe.evaluation" title="rainforest.qpe.evaluation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.qpe.evaluation</span></code></a> : module that deals with evaluation of QPE products</p>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.qpe.qpe</span></code> : main module that computes RF QPE realizations</p>
-<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.qpe.qpe_compute</span></code> : command-line utility to compute RF QPE</p>
+<p><a class="reference internal" href="#module-rainforest.qpe.qpe" title="rainforest.qpe.qpe"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.qpe.qpe</span></code></a> : main module that computes RF QPE realizations</p>
+<p><a class="reference internal" href="#module-rainforest.qpe.qpe_compute" title="rainforest.qpe.qpe_compute"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.qpe.qpe_compute</span></code></a> : command-line utility to compute RF QPE</p>
 <p><a class="reference internal" href="#module-rainforest.qpe.qpe_evaluation" title="rainforest.qpe.qpe_evaluation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.qpe.qpe_evaluation</span></code></a> : command-line utility to evaluate QPE products</p>
 <p><a class="reference internal" href="#module-rainforest.qpe.qpe_plot" title="rainforest.qpe.qpe_plot"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.qpe.qpe_plot</span></code></a> : command-line utility to plot QPE products</p>
 <div class="section" id="module-rainforest.qpe.evaluation">
@@ -266,11 +266,81 @@ subfolders (models) available in qpefolder</p></li>
 </dd></dl>
 
 </div>
-<div class="section" id="rainforest-qpe-qpe-module">
-<h2>rainforest.qpe.qpe module<a class="headerlink" href="#rainforest-qpe-qpe-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-rainforest.qpe.qpe">
+<span id="rainforest-qpe-qpe-module"></span><h2>rainforest.qpe.qpe module<a class="headerlink" href="#module-rainforest.qpe.qpe" title="Permalink to this headline">¶</a></h2>
+<p>Main function to compute the randomForest QPE estimate</p>
+<p>Daniel Wolfensberger
+MeteoSwiss/EPFL
+<a class="reference external" href="mailto:daniel&#46;wolfensberger&#37;&#52;&#48;epfl&#46;ch">daniel<span>&#46;</span>wolfensberger<span>&#64;</span>epfl<span>&#46;</span>ch</a>
+December 2019</p>
+<dl class="class">
+<dt id="rainforest.qpe.qpe.QPEProcessor">
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.qpe.qpe.</code><code class="sig-name descname">QPEProcessor</code><span class="sig-paren">(</span><em class="sig-param">config_file</em>, <em class="sig-param">models</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.qpe.qpe.QPEProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Creates a QPEProcessor object which can be used to compute QPE
+realizations with the RandomForest Regressors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<em>str</em>) – A yaml file containing all necessary options for the QPE algorithm
+check the default_config.yml file to see which keys are required</p></li>
+<li><p><strong>models</strong> (<em>dict</em>) – A dictionary containing all RF models to use for prediction,
+keys in this dictionary are used to store outputs in separate
+folders whereas the values must be valid RF regressor instances
+as stored in the rf_models subfolder</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="rainforest.qpe.qpe.QPEProcessor.compute">
+<code class="sig-name descname">compute</code><span class="sig-paren">(</span><em class="sig-param">output_folder</em>, <em class="sig-param">t0</em>, <em class="sig-param">t1</em>, <em class="sig-param">timestep=5</em>, <em class="sig-param">basename='RF%y%j%H%M'</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.qpe.qpe.QPEProcessor.compute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes QPE values for a given time range and stores them in a
+folder, in a binary format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_folder</strong> (<em>str</em>) – Folder where to store the computed QPE fields, note that subfolders
+for every model will be created in this folder</p></li>
+<li><p><strong>t0</strong> (<em>datetime</em>) – Start time of the timerange in datetime format</p></li>
+<li><p><strong>t1</strong> (<em>datetime</em>) – End time of the timerange in datetime format</p></li>
+<li><p><strong>timestep</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – In case you don’t to generate a new product every 5 minute, you can
+change the time here, f.ex. 10 min, will compute the QPE only every
+two sets of radar scans</p></li>
+<li><p><strong>basename</strong> (<em>str</em><em> (</em><em>optional</em><em>)</em>) – Pattern for the filenames, default is  ‘RF%y%j%H%M’ which uses
+the same standard as other MeteoSwiss products
+(example RF191011055)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.qpe.qpe.QPEProcessor.fetch_data">
+<code class="sig-name descname">fetch_data</code><span class="sig-paren">(</span><em class="sig-param">t0</em>, <em class="sig-param">t1</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.qpe.qpe.QPEProcessor.fetch_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves and add new polar radar and status data to the QPEProcessor
+for a given time range</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t0</strong> (<em>datetime</em>) – Start time of the timerange in datetime format</p></li>
+<li><p><strong>t1</strong> (<em>datetime</em>) – End time of the timerange in datetime format</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </div>
-<div class="section" id="rainforest-qpe-qpe-compute-module">
-<h2>rainforest.qpe.qpe_compute module<a class="headerlink" href="#rainforest-qpe-qpe-compute-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-rainforest.qpe.qpe_compute">
+<span id="rainforest-qpe-qpe-compute-module"></span><h2>rainforest.qpe.qpe_compute module<a class="headerlink" href="#module-rainforest.qpe.qpe_compute" title="Permalink to this headline">¶</a></h2>
+<p>Command line script for the RandomForest QPE</p>
+<p>see <a class="reference internal" href="qpe_cmd.html#qpe-compute"><span class="std std-ref">qpe_compute</span></a></p>
+<dl class="function">
+<dt id="rainforest.qpe.qpe_compute.main">
+<code class="sig-prename descclassname">rainforest.qpe.qpe_compute.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.qpe.qpe_compute.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-rainforest.qpe.qpe_evaluation">
 <span id="rainforest-qpe-qpe-evaluation-module"></span><h2>rainforest.qpe.qpe_evaluation module<a class="headerlink" href="#module-rainforest.qpe.qpe_evaluation" title="Permalink to this headline">¶</a></h2>

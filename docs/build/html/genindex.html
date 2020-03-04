@@ -98,8 +98,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="reference/rainforest.qpe.html">rainforest.qpe package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.qpe.html#rainforest-qpe-qpe-module">rainforest.qpe.qpe module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.qpe.html#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe_compute">rainforest.qpe.qpe_compute module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a></li>
 </ul>
@@ -262,6 +262,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/common.html#rainforest.common.lookup.calc_lookup">calc_lookup() (in module rainforest.common.lookup)</a>
 </li>
+      <li><a href="reference/rainforest.html#rainforest.interface.check_input">check_input() (in module rainforest.interface)</a>
+</li>
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSheight">CHtoWGSheight() (rainforest.common.wgs84_ch1903.GPSConverter method)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSlat">CHtoWGSlat() (rainforest.common.wgs84_ch1903.GPSConverter method)</a>
@@ -272,6 +274,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor.compute">compute() (rainforest.qpe.qpe.QPEProcessor method)</a>
+</li>
       <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.compute_hydro">compute_hydro() (rainforest.common.radarprocessing.Radar method)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.compute_kdp">compute_kdp() (rainforest.common.radarprocessing.Radar method)</a>
@@ -314,10 +318,12 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler.find_class">find_class() (rainforest.ml.rfdefinitions.MyCustomUnpickler method)</a>
+      <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor.fetch_data">fetch_data() (rainforest.qpe.qpe.QPEProcessor method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler.find_class">find_class() (rainforest.ml.rfdefinitions.MyCustomUnpickler method)</a>
+</li>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.fit_models">fit_models() (rainforest.ml.rf.RFTraining method)</a>
 </li>
   </ul></td>
@@ -379,7 +385,11 @@
       <li><a href="reference/rainforest.database.html#rainforest.database.db_populate.main">main() (in module rainforest.database.db_populate)</a>
 
       <ul>
+        <li><a href="reference/rainforest.html#rainforest.interface.main">(in module rainforest.interface)</a>
+</li>
         <li><a href="reference/rainforest.ml.html#rainforest.ml.rf_train.main">(in module rainforest.ml.rf_train)</a>
+</li>
+        <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe_compute.main">(in module rainforest.qpe.qpe_compute)</a>
 </li>
         <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe_evaluation.main">(in module rainforest.qpe.qpe_evaluation)</a>
 </li>
@@ -434,6 +444,8 @@
       </ul></li>
       <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater.process_single_timestep">process_single_timestep() (rainforest.database.retrieve_radar_data.Updater method)</a>
 </li>
+      <li><a href="reference/rainforest.html#rainforest.interface.prompt_check">prompt_check() (in module rainforest.interface)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -443,6 +455,8 @@
       <li><a href="reference/common.html#rainforest.common.graphics.qpe_plot">qpe_plot() (in module rainforest.common.graphics)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.graphics.qpe_scatterplot">qpe_scatterplot() (in module rainforest.common.graphics)</a>
+</li>
+      <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor">QPEProcessor (class in rainforest.qpe.qpe)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -486,6 +500,8 @@
 </li>
       <li><a href="reference/rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data (module)</a>
 </li>
+      <li><a href="reference/rainforest.html#module-rainforest.interface">rainforest.interface (module)</a>
+</li>
       <li><a href="reference/rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf (module)</a>
 </li>
       <li><a href="reference/rainforest.ml.rf_models.html#module-rainforest.ml.rf_models">rainforest.ml.rf_models (module)</a>
@@ -496,9 +512,13 @@
 </li>
       <li><a href="reference/rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils (module)</a>
 </li>
+      <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation (module)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation (module)</a>
+      <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe (module)</a>
+</li>
+      <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe_compute">rainforest.qpe.qpe_compute (module)</a>
 </li>
       <li><a href="reference/rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation (module)</a>
 </li>
