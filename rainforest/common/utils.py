@@ -57,7 +57,7 @@ def envyaml(filename):
 
 def perfscores(est_data, ref_data, bounds = None, array = False):
     """
-    Computes a set of performance scores, on different data ranges.
+    Computes a set of precipitation performance scores, on different data ranges.
     The scores are
         - ME: mean error (linear bias)
         - CORR: Pearson correlation of estimation and reference
@@ -91,8 +91,13 @@ def perfscores(est_data, ref_data, bounds = None, array = False):
     """
     all_metrics = OrderedDict()
     
+    valid = np.logical_and(est_data >= 0, ref_data >= 0)
+    est_data = est_data[valid > 0]
+    ref_data = ref_data[valid > 0]
+    
     est = est_data
     ref = ref_data       
+    
     
     all_metrics['all'] = _perfscores(est, ref)
     

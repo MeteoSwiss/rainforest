@@ -33,10 +33,9 @@ from ..common.utils import split_by_time, nanadd_at, envyaml
 from ..common.radarprocessing import Radar
 
 ###############################################################################
-
 # Centerpoints of all QPE grid cells
-Y_QPE_CENTERS = 0.5 * (constants.Y_QPE[0:-1] + constants.Y_QPE[1:])
-X_QPE_CENTERS = 0.5 * (constants.X_QPE[0:-1] + constants.X_QPE[1:])
+Y_QPE_CENTERS = constants.Y_QPE_CENTERS
+X_QPE_CENTERS = constants.X_QPE_CENTERS
 
 NBINS_X = len(X_QPE_CENTERS)
 NBINS_Y = len(Y_QPE_CENTERS)
@@ -79,6 +78,7 @@ def _outlier_removal(image, N = 3, threshold = 3):
     z = (image - mean)/std
     im_copy[z >= threshold] = mean[z >= threshold]
     return im_copy
+    
 def _disaggregate(R, T = 5, t = 1,):
     """
     Disaggregates a set of two consecutive QPE images to 1 min resolution and

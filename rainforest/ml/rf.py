@@ -145,6 +145,8 @@ class RFTraining(object):
                 # radar = radar.sort_values(by = ['TIMESTAMP','STATION','SWEEP'])
                 refer = refer.sort_values(by = ['TIMESTAMP','STATION'])
                 gauge = gauge.sort_values(by = ['TIMESTAMP','STATION'])
+                # Get only valid precip data
+                gauge = gauge[np.isfinite(gauge['RRE150Z0'])]
                 
                 # Create individual 10 min - station stamps
                 gauge['s-tstamp'] = np.array(gauge['STATION'] + 
@@ -483,22 +485,6 @@ class RFTraining(object):
                     radartab['DIST_TO_RAD' + str(val)] = dist
                     
         
-        all_scores = {'10min':{},'60min':{}}
-        all_stats = {'10min':{},'60min':{}}
-        
-        for model in modelnames:
-            all_scores['10min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
-                         'test':  {'solid':[],'liquid':[],'all':[]}}
-            all_scores['60min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
-                         'test':  {'solid':[],'liquid':[],'all':[]}}
-            
-    
-            all_stats['10min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
-                         'test':  {'solid':{},'liquid':{},'all':{}}}
-            
-            all_stats['60min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
-                         'test':  {'solid':{},'liquid':{},'all':{}}}
-        
         ###############################################################################
         # Compute vertical aggregation
         ###############################################################################
@@ -523,6 +509,7 @@ class RFTraining(object):
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
                        axis = 1)
+        
         for model in modelnames:
             features_VERT_AGG[model] = features_VERT_AGG[model][valid]
         
@@ -540,6 +527,27 @@ class RFTraining(object):
         
         
         modelnames.extend(reference_products)
+
+             
+        all_scores = {'10min':{},'60min':{}}
+        all_stats = {'10min':{},'60min':{}}
+        
+        ###############################################################################
+        # Initialize outputs
+        ###############################################################################
+        for model in modelnames:
+            all_scores['10min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
+                         'test':  {'solid':[],'liquid':[],'all':[]}}
+            all_scores['60min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
+                         'test':  {'solid':[],'liquid':[],'all':[]}}
+            
+    
+            all_stats['10min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
+                         'test':  {'solid':{},'liquid':{},'all':{}}}
+            
+            all_stats['60min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
+                         'test':  {'solid':{},'liquid':{},'all':{}}}
+            
         for k in range(K):
             logging.info('Run {:d}/{:d} of cross-validation'.format(k + 1, K))
             test = idx_testtrain == k
@@ -600,7 +608,6 @@ class RFTraining(object):
                                                  bounds = bounds10)
                 all_scores['10min'][model]['test']['all'].append(scores_all)
     
-                
                 # 60 min
                 logging.info('at 60 min')
                 R_pred_60 = np.squeeze(np.array(pd.DataFrame(R_pred_10)

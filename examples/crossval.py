@@ -28,4 +28,4 @@ config = './intercomparison_config_example.yml'
 
 output_folder = './'
 
-rf.model_intercomparison(models, config, output_folder, ['CPC','RZC'])
+rf.model_intercomparison(models, config, output_folder, ['CPCH','RZC'])

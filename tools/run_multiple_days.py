@@ -32,7 +32,7 @@ for d in days:
     end = datetime.datetime.strftime(end, '%Y%m%d%H%M')
     f.write("qpe_compute -s {:s} -e {:s} -m '{:s}' -o {:s}".format(start, end, models,folder))
     f.close()
-#    subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
+    subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
     
     
 # %%
