@@ -20,13 +20,16 @@ import logging
 logging.basicConfig(level=logging.INFO)
 from pathlib import Path
 from scipy.ndimage import gaussian_filter
-logging.basicConfig(level=logging.INFO)
+from scipy.signal import convolve2d
+from scipy.ndimage import map_coordinates
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 from ..common import constants
 from ..common.retrieve_data import retrieve_prod, get_COSMO_T
 from ..common.lookup import get_lookup
-from ..common.utils import split_by_time, nanadd_at, outlier_removal, disaggregate, envyaml
+from ..common.utils import split_by_time, nanadd_at, envyaml
 from ..common.radarprocessing import Radar
 
 ###############################################################################
@@ -39,6 +42,82 @@ NBINS_X = len(X_QPE_CENTERS)
 NBINS_Y = len(Y_QPE_CENTERS)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+
+def _outlier_removal(image, N = 3, threshold = 3):
+    """
+    Performs localized outlier correction by standardizing the data in a moving
+    window and remove values that are below - threshold or above + threshold
+    
+    Parameters
+    ----------
+    image : ndarray
+        2D numpy array, of shape
+    N : int
+        size of the moving window, for both rows and columns ( the window is
+        square)
+    threshold : threshold for a standardized value to be considered an outlier
+           
+    Returns
+    -------
+    An outlier removed version of the image with the same shape
+    """
+    
+    im = np.array(image, dtype=float)
+    im2 = im**2
+    
+    im_copy = im.copy()
+    ones = np.ones(im.shape)
+
+    kernel = np.ones((2*N+1, 2*N+1))
+    s = convolve2d(im, kernel, mode="same")
+    s2 = convolve2d(im2, kernel, mode="same")
+    ns = convolve2d(ones, kernel, mode="same")
+    
+    mean = (s/ns)
+    std = (np.sqrt((s2 - s**2 / ns) / ns))
+    
+    z = (image - mean)/std
+    im_copy[z >= threshold] = mean[z >= threshold]
+    return im_copy
+def _disaggregate(R, T = 5, t = 1,):
+    """
+    Disaggregates a set of two consecutive QPE images to 1 min resolution and
+    then averages them to get a new advection corrected QPE estimates
+    
+    Parameters
+    ----------
+    R : list
+        List of two numpy 2D arrays, containing the previous and the current
+        QPE estimate
+    T : int
+        The time interval that separates the two QPE images, default is 5 min
+    t : int
+        The reference time interval used for the disaggregation, 1 min by 
+        default, should not be touched I think
+  
+    Returns
+    -------
+    An advection corrected QPE estimate
+    
+    """
+    import pysteps
+    x,y = np.meshgrid(np.arange(R[0].shape[1],dtype=float),
+                  np.arange(R[0].shape[0],dtype=float))
+    oflow_method = pysteps.motion.get_method("LK")
+    V1 = oflow_method(np.log(R))
+    Rd = np.zeros((R[0].shape))
+    
+    for i in range(1 + int(T/t)):
+        
+        pos1 = (y - i/T * V1[1],x - i/T * V1[0])
+        R1 = map_coordinates(R[0],pos1, order = 1)
+        
+        pos2 = (y + (T-i)/T * V1[1],x + (T-i)/T * V1[0])
+        R2 = map_coordinates(R[1],pos2, order = 1)
+        
+        Rd += (T-i) * R1 + i * R2
+    return 1/T**2 * Rd
+
 
 class QPEProcessor(object):
     def __init__(self, config_file, models):
@@ -291,7 +370,7 @@ class QPEProcessor(object):
                 
                 # Postprocessing
                 if self.config['OUTLIER_REMOVAL']:
-                    qpe = outlier_removal(qpe)
+                    qpe = _outlier_removal(qpe)
                 
                 if self.config['GAUSSIAN_SIGMA'] > 0:
                     qpe = gaussian_filter(qpe,
@@ -299,7 +378,7 @@ class QPEProcessor(object):
             
                              
                 if self.config['ADVECTION_CORRECTION'] and i > 0:
-                    qpe = disaggregate(np.array([qpe_prev[k], qpe]))
+                    qpe = _disaggregate(np.array([qpe_prev[k], qpe]))
                 
                 qpe_prev[k] = qpe
 

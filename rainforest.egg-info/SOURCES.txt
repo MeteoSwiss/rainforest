@@ -1,4 +1,5 @@
 MANIFEST.in
+README.md
 setup.py
 rainforest/__init__.py
 rainforest/interface.py
@@ -202,8 +203,6 @@ rainforest/database/__init__.py
 rainforest/database/database.py
 rainforest/database/db_populate.py
 rainforest/database/default_config.yml
-rainforest/database/interface.py
-rainforest/database/radar_processing.py
 rainforest/database/retrieve_dwh_data.r
 rainforest/database/retrieve_radar_data.py
 rainforest/database/retrieve_reference_data.py
@@ -223,5 +222,4 @@ rainforest/qpe/qpe.py
 rainforest/qpe/qpe_compute.py
 rainforest/qpe/qpe_evaluation.py
 rainforest/qpe/qpe_plot.py
-rainforest/qpe/qpe_rf.py
 rainforest/qpe/rfdefinitions.py

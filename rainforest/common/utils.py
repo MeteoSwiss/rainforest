@@ -13,11 +13,9 @@ December 2019
 import datetime
 import io
 import os
+from collections import OrderedDict
 import numpy as np
 from scipy.stats import energy_distance
-from collections import OrderedDict
-from scipy.signal import convolve2d
-from scipy.ndimage import map_coordinates
 from dateutil import parser
 import glob
 import logging
@@ -142,32 +140,8 @@ def _perfscores(est_data, ref_data):
     
     return metrics
 
-
-def group_by_tstep(dic_files):
-    keys = list(dic_files.keys())
-    
-    dic_files_tstep = OrderedDict()
-    for k in keys:  
-        list_files = np.array(dic_files[k])
-    
-        tsteps = [os.path.basename(f).split('.')[0][3:-2] for f in list_files]
-        tsteps = np.array(tsteps)
-        
-        tsteps_unique, idx = np.unique(tsteps, return_inverse = True)
-        
-        for i,t in enumerate(tsteps_unique):
-            if t not in dic_files_tstep.keys():
-                dic_files_tstep[t] = {}
-            
-            files_idx = list_files[idx == i]
-            if len(files_idx) == 1:
-                files_idx = files_idx[0]
-                
-            dic_files_tstep[t][k] = files_idx
-        
-    return dic_files_tstep
-
 def split_by_time(files_rad):
+    """Separate a list of files by their timestamp"""
     out = {}
     if type(files_rad) == dict:
         for k in files_rad.keys():
@@ -177,7 +151,6 @@ def split_by_time(files_rad):
     return out    
     
 def _split_by_time(files_rad):
-    """Separate a list of files by their timestamp"""
     out = {}
     
     for f in files_rad:
@@ -194,16 +167,6 @@ def _split_by_time(files_rad):
     return out
 
 
-def autolabel(ax, rects):
-    """Attach a text label above each bar in *rects*, displaying its height."""
-    for rect in rects:
-        height = rect.get_height()
-        ax.annotate('{:3.2f}'.format(height), rotation = 90 + 180 * (height < 0),
-                    xy=(rect.get_x() + rect.get_width() / 2, height),
-                    xytext=(0,int(height < 0) * -27 + int(height > 0) * 3),  # 3 points vertical offset
-                    textcoords="offset points",
-                    ha='center', va='bottom', color = rect._facecolor)
-        
 def timestamp_from_datetime(dt):
     return  dt.replace(tzinfo = datetime.timezone.utc).timestamp()
 
@@ -450,7 +413,7 @@ def dict_flatten(mydict):
     new_dict = {}
     for key,value in mydict.items():
         if type(value) == dict:
-            _dict = {':'.join([key, _key]):_value for _key, _value in
+            _dict = {':'.join([key,str(_key)]):_value for _key, _value in
                      dict_flatten(value).items()}
             new_dict.update(_dict)
         else:
@@ -540,45 +503,6 @@ def read_task_file(task_file):
             line = np.array([s.replace(' ','') for s in line])
             tasks_dic[int(line[0])] = line[1:]
     return tasks_dic
-
-
-
-def outlier_removal(image, N = 3, threshold = 3):
-    """
-    Performs localized outlier correction by standardizing the data in a moving
-    window and remove values that are below - threshold or above + threshold
-    
-    Parameters
-    ----------
-    image : ndarray
-        2D numpy array, of shape
-    N : int
-        size of the moving window, for both rows and columns ( the window is
-        square)
-    threshold : threshold for a standardized value to be considered an outlier
-           
-    Returns
-    -------
-    An outlier removed version of the image with the same shape
-    """
-    
-    im = np.array(image, dtype=float)
-    im2 = im**2
-    
-    im_copy = im.copy()
-    ones = np.ones(im.shape)
-
-    kernel = np.ones((2*N+1, 2*N+1))
-    s = convolve2d(im, kernel, mode="same")
-    s2 = convolve2d(im2, kernel, mode="same")
-    ns = convolve2d(ones, kernel, mode="same")
-    
-    mean = (s/ns)
-    std = (np.sqrt((s2 - s**2 / ns) / ns))
-    
-    z = (image - mean)/std
-    im_copy[z >= threshold] = mean[z >= threshold]
-    return im_copy
 
 def read_df(pattern, dbsystem = 'dask', sqlContext = None):
     """
@@ -719,43 +643,3 @@ def get_qpe_files(input_folder, t0 = None, t1 = None, time_agg = None,
                 pass
             
     return all_files
-
-
-def disaggregate(R, T = 5, t = 1,):
-    """
-    Disaggregates a set of two consecutive QPE images to 1 min resolution and
-    then averages them to get a new advection corrected QPE estimates
-    
-    Parameters
-    ----------
-    R : list
-        List of two numpy 2D arrays, containing the previous and the current
-        QPE estimate
-    T : int
-        The time interval that separates the two QPE images, default is 5 min
-    t : int
-        The reference time interval used for the disaggregation, 1 min by 
-        default, should not be touched I think
-  
-    Returns
-    -------
-    An advection corrected QPE estimate
-    
-    """
-    import pysteps
-    x,y = np.meshgrid(np.arange(R[0].shape[1],dtype=float),
-                  np.arange(R[0].shape[0],dtype=float))
-    oflow_method = pysteps.motion.get_method("LK")
-    V1 = oflow_method(np.log(R))
-    Rd = np.zeros((R[0].shape))
-    
-    for i in range(1 + int(T/t)):
-        
-        pos1 = (y - i/T * V1[1],x - i/T * V1[0])
-        R1 = map_coordinates(R[0],pos1, order = 1)
-        
-        pos2 = (y + (T-i)/T * V1[1],x + (T-i)/T * V1[0])
-        R2 = map_coordinates(R[1],pos2, order = 1)
-        
-        Rd += (T-i) * R1 + i * R2
-    return 1/T**2 * Rd

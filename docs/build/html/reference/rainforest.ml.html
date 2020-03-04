@@ -123,7 +123,7 @@
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
 </ul>
 </li>
@@ -237,7 +237,7 @@
 <p>Main module to</p>
 <dl class="class">
 <dt id="rainforest.ml.rf.RFTraining">
-<em class="property">class </em><code class="sig-prename descclassname">rainforest.ml.rf.</code><code class="sig-name descname">RFTraining</code><span class="sig-paren">(</span><em class="sig-param">db_location</em>, <em class="sig-param">input_location</em>, <em class="sig-param">force_regenerate_input=True</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.ml.rf.</code><code class="sig-name descname">RFTraining</code><span class="sig-paren">(</span><em class="sig-param">db_location</em>, <em class="sig-param">input_location=None</em>, <em class="sig-param">force_regenerate_input=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This is the main class that allows to preparate data for random forest
 training, train random forests and perform cross-validation of trained models</p>
@@ -252,7 +252,8 @@ call the function self.prepare_input(only_center_pixel = False)</p>
 <li><p><strong>db_location</strong> (<em>str</em>) – Location of the main directory of the database (with subfolders
 ‘reference’, ‘gauge’ and ‘radar’ on the filesystem)</p></li>
 <li><p><strong>input_location</strong> (<em>str</em>) – Location of the prepared input data, if this data can not be found
-in this folder, it will computed here</p></li>
+in this folder, it will computed here, default is a subfolder
+called rf_input_data within db_location</p></li>
 <li><p><strong>force_regenerate_input</strong> (<em>bool</em>) – if True the input parquet files will always be regenerated from
 the database even if already present in the input_location folder</p></li>
 </ul>
@@ -417,30 +418,9 @@ must be defined in the script ml/rf_definitions.py</p>
 <span id="rainforest-ml-utils-module"></span><h2>rainforest.ml.utils module<a class="headerlink" href="#module-rainforest.ml.utils" title="Permalink to this headline">¶</a></h2>
 <p>Utility functions for the ML submodule</p>
 <dl class="function">
-<dt id="rainforest.ml.utils.chunks">
-<code class="sig-prename descclassname">rainforest.ml.utils.</code><code class="sig-name descname">chunks</code><span class="sig-paren">(</span><em class="sig-param">l</em>, <em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.chunks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Cuts list l into maximum n chunks of similar sizes</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="rainforest.ml.utils.nesteddictvalues">
 <code class="sig-prename descclassname">rainforest.ml.utils.</code><code class="sig-name descname">nesteddictvalues</code><span class="sig-paren">(</span><em class="sig-param">d</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.nesteddictvalues" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="function">
-<dt id="rainforest.ml.utils.plot_crossval_stats">
-<code class="sig-prename descclassname">rainforest.ml.utils.</code><code class="sig-name descname">plot_crossval_stats</code><span class="sig-paren">(</span><em class="sig-param">stats</em>, <em class="sig-param">output_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.plot_crossval_stats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plots the results of a crossvalidation intercomparion as performed in
-the rf.py module</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>stats</strong> (<em>dict</em>) – dictionary containing the result statistics</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em>) – where to store the plots</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
 
 <dl class="function">
 <dt id="rainforest.ml.utils.split_event">

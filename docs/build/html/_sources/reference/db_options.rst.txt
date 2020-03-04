@@ -10,7 +10,7 @@ This configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/
 .. code-block:: yaml
 
     NO_DATA_FILL: -9999
-    TMP_FOLDER: '/scratch/wolfensb/temp/'
+    TMP_FOLDER: '/scratch/${USER}/temp/'
     GAUGE_RETRIEVAL:
         VARIABLES : ['tre200s0','prestas0','ure200s0','rre150z0','dkl010z0','fkl010z0']
         STATIONS : 'all'
@@ -39,7 +39,7 @@ This configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/
             RCELL : 1000.
             ZMIN : 20
 
-The parameters are the following
+The parameters are the following, please note that environment variables must be indicated with ${name_of_variable}
 
 -   **NO_DATA_FILL** : Used to indicate missing data in the tables
 -   **TMP_FOLDER** : Temporary storage folder to use

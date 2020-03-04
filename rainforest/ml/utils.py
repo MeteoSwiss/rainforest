@@ -8,11 +8,9 @@ Utility functions for the ML submodule
 import pandas as pd
 import numpy as np
 import logging
-import matplotlib.pyplot as plt
 
 # Local imports
-from ..common.graphics import REFCOLORS
-from ..common.utils import autolabel
+from ..common.utils import chunks
 
 def vert_aggregation(radar_data, vert_weights, grp_vertical, 
                   visib_weight = True, visib = None):
@@ -68,22 +66,6 @@ def nesteddictvalues(d):
     else:
       yield v
       
-def chunks(l, n):
-    '''Cuts list l into maximum n chunks of similar sizes'''
-    o = int(np.round(len(l)/n))
-    out = []
-    # For item i in a range that is a length of l,
-    for i in range(0, n):
-        # Create an index range for l of n items:
-        if i == n-1:
-            sub = l[i*o:]
-        else:
-            sub = l[i*o:i*o+o]
-        
-        if len(sub):
-            out.append(sub)
-    return out
-
 
 def split_event(timestamps, n = 5, threshold_hr = 12):
     """
@@ -137,76 +119,3 @@ def split_event(timestamps, n = 5, threshold_hr = 12):
     split_idx = split_idx[revorder]
     
     return split_idx
-
-def plot_crossval_stats(stats, output_folder):
-    """
-    Plots the results of a crossvalidation intercomparion as performed in
-    the rf.py module
-    
-    Parameters
-    ----------
-    stats : dict
-        dictionary containing the result statistics
-    output_folder : str
-        where to store the plots
-    
-    """  
-    
-    width = 0.9
-    # Convert dict to array    
-    success = True
-    all_keys = []
-    all_dims = []
-    cdict = stats
-    while success:
-        try:
-            keys = list(cdict.keys())
-            all_keys.append(keys)
-            all_dims.append(len(keys))
-            cdict = cdict[keys[0]]
-            
-        except:
-            success = False
-            pass
-    
-    # convert to array
-    data = np.reshape(list(nesteddictvalues(stats)), all_dims)
-    
-    # Flip method/bound axis
-    data = np.swapaxes(data, 1,4)
-    all_keys[1], all_keys[4] = all_keys[4], all_keys[1] 
-    all_dims[1], all_dims[4] = all_dims[4], all_dims[1] 
-    
-    for i, agg in enumerate(all_keys[0]):
-        for j, bound in enumerate(all_keys[1]):
-            for k, veriftype in enumerate(all_keys[2]):
-                fig, ax = plt.subplots(all_dims[3],1, figsize = (7,12))
-                n = all_dims[4]
-                for l, precipttype in enumerate(all_keys[3]):
-                    dataplot = data[i,j,k,l]
-                    x = np.arange(len(dataplot[0]))
-                    
-                    idx = 0
-                    for m,d in enumerate(dataplot):
-                        
-                        name = all_keys[-3][m]
-                        if name in REFCOLORS.keys():
-                            c = REFCOLORS[name]
-                        else:
-                            c = 'C'+str(idx)
-                            idx += 1 
-                        rec = ax[l].bar(x + (m-int(n/2))*width/n, d[:,0],
-                                    width = width/n,
-                                    yerr = d[:,1], color = c)
-                        
-                        autolabel(ax[l],rec)
- 
-                    ax[l].set_xticklabels(all_keys[-2])
-                    ax[l].set_xticks(x)
-                    fig.legend(all_keys[-3])
-                    ax[l].set_ylabel('precip: {:s}'.format(precipttype))
-                plt.suptitle('{:s} errors, Agg : {:s}, R-range {:s}'.format(veriftype,
-                          agg, bound))
-                nfile = '{:s}_{:s}_{:s}'.format(veriftype, agg, bound) + '.png'
-                plt.savefig(output_folder + '/' + nfile, dpi = 300, 
-                            bbox_inches = 'tight')

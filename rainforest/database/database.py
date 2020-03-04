@@ -27,7 +27,7 @@ conf.set("spark.sql.caseSensitive","true")
 import glob
 import yaml
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.getLogger().setLevel(logging.INFO)
 import os
 import textwrap
 import numpy as np

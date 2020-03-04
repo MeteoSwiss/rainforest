@@ -10,11 +10,11 @@ daniel.wolfensberger@epfl.ch
 December 2019
 """
 
+# Global imports
 import pickle
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 import os
-import sys
 
 current_file = os.path.abspath(__file__)
 current_folder = os.path.dirname(current_file)

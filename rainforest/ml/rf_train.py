@@ -66,7 +66,8 @@ def main():
                       'You can combine them for example "vpol_default, hpol_default, dualpol_default, will compute all three"',
                       metavar="MODELS")
 
-    parser.add_option("-g", "--generate_inputs", dest = "generate_inputs", type = int,
+    parser.add_option("-g", "--generate_inputs", dest = "generate_inputs", 
+                      type = int,
                       default = 1,
                       help="If set to 1 (default), the input parquet files (homogeneized tables) for the ml routines will be recomputed from the current database rows"+
                       "This takes a bit of time but is needed if you updated the database and want to use the new data in the training", 
@@ -87,9 +88,6 @@ def main():
         os.makedirs(options.outputfolder)
         
     logging.info('Output folder will be {:s}'.format(options.outputfolder))
-    
-    if options.inputfolder == None:
-        options.inputfolder = str(Path(options.dbfolder, 'rf_input_data'))
     
     logging.info('Folder with RF input data will be {:s}'.format(options.inputfolder))
     

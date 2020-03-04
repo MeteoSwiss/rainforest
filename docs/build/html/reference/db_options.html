@@ -123,7 +123,7 @@
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
 </ul>
 </li>
@@ -234,7 +234,7 @@ This configuration file must be written in <a class="reference external" href="h
 <p>It is highly recommended to use the standard default config file when updating the database, if you use different parameters, the database will not be consistent over time, so make sure you know what you are doing!</p>
 </div>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">NO_DATA_FILL</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">-9999</span>
-<span class="nt">TMP_FOLDER</span><span class="p">:</span> <span class="s">&#39;/scratch/wolfensb/temp/&#39;</span>
+<span class="nt">TMP_FOLDER</span><span class="p">:</span> <span class="s">&#39;/scratch/${USER}/temp/&#39;</span>
 <span class="nt">GAUGE_RETRIEVAL</span><span class="p">:</span>
     <span class="nt">VARIABLES </span><span class="p">:</span> <span class="p p-Indicator">[</span><span class="s">&#39;tre200s0&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;prestas0&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;ure200s0&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;rre150z0&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;dkl010z0&#39;</span><span class="p p-Indicator">,</span><span class="s">&#39;fkl010z0&#39;</span><span class="p p-Indicator">]</span>
     <span class="nt">STATIONS </span><span class="p">:</span> <span class="s">&#39;all&#39;</span>
@@ -264,7 +264,7 @@ This configuration file must be written in <a class="reference external" href="h
         <span class="nt">ZMIN </span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">20</span>
 </pre></div>
 </div>
-<p>The parameters are the following</p>
+<p>The parameters are the following, please note that environment variables must be indicated with ${name_of_variable}</p>
 <ul class="simple">
 <li><p><strong>NO_DATA_FILL</strong> : Used to indicate missing data in the tables</p></li>
 <li><p><strong>TMP_FOLDER</strong> : Temporary storage folder to use</p></li>

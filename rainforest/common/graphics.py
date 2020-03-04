@@ -11,17 +11,29 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import OrderedDict
 
-
-# Local imports
-from .utils import autolabel
-
 REFCOLORS = OrderedDict()
 REFCOLORS['RZC'] = 'k'
 REFCOLORS['CPC'] = 'dimgrey'
 REFCOLORS['CPCH'] = 'slategrey'
 REFCOLORS['CPC.CV'] = 'lightgray'
 
+# Local imports
 from . import constants
+from .utils import nested_dict_values
+
+
+def _autolabel(ax, rects):
+    """Attach a text label above each bar in *rects*, displaying its height."""
+    for rect in rects:
+        height = rect.get_height()
+        ax.annotate('{:3.2f}'.format(height), rotation = 90 + 180 * (height < 0),
+                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xytext=(0,int(height < 0) * -27 + int(height > 0) * 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha='center', va='bottom', color = rect._facecolor)
+        
+        
+        
 class MidpointNormalize(Normalize):
     """
     Normalizing that is linear up to a certain transition value, logarithmic 
@@ -238,7 +250,7 @@ def score_plot(scores, title_prefix = '', figsize = (10,5)):
             for k, m in enumerate(models_reordered):
                 sc = scores[m][precip_range][s]
                 rec = ax[i].bar([offset*j+k],[sc], color = colors[k])
-                autolabel(ax[i], rec)
+                _autolabel(ax[i], rec)
                
                 
             labels.append(m)
@@ -327,3 +339,78 @@ def qpe_scatterplot(ref, qpe_est, title_prefix = '', figsize = (10,7.5)):
     fig.subplots_adjust(hspace=0.25)
     cax = fig.add_axes([0.18, 0.15, 0.7, 0.03])
     fig.colorbar(pl, cax, orientation = 'horizontal', label = 'Counts')
+    
+    
+def plot_crossval_stats(stats, output_folder):
+    """
+    Plots the results of a crossvalidation intercomparion as performed in
+    the rf.py module 
+    
+    Parameters
+    ----------
+    stats : dict
+        dictionary containing the result statistics as obtained in the 
+        rf.py:model_intercomparison function
+    output_folder : str
+        where to store the plots
+    
+    """  
+    
+    width = 0.9
+    # Convert dict to array    
+    success = True
+    all_keys = []
+    all_dims = []
+    cdict = stats
+    while success:
+        try:
+            keys = list(cdict.keys())
+            all_keys.append(keys)
+            all_dims.append(len(keys))
+            cdict = cdict[keys[0]]
+            
+        except:
+            success = False
+            pass
+    
+    # convert to array
+    data = np.reshape(list(nested_dict_values(stats)), all_dims)
+    
+    # Flip method/bound axis
+    data = np.swapaxes(data, 1,4)
+    all_keys[1], all_keys[4] = all_keys[4], all_keys[1] 
+    all_dims[1], all_dims[4] = all_dims[4], all_dims[1] 
+    
+    for i, agg in enumerate(all_keys[0]):
+        for j, bound in enumerate(all_keys[1]):
+            for k, veriftype in enumerate(all_keys[2]):
+                fig, ax = plt.subplots(all_dims[3],1, figsize = (7,12))
+                n = all_dims[4]
+                for l, precipttype in enumerate(all_keys[3]):
+                    dataplot = data[i,j,k,l]
+                    x = np.arange(len(dataplot[0]))
+                    
+                    idx = 0
+                    for m,d in enumerate(dataplot):
+                        
+                        name = all_keys[-3][m]
+                        if name in REFCOLORS.keys():
+                            c = REFCOLORS[name]
+                        else:
+                            c = 'C'+str(idx)
+                            idx += 1 
+                        rec = ax[l].bar(x + (m-int(n/2))*width/n, d[:,0],
+                                    width = width/n,
+                                    yerr = d[:,1], color = c)
+                        
+                        _autolabel(ax[l],rec)
+ 
+                    ax[l].set_xticklabels(all_keys[-2])
+                    ax[l].set_xticks(x)
+                    fig.legend(all_keys[-3])
+                    ax[l].set_ylabel('precip: {:s}'.format(precipttype))
+                plt.suptitle('{:s} errors, Agg : {:s}, R-range {:s}'.format(veriftype,
+                          agg, bound))
+                nfile = '{:s}_{:s}_{:s}'.format(veriftype, agg, bound) + '.png'
+                plt.savefig(output_folder + '/' + nfile, dpi = 300, 
+                            bbox_inches = 'tight')

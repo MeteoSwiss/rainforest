@@ -11,7 +11,6 @@ import sys
 import os 
 import datetime
 import logging
-import yaml
 from pathlib import Path
 logging.basicConfig(level=logging.INFO)
 dir_path = os.path.dirname(os.path.realpath(__file__))

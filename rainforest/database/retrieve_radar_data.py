@@ -15,7 +15,6 @@ so you should never have to call it manually
 import numpy as np
 import pandas as pd
 import datetime
-import yaml
 import logging
 import gc
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +25,7 @@ from optparse import OptionParser
 
 from rainforest.common import constants
 from rainforest.common.lookup import get_lookup
-from rainforest.common.utils import group_by_tstep, read_task_file, envyaml
+from rainforest.common.utils import split_by_time, read_task_file, envyaml
 from rainforest.common.utils import aggregate_multi, nested_dict_values
 from rainforest.common.radarprocessing import Radar, hydroClass_single
 from rainforest.common.retrieve_data import retrieve_prod, get_COSMO_T, get_COSMO_variables
@@ -139,7 +138,7 @@ class Updater(object):
                                         pattern = 'ST*')
                files_rad['status'] = files_s
                
-            files_rad = group_by_tstep(files_rad)
+            files_rad = split_by_time(files_rad)
         except:
             raise
             logging.error("""Retrieval for radar {:s} at timesteps {:s}-{:s} 
@@ -445,7 +444,7 @@ class Updater(object):
             data_one_tstep = np.empty((len(stations_to_get),0), 
                                       dtype = np.float32)
             
-            for r in self.radars:
+            for r in self.radars: # Main loop
                 # Check if we need to process the radar
                 # If no station we want is in the list of stations seen by radar
                 visible_stations = list(self.lut['coords']['A'].keys())
@@ -461,11 +460,11 @@ class Updater(object):
                                                           include_vpr,
                                                           include_status)
 
-                    for tidx, tstamp in enumerate(rad_files.keys()): # 2 timesteps to make 10 min
+                    for tidx, tstamp in enumerate(rad_files['radar'].keys()): # 2 timesteps to make 10 min
                         # Create radar object
-                        radar = Radar(r, rad_files[tstamp]['radar'],
-                                      rad_files[tstamp]['status'],
-                                      rad_files[tstamp]['vpr'])
+                        radar = Radar(r, rad_files['radar'][tstamp],
+                                      rad_files['status'][tstamp],
+                                      rad_files['vpr'][tstamp])
   
                         if len(self.cosmo_variables):
                             radar.add_cosmo_data(cosmo_data[r])

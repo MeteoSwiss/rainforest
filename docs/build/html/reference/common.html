@@ -123,7 +123,7 @@
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-reference-data-module">rainforest.database.retrieve_reference_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
 </ul>
 </li>
@@ -632,7 +632,7 @@ parameter. This is usually set to 2 at MeteoSwiss</p></li>
 
 <dl class="function">
 <dt id="rainforest.common.radarprocessing.hydroClass_single">
-<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=&lt;Mock name='mock.array()' id='46912667756640'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=&lt;Mock name='mock.array()' id='46912667501960'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the hydrometeor classes for columnar data, note that all input
 arrays except weights must have the same length</p>
 <dl class="field-list simple">
@@ -680,6 +680,22 @@ hydrometeor classification</p></li>
 <div class="section" id="module-rainforest.common.graphics">
 <span id="rainforest-common-graphics-module"></span><h2>rainforest.common.graphics module<a class="headerlink" href="#module-rainforest.common.graphics" title="Permalink to this headline">¶</a></h2>
 <p>Set of functions to display QPE precipitation data and verification scores</p>
+<dl class="function">
+<dt id="rainforest.common.graphics.plot_crossval_stats">
+<code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">plot_crossval_stats</code><span class="sig-paren">(</span><em class="sig-param">stats</em>, <em class="sig-param">output_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.plot_crossval_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots the results of a crossvalidation intercomparion as performed in
+the rf.py module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stats</strong> (<em>dict</em>) – dictionary containing the result statistics as obtained in the
+rf.py:model_intercomparison function</p></li>
+<li><p><strong>output_folder</strong> (<em>str</em>) – where to store the plots</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="function">
 <dt id="rainforest.common.graphics.qpe_plot">
 <code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">qpe_plot</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">subplots=None</em>, <em class="sig-param">figsize=None</em>, <em class="sig-param">vmin=0.04</em>, <em class="sig-param">vmax=120</em>, <em class="sig-param">transition=10</em>, <em class="sig-param">ch_border=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.qpe_plot" title="Permalink to this definition">¶</a></dt>
@@ -932,12 +948,6 @@ must have the same length as the first dimension of array_3D (N)</p></li>
 </dd></dl>
 
 <dl class="function">
-<dt id="rainforest.common.utils.autolabel">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">autolabel</code><span class="sig-paren">(</span><em class="sig-param">ax</em>, <em class="sig-param">rects</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.autolabel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attach a text label above each bar in <em>rects</em>, displaying its height.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="rainforest.common.utils.chunks">
 <code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">chunks</code><span class="sig-paren">(</span><em class="sig-param">l</em>, <em class="sig-param">n</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.chunks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Divides a list l into n sublists of similar sizes</p>
@@ -947,30 +957,6 @@ must have the same length as the first dimension of array_3D (N)</p></li>
 <dt id="rainforest.common.utils.dict_flatten">
 <code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">dict_flatten</code><span class="sig-paren">(</span><em class="sig-param">mydict</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.dict_flatten" title="Permalink to this definition">¶</a></dt>
 <dd><p>Flattens a nested dictionary</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="rainforest.common.utils.disaggregate">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">disaggregate</code><span class="sig-paren">(</span><em class="sig-param">R</em>, <em class="sig-param">T=5</em>, <em class="sig-param">t=1</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.disaggregate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Disaggregates a set of two consecutive QPE images to 1 min resolution and
-then averages them to get a new advection corrected QPE estimates</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>R</strong> (<em>list</em>) – List of two numpy 2D arrays, containing the previous and the current
-QPE estimate</p></li>
-<li><p><strong>T</strong> (<em>int</em>) – The time interval that separates the two QPE images, default is 5 min</p></li>
-<li><p><strong>t</strong> (<em>int</em>) – The reference time interval used for the disaggregation, 1 min by
-default, should not be touched I think</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>An advection corrected QPE estimate</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="function">
@@ -1022,11 +1008,6 @@ will be used</p></li>
 </dd></dl>
 
 <dl class="function">
-<dt id="rainforest.common.utils.group_by_tstep">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">group_by_tstep</code><span class="sig-paren">(</span><em class="sig-param">dic_files</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.group_by_tstep" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
 <dt id="rainforest.common.utils.idx_cart">
 <code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">idx_cart</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.idx_cart" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the Cartesian index of a set of coordinates x and y</p>
@@ -1073,29 +1054,6 @@ it will return 1 Jan 2020 10:00</p>
 <dt id="rainforest.common.utils.nested_dict_values">
 <code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">nested_dict_values</code><span class="sig-paren">(</span><em class="sig-param">d</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.nested_dict_values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extracts all values from a nested dictionary</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="rainforest.common.utils.outlier_removal">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">outlier_removal</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">N=3</em>, <em class="sig-param">threshold=3</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.outlier_removal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Performs localized outlier correction by standardizing the data in a moving
-window and remove values that are below - threshold or above + threshold</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>image</strong> (<em>ndarray</em>) – 2D numpy array, of shape</p></li>
-<li><p><strong>N</strong> (<em>int</em>) – size of the moving window, for both rows and columns ( the window is
-square)</p></li>
-<li><p><strong>threshold</strong> (<em>threshold for a standardized value to be considered an outlier</em>) – </p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p></p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>An outlier removed version of the image with the same shape</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="function">
@@ -1226,11 +1184,12 @@ dictionary PYART_NAMES_MAPPING in the constants.py module</p>
 <dl class="function">
 <dt id="rainforest.common.utils.split_by_time">
 <code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">split_by_time</code><span class="sig-paren">(</span><em class="sig-param">files_rad</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.split_by_time" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Separate a list of files by their timestamp</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="rainforest.common.utils.stack_uneven">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912667546232'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912668907280'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fits mmltiple into a single numpy array, even if they are
 different sizes, assigning a fill_value to parts with no data</p>
 <dl class="field-list simple">
