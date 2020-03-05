@@ -18,3 +18,4 @@ rainforest/common/data/coords_COSMO1_T.nc
 ./rainforest/ml/rf_models/RF_hpol_BETA_-0.5_BC_raw.p
 ./rainforest/common/data/coords_COSMO1.nc
 ./rainforest/common/data/coords_COSMO1_T.nc
+./examples/output/*

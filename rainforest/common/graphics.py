@@ -285,7 +285,32 @@ def qpe_scatterplot(ref, qpe_est, title_prefix = '', figsize = (10,7.5)):
         
         
     title_prefix: str (optional)
-        a prefix for the suptitle (global title)
+        a prefix for the suptitle (global titl    
+    width = 0.9
+    # Convert dict to array    
+    success = True
+    all_keys = []
+    all_dims = []
+    cdict = stats
+    while success:
+        try:
+            keys = list(cdict.keys())
+            all_keys.append(keys)
+            all_dims.append(len(keys))
+            cdict = cdict[keys[0]]
+            
+        except:
+            success = False
+            pass
+    
+    # convert to array
+    data = np.reshape(list(nested_dict_values(stats)), all_dims)
+    
+    # Flip method/bound axis
+    data = np.swapaxes(data, 1,4)
+    all_keys[1], all_keys[4] = all_keys[4], all_keys[1] 
+    all_dims[1], all_dims[4] = all_dims[4], all_dims[1] 
+    e)
     
     figsize: 2-element tuple (optional)
         Tuple indicating the size of the figure in inches in both directions 
@@ -380,18 +405,34 @@ def plot_crossval_stats(stats, output_folder):
     data = np.swapaxes(data, 1,4)
     all_keys[1], all_keys[4] = all_keys[4], all_keys[1] 
     all_dims[1], all_dims[4] = all_dims[4], all_dims[1] 
+
     
-    for i, agg in enumerate(all_keys[0]):
-        for j, bound in enumerate(all_keys[1]):
-            for k, veriftype in enumerate(all_keys[2]):
+    # Reorder nested dic
+    aggtype = list(stats.keys())
+    qpetype = list(stats[aggtype[0]].keys())
+    
+    
+    models_reordered = []
+    for m in REFCOLORS.keys():
+        if m in all_keys[-3]:
+            models_reordered.append(m)
+    for m in all_keys[-3]:
+        if m not in models_reordered:
+            models_reordered.append(m) 
+    
+    scorenames = np.array(all_keys[-2])
+            
+    for i, agg in enumerate(all_keys[0]): # 10 min / 60 min
+        for j, bound in enumerate(all_keys[1]): 
+            for k, veriftype in enumerate(all_keys[2]): # test/train
                 fig, ax = plt.subplots(all_dims[3],1, figsize = (7,12))
                 n = all_dims[4]
-                for l, precipttype in enumerate(all_keys[3]):
+                for l, precipttype in enumerate(all_keys[3]): # solid/liquid/all
                     dataplot = data[i,j,k,l]
-                    x = np.arange(len(dataplot[0]))
+                    x = np.arange(sum(scorenames != 'N'))
                     
                     idx = 0
-                    for m,d in enumerate(dataplot):
+                    for m,d in enumerate(dataplot): # Loop on QPE types
                         
                         name = all_keys[-3][m]
                         if name in REFCOLORS.keys():
@@ -399,9 +440,10 @@ def plot_crossval_stats(stats, output_folder):
                         else:
                             c = 'C'+str(idx)
                             idx += 1 
-                        rec = ax[l].bar(x + (m-int(n/2))*width/n, d[:,0],
+                        rec = ax[l].bar(x + (m-int(n/2))*width/n, 
+                                        d[scorenames != 'N',0],
                                     width = width/n,
-                                    yerr = d[:,1], color = c)
+                                    yerr = d[scorenames != 'N',1], color = c)
                         
                         _autolabel(ax[l],rec)
  
@@ -409,8 +451,8 @@ def plot_crossval_stats(stats, output_folder):
                     ax[l].set_xticks(x)
                     fig.legend(all_keys[-3])
                     ax[l].set_ylabel('precip: {:s}'.format(precipttype))
-                plt.suptitle('{:s} errors, Agg : {:s}, R-range {:s}'.format(veriftype,
-                          agg, bound))
+                plt.suptitle('{:s} errors, Agg : {:s}, R-range {:s} \n Nsamples = {:d}'.format(veriftype,
+                          agg, bound, int(d[scorenames == 'N',0][0])))
                 nfile = '{:s}_{:s}_{:s}'.format(veriftype, agg, bound) + '.png'
                 plt.savefig(output_folder + '/' + nfile, dpi = 300, 
                             bbox_inches = 'tight')

@@ -89,6 +89,9 @@ def main():
         
     logging.info('Output folder will be {:s}'.format(options.outputfolder))
     
+    if options.inputfolder == None:
+        options.inputfolder = str(Path(script_path, 'rf_input_data'))
+
     logging.info('Folder with RF input data will be {:s}'.format(options.inputfolder))
     
     dic_models = {}

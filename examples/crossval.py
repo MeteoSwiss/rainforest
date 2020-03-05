@@ -7,11 +7,6 @@ reference to rain gauges
 from rainforest.ml.rf import RFTraining
 
 
-
-
-
-
-
 rf = RFTraining('/store/msrad/radar/radar_database/')
 
 # Create dictionnary of models to compare
@@ -26,6 +21,6 @@ models['RF_vpol'] =  ["RADAR", "zv_VISIB_mean","T",
 # Path of configuration files
 config = './intercomparison_config_example.yml'
 
-output_folder = './'
+output_folder = './output'
 
 rf.model_intercomparison(models, config, output_folder, ['CPCH','RZC'])
