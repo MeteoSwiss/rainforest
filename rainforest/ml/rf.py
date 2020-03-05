@@ -136,9 +136,13 @@ class RFTraining(object):
                 refer = refer.loc[np.logical_and(refer['NX'] == x, 
                                                  refer['NY'] == y)]
                 
-                # Convert to pandas and remove duplicates based on tstamp/station
+                # Convert to pandas and remove duplicates 
                 radar = radar.compute().drop_duplicates(subset = ['TIMESTAMP',
-                                                                   'STATION'])
+                                                                   'STATION',
+                                                                   'RADAR',
+                                                                   'NX','NY',
+                                                                   'SWEEP'])
+                
                 refer = refer.compute().drop_duplicates(subset = ['TIMESTAMP',
                                                                   'STATION'])
                 
@@ -283,9 +287,7 @@ class RFTraining(object):
             config_file = dir_path + '/default_config.yml'
             
         config = envyaml(config_file)
-
-
-            
+  
         #######################################################################
         # Read data
         #######################################################################
@@ -595,7 +597,8 @@ class RFTraining(object):
                 scores_solid = perfscores(R_pred_10[sol_10_test],
                                                  R[test][sol_10_test],
                                                  bounds = bounds10)
-                
+                import pdb
+                pdb.set_trace()
                 all_scores['10min'][model]['test']['solid'].append(scores_solid)
                 
                 scores_liquid = perfscores(R_pred_10[liq_10_test],

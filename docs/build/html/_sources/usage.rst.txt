@@ -12,7 +12,7 @@ On Kesch simply run the command
     source activate radardb
     
 
-Which will load the appropriate anaconda *virtualenv*, you can then directly use the command line tools and/or import the python library using
+Which will load the appropriate anaconda *virtualenv*, you can then directly use the command line tools (:ref:`interface`, :doc:`./reference/db_cmd`, :doc:`./reference/ml_cmd`, :doc:`./reference/qpe_cmd`)  in the standard console and/or import the library within python with
 
 
 .. code-block:: python

@@ -381,7 +381,6 @@ def plot_crossval_stats(stats, output_folder):
     
     """  
     
-    width = 0.9
     # Convert dict to array    
     success = True
     all_keys = []
@@ -407,52 +406,66 @@ def plot_crossval_stats(stats, output_folder):
     all_dims[1], all_dims[4] = all_dims[4], all_dims[1] 
 
     
-    # Reorder nested dic
+    # get nested dict keys
     aggtype = list(stats.keys())
     qpetype = list(stats[aggtype[0]].keys())
-    
+    veriftype = list(stats[aggtype[0]][qpetype[0]].keys())
+    preciptype = list(stats[aggtype[0]][qpetype[0]][veriftype[0]].keys())
+    boundtype = {}
+    boundtype['10min'] = list(stats['10min'][qpetype[0]][veriftype[0]][preciptype[0]].keys())
+    boundtype['60min'] = list(stats['60min'][qpetype[0]][veriftype[0]][preciptype[0]].keys())
+    scoretype = list(stats[aggtype[0]][qpetype[0]][veriftype[0]][preciptype[0]][boundtype['10min'][0]].keys())
     
     models_reordered = []
     for m in REFCOLORS.keys():
-        if m in all_keys[-3]:
+        if m in qpetype:
             models_reordered.append(m)
-    for m in all_keys[-3]:
+    for m in qpetype:
         if m not in models_reordered:
             models_reordered.append(m) 
     
-    scorenames = np.array(all_keys[-2])
-            
-    for i, agg in enumerate(all_keys[0]): # 10 min / 60 min
-        for j, bound in enumerate(all_keys[1]): 
-            for k, veriftype in enumerate(all_keys[2]): # test/train
-                fig, ax = plt.subplots(all_dims[3],1, figsize = (7,12))
-                n = all_dims[4]
-                for l, precipttype in enumerate(all_keys[3]): # solid/liquid/all
-                    dataplot = data[i,j,k,l]
-                    x = np.arange(sum(scorenames != 'N'))
-                    
-                    idx = 0
-                    for m,d in enumerate(dataplot): # Loop on QPE types
-                        
-                        name = all_keys[-3][m]
-                        if name in REFCOLORS.keys():
-                            c = REFCOLORS[name]
-                        else:
-                            c = 'C'+str(idx)
-                            idx += 1 
-                        rec = ax[l].bar(x + (m-int(n/2))*width/n, 
-                                        d[scorenames != 'N',0],
-                                    width = width/n,
-                                    yerr = d[scorenames != 'N',1], color = c)
-                        
-                        _autolabel(ax[l],rec)
- 
-                    ax[l].set_xticklabels(all_keys[-2])
-                    ax[l].set_xticks(x)
-                    fig.legend(all_keys[-3])
-                    ax[l].set_ylabel('precip: {:s}'.format(precipttype))
-                plt.suptitle('{:s} errors, Agg : {:s}, R-range {:s} \n Nsamples = {:d}'.format(veriftype,
-                          agg, bound, int(d[scorenames == 'N',0][0])))
-                nfile = '{:s}_{:s}_{:s}'.format(veriftype, agg, bound) + '.png'
-                plt.savefig(output_folder + '/' + nfile, dpi = 300, 
+    qpetype = models_reordered
+    scoretype.remove('N')
+    
+    colors = []
+    idx = 0
+    for i, q in enumerate(qpetype):
+        if q in REFCOLORS.keys():
+            c = REFCOLORS[q]
+        else:
+            c = 'C'+str(idx)
+            idx += 1 
+        colors.append(c)
+
+
+    for a in aggtype:
+        for b in boundtype[a]:
+            for v in veriftype:
+                 fig, ax = plt.subplots(len(preciptype),1, figsize = (7,12))
+                 for i, p in enumerate(preciptype):
+                     offset  = len(qpetype) + 1
+                     x = []
+                     for j,s in enumerate(scoretype):
+                         for k, q in enumerate(qpetype):
+                             mean = stats[a][q][v][p][b][s]['mean']
+                             std = stats[a][q][v][p][b][s]['std']
+                 
+                             rec = ax[i].bar([offset*j+k],[mean], 
+                                             color = colors[k],
+                                             yerr = std)
+                             _autolabel(ax[i], rec)
+                         x.append(offset*j+0.6)      
+
+                     ax[i].set_xticks(x)
+                     ax[i].set_xticklabels(scoretype, rotation=65)
+                     ax[i].set_ylabel('precip: {:s}'.format(p))
+                  
+                 fig.legend(qpetype)
+                 plt.suptitle('{:s} errors, Agg : {:s}, R-range {:s} \n Nsamples = {:d}'.format(v,
+                          a, b, 
+                          int( stats[a][q][v][p][b]['N']['mean'])))
+                
+                 nfile = '{:s}_{:s}_{:s}'.format(v, a, b) + '.png'
+                 plt.savefig(output_folder + '/' + nfile, dpi = 300, 
                             bbox_inches = 'tight')
+            

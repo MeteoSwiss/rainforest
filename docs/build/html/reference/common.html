@@ -632,7 +632,7 @@ parameter. This is usually set to 2 at MeteoSwiss</p></li>
 
 <dl class="function">
 <dt id="rainforest.common.radarprocessing.hydroClass_single">
-<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=&lt;Mock name='mock.array()' id='46912667506000'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=&lt;Mock name='mock.array()' id='46912667579056'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the hydrometeor classes for columnar data, note that all input
 arrays except weights must have the same length</p>
 <dl class="field-list simple">
@@ -748,8 +748,36 @@ is a model</p></li>
 </dd>
 </dl>
 <dl class="simple">
-<dt>title_prefix: str (optional)</dt><dd><p>a prefix for the suptitle (global title)</p>
+<dt>title_prefix: str (optional)</dt><dd><p>a prefix for the suptitle (global titl</p>
 </dd>
+</dl>
+<p>width = 0.9
+# Convert dict to array
+success = True
+all_keys = []
+all_dims = []
+cdict = stats
+while success:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>try:</dt><dd><p>keys = list(cdict.keys())
+all_keys.append(keys)
+all_dims.append(len(keys))
+cdict = cdict[keys[0]]</p>
+</dd>
+<dt>except:</dt><dd><p>success = False
+pass</p>
+</dd>
+</dl>
+</div></blockquote>
+<p># convert to array
+data = np.reshape(list(nested_dict_values(stats)), all_dims)</p>
+<p># Flip method/bound axis
+data = np.swapaxes(data, 1,4)
+all_keys[1], all_keys[4] = all_keys[4], all_keys[1]
+all_dims[1], all_dims[4] = all_dims[4], all_dims[1]
+e)</p>
+<dl class="simple">
 <dt>figsize: 2-element tuple (optional)</dt><dd><p>Tuple indicating the size of the figure in inches in both directions
 (w,h)</p>
 </dd>
@@ -1189,7 +1217,7 @@ dictionary PYART_NAMES_MAPPING in the constants.py module</p>
 
 <dl class="function">
 <dt id="rainforest.common.utils.stack_uneven">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912670056064'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912668919120'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fits mmltiple into a single numpy array, even if they are
 different sizes, assigning a fill_value to parts with no data</p>
 <dl class="field-list simple">

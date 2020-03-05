@@ -16,6 +16,11 @@ This python library provides a set of tools and lookup tables to
 
 as well as a command line (:ref:`interface <Interface>`) to run most of the commands interactively.
 
+.. note::
+   On the CSCS, the source code is stored under */store/msrad/radar/rainforest/* and the database under */store/msrad/radar/radar_database/*
+
+
+
 :ref:`Usage`
 ~~~~~~~~~~~~~~~~~
 
