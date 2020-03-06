@@ -146,7 +146,7 @@ class RFTraining(object):
                 refer = refer.compute().drop_duplicates(subset = ['TIMESTAMP',
                                                                   'STATION'])
                 
-                # radar = radar.sort_values(by = ['TIMESTAMP','STATION','SWEEP'])
+                radar = radar.sort_values(by = ['TIMESTAMP','STATION','SWEEP'])
                 refer = refer.sort_values(by = ['TIMESTAMP','STATION'])
                 gauge = gauge.sort_values(by = ['TIMESTAMP','STATION'])
                 # Get only valid precip data
