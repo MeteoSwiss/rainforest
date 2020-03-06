@@ -1,0 +1,373 @@
+INFO:root:Reading input data
+INFO:root:Computing derived variable zh_VISIB_mean
+INFO:root:Computing derived variable zv_VISIB_mean
+INFO:root:Performing vertical aggregation of input features for model RF_dualpol
+INFO:root:Performing vertical aggregation of input features for model RF_hpol
+INFO:root:Performing vertical aggregation of input features for model RF_vpol
+INFO:root:Splitting dataset in 5 parts using different events
+INFO:root:Run 1/5 of cross-validation
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:572: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_train = T[train] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:573: RuntimeWarning: invalid value encountered in less
+  sol_10_train = T[train] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:574: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_train = T_train_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:575: RuntimeWarning: invalid value encountered in less
+  sol_60_train = T_train_60 < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:577: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_test = T[test] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:578: RuntimeWarning: invalid value encountered in less
+  sol_10_test = T[test] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:579: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_test = T_test_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:580: RuntimeWarning: invalid value encountered in less
+  sol_60_test = T_test_60 < constants.THRESHOLD_SOLID
+INFO:root:Checking model RF_dualpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_hpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_vpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model CPCH
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Checking model RZC
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Run 2/5 of cross-validation
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:572: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_train = T[train] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:573: RuntimeWarning: invalid value encountered in less
+  sol_10_train = T[train] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:574: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_train = T_train_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:575: RuntimeWarning: invalid value encountered in less
+  sol_60_train = T_train_60 < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:577: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_test = T[test] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:578: RuntimeWarning: invalid value encountered in less
+  sol_10_test = T[test] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:579: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_test = T_test_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:580: RuntimeWarning: invalid value encountered in less
+  sol_60_test = T_test_60 < constants.THRESHOLD_SOLID
+INFO:root:Checking model RF_dualpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_hpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_vpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model CPCH
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Checking model RZC
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Run 3/5 of cross-validation
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:572: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_train = T[train] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:573: RuntimeWarning: invalid value encountered in less
+  sol_10_train = T[train] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:574: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_train = T_train_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:575: RuntimeWarning: invalid value encountered in less
+  sol_60_train = T_train_60 < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:577: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_test = T[test] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:578: RuntimeWarning: invalid value encountered in less
+  sol_10_test = T[test] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:579: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_test = T_test_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:580: RuntimeWarning: invalid value encountered in less
+  sol_60_test = T_test_60 < constants.THRESHOLD_SOLID
+INFO:root:Checking model RF_dualpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_hpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_vpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model CPCH
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Checking model RZC
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Run 4/5 of cross-validation
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:572: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_train = T[train] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:573: RuntimeWarning: invalid value encountered in less
+  sol_10_train = T[train] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:574: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_train = T_train_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:575: RuntimeWarning: invalid value encountered in less
+  sol_60_train = T_train_60 < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:577: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_test = T[test] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:578: RuntimeWarning: invalid value encountered in less
+  sol_10_test = T[test] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:579: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_test = T_test_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:580: RuntimeWarning: invalid value encountered in less
+  sol_60_test = T_test_60 < constants.THRESHOLD_SOLID
+INFO:root:Checking model RF_dualpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_hpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_vpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model CPCH
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Checking model RZC
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Run 5/5 of cross-validation
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:572: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_train = T[train] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:573: RuntimeWarning: invalid value encountered in less
+  sol_10_train = T[train] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:574: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_train = T_train_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:575: RuntimeWarning: invalid value encountered in less
+  sol_60_train = T_train_60 < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:577: RuntimeWarning: invalid value encountered in greater_equal
+  liq_10_test = T[test] >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:578: RuntimeWarning: invalid value encountered in less
+  sol_10_test = T[test] < constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:579: RuntimeWarning: invalid value encountered in greater_equal
+  liq_60_test = T_test_60 >= constants.THRESHOLD_SOLID
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rf.py:580: RuntimeWarning: invalid value encountered in less
+  sol_60_test = T_test_60 < constants.THRESHOLD_SOLID
+INFO:root:Checking model RF_dualpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_hpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model RF_vpol
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:Training model on gauge data
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/ml/rfdefinitions.py:39: FutureWarning: `rcond` parameter will change to the default of machine precision times ``max(M, N)`` where M and N are the input matrix dimensions.
+To use the future default and silence this warning we advise to pass `rcond=None`, to keep using the old, explicitly pass `rcond=-1`.
+  p, _, _, _ = np.linalg.lstsq(X, y[:,None])
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/rainforest-1.0-py3.6.egg/rainforest/common/utils.py:130: RuntimeWarning: divide by zero encountered in true_divide
+  db_err = 10 * np.log10(est_data / ref_data)
+INFO:root:at 60 min
+INFO:root:Checking model CPCH
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Checking model RZC
+INFO:root:Evaluating test error
+INFO:root:at 10 min
+INFO:root:at 60 min
+INFO:root:Evaluating train error
+INFO:root:at 10 min
+INFO:root:at 60 min
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-wolfensb'

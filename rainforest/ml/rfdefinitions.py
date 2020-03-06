@@ -47,7 +47,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
     to apply a rounding function to the outputs on the fly and adds a 
     bit of metadata:
     
-        *bc_type* : type of bias correction method
+        *bctype* : type of bias correction method
         *variables* : name of input features
         *beta* : weighting factor in vertical aggregation
         *degree* : order of the polyfit used in some bias-correction methods

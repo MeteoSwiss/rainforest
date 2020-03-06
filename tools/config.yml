@@ -1,0 +1,20 @@
+TMP_FOLDER: '/scratch/${USER}/temp/'
+KDP_PARAMETERS:
+    RMIN : 1000.
+    RMAX : 50000.
+    RCELL : 1000.
+    ZMIN : 20.
+    ZMAX : 40.
+    RWIND : 6000.
+SNR_THRESHOLD: 3
+ZH_THRESHOLD: 7
+VISIB_CORR:
+    MIN_VISIB: 37
+    MAX_CORR: 2
+SWEEPS: 'all'
+RADARS: 'all'
+# Post-processing
+OUTLIER_REMOVAL: 1
+GAUSSIAN_SIGMA: 0.5
+ADVECTION_CORRECTION: 1
+DN: 1 # Convert to digital number  using common/constants/constants.py:SCALE_CPC

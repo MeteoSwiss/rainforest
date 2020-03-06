@@ -1,0 +1,7 @@
+#!/bin/sh
+#SBATCH -N 1     # nodes requested
+#SBATCH -c 1      # cores requested
+#SBATCH -t 23:0:00  # time requested in hour:minute:second
+export PATH=/store/msrad/utils/anaconda3/envs/radardb/bin/:$PATH
+python3 -u  crossval.py 
+    

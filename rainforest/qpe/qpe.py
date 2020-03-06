@@ -174,8 +174,8 @@ class QPEProcessor(object):
             for var in self.models[k].variables:
                 if var not in self.model_weights_per_var.keys():
                     self.model_weights_per_var[var] = []
-                if models[k].vw not in self.model_weights_per_var[var]:
-                    self.model_weights_per_var[var].append(models[k].vw)
+                if models[k].beta not in self.model_weights_per_var[var]:
+                    self.model_weights_per_var[var].append(models[k].beta)
             
     def fetch_data(self, t0, t1):
         """
@@ -350,7 +350,7 @@ class QPEProcessor(object):
                 model = self.models[k]
                 X = []
                 for v in model.variables:
-                    dat = rf_features_cart[model.vw][v] / weights_cart[model.vw]
+                    dat = rf_features_cart[model.beta][v] / weights_cart[model.beta]
                     X.append(dat.ravel())
                 
                 X = np.array(X).T

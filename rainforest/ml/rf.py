@@ -597,8 +597,7 @@ class RFTraining(object):
                 scores_solid = perfscores(R_pred_10[sol_10_test],
                                                  R[test][sol_10_test],
                                                  bounds = bounds10)
-                import pdb
-                pdb.set_trace()
+               
                 all_scores['10min'][model]['test']['solid'].append(scores_solid)
                 
                 scores_liquid = perfscores(R_pred_10[liq_10_test],
