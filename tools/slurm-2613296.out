@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/store/msrad/utils/anaconda3/envs/radardb/bin/qpe_compute", line 6, in <module>
+    from pkg_resources import load_entry_point
+  File "/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/pkg_resources/__init__.py", line 3251, in <module>
+    @_call_aside
+  File "/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/pkg_resources/__init__.py", line 3235, in _call_aside
+    f(*args, **kwargs)
+  File "/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/pkg_resources/__init__.py", line 3264, in _initialize_master_working_set
+    working_set = WorkingSet._build_master()
+  File "/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/pkg_resources/__init__.py", line 583, in _build_master
+    ws.require(__requires__)
+  File "/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/pkg_resources/__init__.py", line 900, in require
+    needed = self.resolve(parse_requirements(requirements))
+  File "/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/pkg_resources/__init__.py", line 786, in resolve
+    raise DistributionNotFound(req, requirers)
+pkg_resources.DistributionNotFound: The 'rainforest==1.0' distribution was not found and is required by the application

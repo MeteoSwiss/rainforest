@@ -180,9 +180,9 @@ class RFTraining(object):
                 full_hours = np.array(gauge.groupby(stahour)['STATION']
                                         .transform('count') == 6)
                
-                refer = refer.loc[full_hours]
-                gauge = gauge.loc[full_hours]    
-                radar = radar.loc[radar['s-tstamp'].
+                refer = refer.reindex[full_hours]
+                gauge = gauge.reindex[full_hours]    
+                radar = radar.reindex[radar['s-tstamp'].
                                            isin(np.array(gauge['s-tstamp']))]
                 
                 stahour = stahour[full_hours]
