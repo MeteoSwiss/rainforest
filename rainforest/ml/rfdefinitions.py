@@ -167,7 +167,9 @@ class RandomForestRegressorBC(RandomForestRegressor):
                 func = lambda x : np.polyval(self.p,x)
             elif self.bctype == 'spline':
                 func = lambda x : self.p(x)
-        return round_func(func(pred))
+        out = func(pred)
+        out[out < 0] = 0
+        return round_func(out)
     
 ##################
         

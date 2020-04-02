@@ -14,7 +14,7 @@ from rainforest.common.constants import SLURM_HEADER_PY
 from rainforest.common.retrieve_data import retrieve_prod
 
 days = ['20190610','20190806','20190922','20191015','20191124','20200129']
-models = '{"RF_dualpol_ac":"RF_dualpol_BETA_-0.5_BC_raw.p"}'
+models = '{"RF_dualpol_ac":"RF_dualpol_BETA_-0.5_BC_spline.p"}'
 outputfolder = '/scratch/wolfensb/qpe_runs/'
 gauge = "'/store/msrad/radar/radar_database/gauge/*.csv.gz'" # beeware of quotes!
 config = './config.yml'

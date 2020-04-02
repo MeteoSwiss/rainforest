@@ -207,11 +207,13 @@ rainforest/database/retrieve_dwh_data.r
 rainforest/database/retrieve_radar_data.py
 rainforest/database/retrieve_reference_data.py
 rainforest/ml/__init__.py
+rainforest/ml/default_config.yml
 rainforest/ml/rf.py
 rainforest/ml/rf_train.py
 rainforest/ml/rfdefinitions.py
 rainforest/ml/utils.py
 rainforest/ml/rf_models/RF_dualpol_BETA_-0.5_BC_raw.p
+rainforest/ml/rf_models/RF_dualpol__BETA_-0.5_BC_raw.p
 rainforest/ml/rf_models/RF_hpol_BETA_-0.5_BC_raw.p
 rainforest/ml/rf_models/RF_vpol_BETA_-0.5_BC_raw.p
 rainforest/ml/rf_models/__init__.py

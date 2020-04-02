@@ -344,9 +344,9 @@ class RFTraining(object):
                                       True, radartab['VISIB_mean'])
         cond1 = np.array(np.isin(gaugetab['STATION'], filterconf['STA_TO_REMOVE']))
         cond2 = np.logical_and(ZH_agg['ZH_mean'] < filterconf['CONSTRAINT_MIN_ZH'][1],
-               gaugetab['RRE150Z0'].values >= filterconf['CONSTRAINT_MIN_ZH'][0])
+               6 * gaugetab['RRE150Z0'].values >= filterconf['CONSTRAINT_MIN_ZH'][0])
         cond3 = np.logical_and(ZH_agg['ZH_mean'] >  filterconf['CONSTRAINT_MAX_ZH'][1],
-               gaugetab['RRE150Z0'].values <=  filterconf['CONSTRAINT_MIN_ZH'][0])
+               6 * gaugetab['RRE150Z0'].values <=  filterconf['CONSTRAINT_MIN_ZH'][0])
         
         invalid = np.logical_or(cond1,cond2)
         invalid = np.logical_or(invalid,cond3)
@@ -381,7 +381,7 @@ class RFTraining(object):
                           bctype = config['BIAS_CORR'],
                           variables = features_dic[model],
                           beta = config['VERT_AGG']['BETA'],
-                          **config['RANDOMFORESTREGRESSOR'])
+                          **config['RANDOMFOREST_REGRESSOR'])
             
             Y = np.array(gaugetab['RRE150Z0'] * 6)
             logging.info('')
@@ -391,7 +391,7 @@ class RFTraining(object):
             valid = np.all(np.isfinite(features_VERT_AGG),axis=1)
             reg.fit(features_VERT_AGG[valid], Y[valid])
             
-            out_name = str(Path(output_folder, '{:s}__BETA_{:2.1f}_BC_{:s}.p'.format(model, 
+            out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}.p'.format(model, 
                                                   config['VERT_AGG']['BETA'],
                                                   config['BIAS_CORR'])))
             logging.info('Saving model to {:s}'.format(out_name))

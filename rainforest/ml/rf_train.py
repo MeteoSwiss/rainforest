@@ -60,9 +60,9 @@ def main():
                       ', please note the double and single quotes, which are required' + 
                       'IMPORTANT: if no model is provided only the ml input data will be recomputed from the database, but no model will be computed'+
                       'To simplify three aliases are proposed: ' +
-                      '"dualpol_default" = \'{"RF_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","T", "HEIGHT","VISIB_mean"]}\'' +
-                      '"vpol_default" = \'{"RF_vpol": ["RADAR", "zv_VISIB_mean","T", "HEIGHT","VISIB_mean"]}\'' +
-                      '"hpol_default" = \'{"RF_hpol": ["RADAR", "zh_VISIB_mean","T", "HEIGHT","VISIB_mean"]}\'' +
+                      '"dualpol_default" = \'{"RF_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\'' +
+                      '"vpol_default" = \'{"RF_vpol": ["RADAR", "zv_VISIB_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\'' +
+                      '"hpol_default" = \'{"RF_hpol": ["RADAR", "zh_VISIB_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\'' +
                       'You can combine them for example "vpol_default, hpol_default, dualpol_default, will compute all three"',
                       metavar="MODELS")
 
