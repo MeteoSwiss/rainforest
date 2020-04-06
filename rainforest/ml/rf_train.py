@@ -107,13 +107,13 @@ def main():
                 if opt == 'dualpol_default':
                     dic_models['RF_dualpol'] =  ["RADAR", "zh_VISIB_mean",
                                                  "zv_VISIB_mean","KDP_mean",
-                                                 "RHOHV_mean","T", 
+                                                 "RHOHV_mean","SW_mean","T", 
                                                  "HEIGHT","VISIB_mean"]
                 elif opt == 'hpol_default':
-                    dic_models['RF_hpol'] =  ["RADAR", "zh_VISIB_mean","T",
+                    dic_models['RF_hpol'] =  ["RADAR", "zh_VISIB_mean","SW_mean","T",
                                               "HEIGHT","VISIB_mean"]
                 elif opt == 'vpol_default':
-                    dic_models['RF_hpol'] =  ["RADAR", "zv_VISIB_mean","T",
+                    dic_models['RF_hpol'] =  ["RADAR", "zv_VISIB_mean","SW_mean","T",
                                               "HEIGHT","VISIB_mean"]
         else:
             dic_models = json.loads(options.models)
