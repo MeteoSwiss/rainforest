@@ -104,6 +104,7 @@ def main():
             logging.info('Found at least one "default" alias in models {:s}, assuming they are all aliases'.format(options.models))
             options.models = options.models.split(',')
             for opt in options.models: # Add aliases here if needed
+                opt = opt.strip()
                 if opt == 'dualpol_default':
                     dic_models['RF_dualpol'] =  ["RADAR", "zh_VISIB_mean",
                                                  "zv_VISIB_mean","KDP_mean",
