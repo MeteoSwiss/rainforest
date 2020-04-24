@@ -196,15 +196,17 @@ class QPEProcessor(object):
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
             logging.info('Retrieving data for radar '+rad)
-            
-            radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1, 
-                               product_name = 'ML' + rad, 
-                               sweeps = self.config['SWEEPS'])
-            self.radar_files[rad] = split_by_time(radfiles)
-            statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1, 
-                               product_name = 'ST' + rad, pattern = 'ST*.xml')
-            self.status_files[rad] = split_by_time(statfiles)
-    
+            try:
+                radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1, 
+                                   product_name = 'ML' + rad, 
+                                   sweeps = self.config['SWEEPS'])
+                self.radar_files[rad] = split_by_time(radfiles)
+                statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1, 
+                                   product_name = 'ST' + rad, pattern = 'ST*.xml')
+                self.status_files[rad] = split_by_time(statfiles)
+            except:
+                logging.error('Failed to retrieve data for radar {:s}'.format(rad))
+                
     def compute(self, output_folder, t0, t1, timestep = 5,
                                                     basename = 'RF%y%j%H%M'):
         """
@@ -232,6 +234,8 @@ class QPEProcessor(object):
         """
         
         for model in self.models.keys():
+            if self.config['ADVECTION_CORRECTION']:
+                model += '_AC'
             if not os.path.exists(str(Path(output_folder, model))):
                 os.makedirs(str(Path(output_folder, model)))
         
@@ -244,6 +248,7 @@ class QPEProcessor(object):
                             for i in range(n_incr + 1)])
         
         qpe_prev = {}
+        X_prev = {}
         
         for i, t in enumerate(timeserie): # Loop on timesteps
             logging.info('====')
@@ -343,6 +348,7 @@ class QPEProcessor(object):
                     except:
                         logging.error('Could not compute sweep {:d}'.format(sweep))
                         pass
+                        
            
             """Part four - RF prediction"""
             # Get QPE estimate
@@ -354,19 +360,39 @@ class QPEProcessor(object):
                     X.append(dat.ravel())
                 
                 X = np.array(X).T
-                X[np.isnan(X)] = 0
+                if i == 0:
+                    X_prev[k] = X
+                    
+                idx_zh = np.where(np.array(model.variables)
+                                  == 'zh_VISIB')[0][0]
+               
+                rproxy = (X[:,idx_zh]/constants.A_QPE)**(1/constants.B_QPE)
+                rproxy[np.isnan(rproxy)] = 0
+
+                Xcomb = np.nanmean((X_prev[k] , X),axis = 0)
+                X_prev[k]  = X
+                
+                Xcomb[np.isnan(Xcomb)] = 0
+                rproxy_mean = (Xcomb[:,idx_zh]/constants.A_QPE)**(1/constants.B_QPE)
+                rproxy_mean[np.isnan(rproxy_mean)] = 0
+                
+            
                 # Remove axis with only zeros
-                validrows = (X>0).any(axis=1)
+                validrows = (Xcomb>0).any(axis=1)
             
                 qpe = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
                 try:
-                    qpe[validrows] = self.models[k].predict(X[validrows,:])
+                    qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
                 except:
                     logging.error('RF failed!')
                     pass
                 
+                # Rescale qpe through rproxy
+                qpe = qpe * rproxy / rproxy_mean
                 # Reshape to Cartesian grid
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
+                
+                
                 
                 # Postprocessing
                 if self.config['OUTLIER_REMOVAL']:
@@ -376,12 +402,15 @@ class QPEProcessor(object):
                     qpe = gaussian_filter(qpe,
                        self.config['GAUSSIAN_SIGMA'])
             
-                             
-                if self.config['ADVECTION_CORRECTION'] and i > 0:
-                    qpe = _disaggregate(np.array([qpe_prev[k], qpe]))
-                
+                if i == 0:
+                    qpe_prev[k] = qpe
+                    
+                comp = np.array([qpe_prev[k].copy(), qpe.copy()])
                 qpe_prev[k] = qpe
-
+                if self.config['ADVECTION_CORRECTION'] and i > 0:
+                    qpe = _disaggregate(comp)
+                 
+                
                 tstr = datetime.datetime.strftime(t, basename)
                 filepath = output_folder + '/' + k
                 if self.config['ADVECTION_CORRECTION']:

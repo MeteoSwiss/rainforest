@@ -13,11 +13,24 @@ import subprocess
 from rainforest.common.constants import SLURM_HEADER_PY
 from rainforest.common.retrieve_data import retrieve_prod
 
-days = ['20190610','20190806','20190922','20191015','20191124','20200129']
-models = '{"RF_dualpol_ac":"RF_dualpol_BETA_-0.5_BC_spline.p"}'
+# days = ['20170725','20180122','20181027']
+days = []
+days.extend([        '20190806','20191015','20200129'])
+
+
+
+models = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p","RF_hpol":"RF_hpol_BETA_-0.5_BC_spline.p"}'
 outputfolder = '/scratch/wolfensb/qpe_runs/'
 gauge = "'/store/msrad/radar/radar_database/gauge/*.csv.gz'" # beeware of quotes!
-config = './config.yml'
+config = '/store/msrad/radar/rainforest/tools/config.yml'
+
+# from rainforest.qpe.qpe import QPEProcessor
+# from rainforest.ml.rfdefinitions import read_rf
+# models = {'RF_dualpol':read_rf('RF_dualpol_BETA_-0.5_BC_spline.p')}
+# q = QPEProcessor(config, models)
+# t0 = datetime.datetime(2017,7,25,0,0)
+# t1 = datetime.datetime(2017,7,25,6,0)
+# q.compute(outputfolder,t0,t1)
 # %%
 # Compute QPE
 
@@ -30,7 +43,7 @@ for d in days:
     start = d + '0000'
     end = datetime.datetime.strptime(d, '%Y%m%d') + datetime.timedelta(days = 1)
     end = datetime.datetime.strftime(end, '%Y%m%d%H%M')
-    f.write("qpe_compute -s {:s} -e {:s} -m '{:s}' -o {:s}".format(start, end, models,folder))
+    f.write("qpe_compute -s {:s} -e {:s} -m '{:s}' -o {:s} -c {:s}".format(start, end, models,folder, config))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
     
@@ -62,7 +75,7 @@ for d in days:
     f = open(d + '_job', 'w')
     f.write(SLURM_HEADER_PY)
     f.write("qpe_evaluation -q {:s} -g {:s} -o {:s} -m {:s} ".format(folder, gauge, output,
-            '"RZC, CPC, RF_dualpol, RF_hpol, RF_vpol"'))
+            'RZC,CPC.CV,RF_dualpol,RF_dualpol_AC,RF_hpol'))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
         # %%
@@ -74,7 +87,7 @@ for d in days:
         os.makedirs(output)
     f = open(d + '_job', 'w')
     f.write(SLURM_HEADER_PY)
-    f.write("qpe_plot -i {:s} -o {:s} -V 80 -t 3".format(folder, output))
+    f.write("qpe_plot -i {:s} -o {:s} -V 80 -t 3 -m {:s}".format(folder, output,'"RZC, CPC, RF_dualpol","RF_dualpol_ac"'))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
     

@@ -80,7 +80,7 @@ class QPE_cmap( mpl.colors.LinearSegmentedColormap):
 
 def qpe_plot(data, subplots = None, figsize = None,
              vmin = 0.04, vmax = 120, transition = 10, ch_border = True,
-             **kwargs):
+             xlim = None, ylim = None, **kwargs):
     
     """Plots one or multiple QPE realizations using a special colormap, that
     shows a clear transition between low and high precipitation intensities,
@@ -166,10 +166,19 @@ def qpe_plot(data, subplots = None, figsize = None,
                 x = [i[0]/1000. for i in shape.shape.points[:]]
                 y = [i[1]/1000. for i in shape.shape.points[:]]
                 ax[i].plot(x,y,'k',linewidth=1.)
-                
-    plt.xlim([400,900])
-    plt.ylim([-0,350])
+    if xlim != None:
+        plt.xlim(xlim)
+    else:
+        plt.xlim([400,900])
+    if ylim != None:
+        plt.ylim(ylim)
+    else:
+        plt.ylim([0,350])
+        
+        
     fig.subplots_adjust(bottom = 0.2)
+    fig.subplots_adjust(wspace=0.1, hspace=0.1)
+    
     cbar_ax = fig.add_axes([0.18, 0.15, 0.7, 0.03])
     cbar=plt.colorbar(m,format='%.2f',orientation='horizontal', cax=cbar_ax,
                       norm = norm, extend = 'max')
@@ -249,7 +258,8 @@ def score_plot(scores, title_prefix = '', figsize = (10,5)):
         for j,s in enumerate(scorenames):
             for k, m in enumerate(models_reordered):
                 sc = scores[m][precip_range][s]
-                rec = ax[i].bar([offset*j+k],[sc], color = colors[k])
+                rec = ax[i].bar([offset*j+k],[sc], color = colors[k], 
+                                width = 1)
                 _autolabel(ax[i], rec)
                
                 
@@ -339,9 +349,13 @@ def qpe_scatterplot(ref, qpe_est, title_prefix = '', figsize = (10,7.5)):
         fig, ax = plt.subplots(1, len(models),
                                figsize = figsize,sharey=True, sharex = True)
         
-    plt.setp(ax.flat, aspect=1.0, adjustable='box')
-    ax = ax.ravel()
-
+    
+    try :
+        ax = ax.ravel()
+    except:
+        pass
+    plt.setp(ax, aspect=1.0, adjustable='box')
+    
     gmax = np.nanmax(ref)
     for i,m in enumerate(models_reordered):
         pl = ax[i].hexbin(qpe_est[m].ravel(), ref.ravel(), bins = 'log',
@@ -452,7 +466,7 @@ def plot_crossval_stats(stats, output_folder):
                  
                              rec = ax[i].bar([offset*j+k],[mean], 
                                              color = colors[k],
-                                             yerr = std)
+                                             yerr = std, width = 1.)
                              _autolabel(ax[i], rec)
                          x.append(offset*j+0.6)      
 

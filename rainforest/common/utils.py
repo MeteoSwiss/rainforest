@@ -59,14 +59,11 @@ def perfscores(est_data, ref_data, bounds = None, array = False):
     """
     Computes a set of precipitation performance scores, on different data ranges.
     The scores are
-        - ME: mean error (linear bias)
-        - CORR: Pearson correlation of estimation and reference
-        - STDE: standard deviation of the errors
-        - MAE: mean absolute error
-        - bias:  (ME/mean(ref_data) + 1) in dB
         - scatter: 0.5 * (Qw84(x) - Qw16(x)), where Qw is a quantile weighted
           by ref_data / sum(ref_data) and x is est_data / ref_data in dB scale
-        - ED: the energy distance which is a measure of the distance between 
+        - RMSE: root mean  square error (linear error)
+        - bias:  (ME/mean(ref_data) + 1) in dB
+        - ED: the energy distance which is a measure of the distance between
           two distributions (https://en.wikipedia.org/wiki/Energy_distance)
           
     Parameters
@@ -123,25 +120,16 @@ def perfscores(est_data, ref_data, bounds = None, array = False):
 
 def _perfscores(est_data, ref_data):
     """An unbounded version of the previous function"""
-    linbias = np.nanmean(est_data - ref_data)
-    stde = np.nanstd(est_data - ref_data)
-    mae = np.nanmean(np.abs(est_data - ref_data))
-    est_data[est_data == 0] += 1E-6
-    db_err = 10 * np.log10(est_data / ref_data)
-    weights = ref_data / np.sum(ref_data)
-    scatter = 0.5 * (quantile(db_err,weights,0.84) - quantile(db_err,weights,0.16))
-    bias_db = 10 * np.log10(linbias/np.nanmean(ref_data) + 1)
-    corr = np.corrcoef(est_data, ref_data)[0,1]
-    ed = energy_distance(est_data, ref_data)
-    
-    metrics = {'ME' : linbias, 
-               'CORR' : corr, 
-               'STDE' : stde, 
-               'MAE' : mae, 
-               'scatter' : scatter,
-               'bias' : bias_db,  
-               'ED' : ed,
-               'N': len(est_data)}
+    doublecond = np.logical_and(ref_data > 0.1, est_data > 0.1)
+    rmse = np.sqrt(np.nanmean((est_data-ref_data)**2))
+    db_err = 10 * np.log10(est_data[doublecond] / ref_data[doublecond])
+    weights = ref_data[doublecond]/np.sum(ref_data[doublecond])
+    scatter = 0.5 * (quantile(db_err,weights,0.84) -quantile(db_err,weights,0.16))
+    bias_db = 10*np.log10(np.sum(est_data[doublecond]) / np.sum(ref_data[doublecond]))
+
+    ed = energy_distance(est_data[np.isfinite(est_data)], ref_data[np.isfinite(est_data)])
+    metrics = {'RMSE':rmse,'scatter':scatter,'logBias':bias_db,
+       'ED':ed,'N':len(ref_data)}
     
     return metrics
 

@@ -23,7 +23,7 @@ from ..common.utils import timestamp_from_datetime, nearest_time
 from ..common.lookup import get_lookup
 from ..common.io_data import read_cart
 from ..common.graphics import score_plot, qpe_scatterplot
-
+from ..common.retrieve_data import retrieve_CPCCV
 
 def evaluation(qpefolder, gaugepattern, list_models = None, 
                outputfolder = './', t0 = None, t1 = None,
@@ -58,7 +58,7 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
                         
      
     """
-    logging.info('Getting all files from qpe folder')
+    logging.info('Getting all files from qpe folder {:s}'.format(qpefolder))
 
     tmp = get_qpe_files(qpefolder, time_agg = 10, list_models = list_models)
     # Get only timesteps where at least 2 files are available during 10 min period
@@ -77,7 +77,7 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
         if nmodels[i] == max(nmodels):
             qpe_files10_filt[k] = qpe_files10[k]
             
-    models = list(qpe_files10_filt.values())[0].keys()
+    models = list(list(qpe_files10_filt.values())[0].keys())
     tsteps = sorted(list(qpe_files10_filt.keys()))
     
     logging.info('Reading gauge data from pattern {:s}'.format(gaugepattern))
@@ -128,11 +128,21 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
     hours = np.array([nearest_time(t, 60) for t in tsteps])
     hours_u,cnt = np.unique(hours, return_counts = True)
     precip_qpe60 = {}
+
+        
     for m in models:
         data = precip_qpe[m]
         precip_qpe60[m] = np.array([np.nanmean(data[hours == h], axis = 0) 
             for h in hours_u[cnt == 6]] )
-
+    if 'CPC.CV' in list_models:
+        logging.info('Retrieving CPC.CV data. at hourly resolution...')
+        
+        precip_qpe60['CPC.CV'] = []
+        for h in hours_u:
+            precip_qpe60['CPC.CV'] .append(retrieve_CPCCV(h, stations))
+        precip_qpe60['CPC.CV']  = np.array(precip_qpe60['CPC.CV'])
+        models.append('CPC.CV')
+        
     precip_ref60 = np.array([np.nanmean(precip_ref[hours == h], axis = 0) 
             for h in hours_u[cnt == 6]] )
 

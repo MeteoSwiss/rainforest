@@ -48,7 +48,7 @@ def main():
     parser.add_option("-B", "--b60", dest = "b60", type = str,
                       help="Specify which precipitation ranges you want to use at the 60 min resolution, " + \
                       " as a comma separated string, e.g. 0,1,10,200 will separate the results, in the ranges [0,2),[2,10),[10,200(",
-                      metavar = "END", default = '0,1,10,200')        
+                      metavar = "END", default = '0,2,10,200')        
 
     parser.add_option("-m", "--models", dest = "models", type = str,
                       help="Specify which models (i.e. subfolders in the qpefolder you want to use, default is to use all available, must be comma separated and put into quotes, e.g. 'dualpol,hpol,RZC'",

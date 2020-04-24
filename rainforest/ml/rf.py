@@ -377,9 +377,20 @@ class RFTraining(object):
             ###############################################################################
             # Fit
             ###############################################################################
+            # create name of variables used in the model
+            features = []
+            for f in features_VERT_AGG.columns:
+                if '_max' in f:
+                    f = f.replace('_max','')
+                elif '_min' in f:
+                    f = f.replace('_min','')
+                elif '_mean' in f:
+                    f = f.replace('_mean','')
+                features.append(f)
+
             reg = RandomForestRegressorBC(degree = 1, 
                           bctype = config['BIAS_CORR'],
-                          variables = features_dic[model],
+                          variables = features,
                           beta = config['VERT_AGG']['BETA'],
                           **config['RANDOMFOREST_REGRESSOR'])
             
