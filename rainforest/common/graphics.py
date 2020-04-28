@@ -80,7 +80,8 @@ class QPE_cmap( mpl.colors.LinearSegmentedColormap):
 
 def qpe_plot(data, subplots = None, figsize = None,
              vmin = 0.04, vmax = 120, transition = 10, ch_border = True,
-             xlim = None, ylim = None, **kwargs):
+             xlim = None, ylim = None, cbar_orientation = 'horizontal',
+             **kwargs):
     
     """Plots one or multiple QPE realizations using a special colormap, that
     shows a clear transition between low and high precipitation intensities,
@@ -117,6 +118,15 @@ def qpe_plot(data, subplots = None, figsize = None,
     
     ch_border: bool (optiona)
         Whether to overlay the shapefile of the Swiss borders
+    
+    xlim: 2 element tuple (optional)
+        limits of the plots in the west-east direction (in Swiss coordinates)
+        
+    ylim: 2 element tuple (optional)
+        limits of the plots in the south-north direction (in Swiss coordinates)
+    
+    cbar_orientation : str (optional)
+        colorbar orientation, either 'horizontal' or 'vertical'
         
     **kwargs:
         All additional arguments that can be passed to imshow
@@ -176,15 +186,23 @@ def qpe_plot(data, subplots = None, figsize = None,
         plt.ylim([0,350])
         
         
-    fig.subplots_adjust(bottom = 0.2)
+    
     fig.subplots_adjust(wspace=0.1, hspace=0.1)
     
-    cbar_ax = fig.add_axes([0.18, 0.15, 0.7, 0.03])
-    cbar=plt.colorbar(m,format='%.2f',orientation='horizontal', cax=cbar_ax,
-                      norm = norm, extend = 'max')
-    cbar.ax.set_xticklabels(cbar.ax.get_xticklabels(),
-                            rotation='vertical')
-    
+    if cbar_orientation == 'horizontal':
+        fig.subplots_adjust(bottom = 0.2)
+        cbar_ax = fig.add_axes([0.18, 0.15, 0.7, 0.03])
+        cbar=plt.colorbar(m,format='%.2f',orientation='horizontal', cax=cbar_ax,
+                          norm = norm, extend = 'max')
+        cbar.ax.set_xticklabels(cbar.ax.get_xticklabels(),
+                                rotation='vertical')
+    else:
+        fig.subplots_adjust(right = 0.8)
+        cbar_ax = fig.add_axes([0.85, 0.2, 0.04, 0.6])
+        cbar=plt.colorbar(m,format='%.2f',orientation='vertical', cax=cbar_ax,
+                          norm = norm, extend = 'max')
+
+        
     if vmax <= 50:
         ticks = np.array([vmin,5,10,15,20,25,30,35,40,45,50, 
                           transition, vmax])
@@ -296,32 +314,7 @@ def qpe_scatterplot(ref, qpe_est, title_prefix = '', figsize = (10,7.5)):
         
     title_prefix: str (optional)
         a prefix for the suptitle (global titl    
-    width = 0.9
-    # Convert dict to array    
-    success = True
-    all_keys = []
-    all_dims = []
-    cdict = stats
-    while success:
-        try:
-            keys = list(cdict.keys())
-            all_keys.append(keys)
-            all_dims.append(len(keys))
-            cdict = cdict[keys[0]]
-            
-        except:
-            success = False
-            pass
-    
-    # convert to array
-    data = np.reshape(list(nested_dict_values(stats)), all_dims)
-    
-    # Flip method/bound axis
-    data = np.swapaxes(data, 1,4)
-    all_keys[1], all_keys[4] = all_keys[4], all_keys[1] 
-    all_dims[1], all_dims[4] = all_dims[4], all_dims[1] 
-    e)
-    
+  
     figsize: 2-element tuple (optional)
         Tuple indicating the size of the figure in inches in both directions 
         (w,h)

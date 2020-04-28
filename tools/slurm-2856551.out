@@ -1,0 +1,162 @@
+/store/msrad/utils/anaconda3/envs/radardb/lib/python3.6/site-packages/osgeo/__init__.py:8: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+  import imp
+INFO:root:Getting all files from qpe folder /scratch/wolfensb/qpe_runs/20200129
+INFO:root:Reading gauge data from pattern /store/msrad/radar/radar_database/gauge/*.csv.gz
+INFO:root:Converting to pandas dataframe...
+INFO:root:Getting lookup table
+INFO:root:Reading timestep 1/144
+INFO:root:Reading timestep 2/144
+INFO:root:Reading timestep 3/144
+INFO:root:Reading timestep 4/144
+INFO:root:Reading timestep 5/144
+INFO:root:Reading timestep 6/144
+INFO:root:Reading timestep 7/144
+INFO:root:Reading timestep 8/144
+INFO:root:Reading timestep 9/144
+INFO:root:Reading timestep 10/144
+INFO:root:Reading timestep 11/144
+INFO:root:Reading timestep 12/144
+INFO:root:Reading timestep 13/144
+INFO:root:Reading timestep 14/144
+INFO:root:Reading timestep 15/144
+INFO:root:Reading timestep 16/144
+INFO:root:Reading timestep 17/144
+INFO:root:Reading timestep 18/144
+INFO:root:Reading timestep 19/144
+INFO:root:Reading timestep 20/144
+INFO:root:Reading timestep 21/144
+INFO:root:Reading timestep 22/144
+INFO:root:Reading timestep 23/144
+INFO:root:Reading timestep 24/144
+INFO:root:Reading timestep 25/144
+INFO:root:Reading timestep 26/144
+INFO:root:Reading timestep 27/144
+INFO:root:Reading timestep 28/144
+INFO:root:Reading timestep 29/144
+INFO:root:Reading timestep 30/144
+INFO:root:Reading timestep 31/144
+INFO:root:Reading timestep 32/144
+INFO:root:Reading timestep 33/144
+INFO:root:Reading timestep 34/144
+INFO:root:Reading timestep 35/144
+INFO:root:Reading timestep 36/144
+INFO:root:Reading timestep 37/144
+INFO:root:Reading timestep 38/144
+INFO:root:Reading timestep 39/144
+INFO:root:Reading timestep 40/144
+INFO:root:Reading timestep 41/144
+INFO:root:Reading timestep 42/144
+INFO:root:Reading timestep 43/144
+INFO:root:Reading timestep 44/144
+INFO:root:Reading timestep 45/144
+INFO:root:Reading timestep 46/144
+INFO:root:Reading timestep 47/144
+INFO:root:Reading timestep 48/144
+INFO:root:Reading timestep 49/144
+INFO:root:Reading timestep 50/144
+INFO:root:Reading timestep 51/144
+INFO:root:Reading timestep 52/144
+INFO:root:Reading timestep 53/144
+INFO:root:Reading timestep 54/144
+INFO:root:Reading timestep 55/144
+INFO:root:Reading timestep 56/144
+INFO:root:Reading timestep 57/144
+INFO:root:Reading timestep 58/144
+INFO:root:Reading timestep 59/144
+INFO:root:Reading timestep 60/144
+INFO:root:Reading timestep 61/144
+INFO:root:Reading timestep 62/144
+INFO:root:Reading timestep 63/144
+INFO:root:Reading timestep 64/144
+INFO:root:Reading timestep 65/144
+INFO:root:Reading timestep 66/144
+INFO:root:Reading timestep 67/144
+INFO:root:Reading timestep 68/144
+INFO:root:Reading timestep 69/144
+INFO:root:Reading timestep 70/144
+INFO:root:Reading timestep 71/144
+INFO:root:Reading timestep 72/144
+INFO:root:Reading timestep 73/144
+INFO:root:Reading timestep 74/144
+INFO:root:Reading timestep 75/144
+INFO:root:Reading timestep 76/144
+INFO:root:Reading timestep 77/144
+INFO:root:Reading timestep 78/144
+INFO:root:Reading timestep 79/144
+INFO:root:Reading timestep 80/144
+INFO:root:Reading timestep 81/144
+INFO:root:Reading timestep 82/144
+INFO:root:Reading timestep 83/144
+INFO:root:Reading timestep 84/144
+INFO:root:Reading timestep 85/144
+INFO:root:Reading timestep 86/144
+INFO:root:Reading timestep 87/144
+INFO:root:Reading timestep 88/144
+INFO:root:Reading timestep 89/144
+INFO:root:Reading timestep 90/144
+INFO:root:Reading timestep 91/144
+INFO:root:Reading timestep 92/144
+INFO:root:Reading timestep 93/144
+INFO:root:Reading timestep 94/144
+INFO:root:Reading timestep 95/144
+INFO:root:Reading timestep 96/144
+INFO:root:Reading timestep 97/144
+INFO:root:Reading timestep 98/144
+INFO:root:Reading timestep 99/144
+INFO:root:Reading timestep 100/144
+INFO:root:Reading timestep 101/144
+INFO:root:Reading timestep 102/144
+INFO:root:Reading timestep 103/144
+INFO:root:Reading timestep 104/144
+INFO:root:Reading timestep 105/144
+INFO:root:Reading timestep 106/144
+INFO:root:Reading timestep 107/144
+INFO:root:Reading timestep 108/144
+INFO:root:Reading timestep 109/144
+INFO:root:Reading timestep 110/144
+INFO:root:Reading timestep 111/144
+INFO:root:Reading timestep 112/144
+INFO:root:Reading timestep 113/144
+INFO:root:Reading timestep 114/144
+INFO:root:Reading timestep 115/144
+INFO:root:Reading timestep 116/144
+INFO:root:Reading timestep 117/144
+INFO:root:Reading timestep 118/144
+INFO:root:Reading timestep 119/144
+INFO:root:Reading timestep 120/144
+INFO:root:Reading timestep 121/144
+INFO:root:Reading timestep 122/144
+INFO:root:Reading timestep 123/144
+INFO:root:Reading timestep 124/144
+INFO:root:Reading timestep 125/144
+INFO:root:Reading timestep 126/144
+INFO:root:Reading timestep 127/144
+INFO:root:Reading timestep 128/144
+INFO:root:Reading timestep 129/144
+INFO:root:Reading timestep 130/144
+INFO:root:Reading timestep 131/144
+INFO:root:Reading timestep 132/144
+INFO:root:Reading timestep 133/144
+INFO:root:Reading timestep 134/144
+INFO:root:Reading timestep 135/144
+INFO:root:Reading timestep 136/144
+INFO:root:Reading timestep 137/144
+INFO:root:Reading timestep 138/144
+INFO:root:Reading timestep 139/144
+INFO:root:Reading timestep 140/144
+INFO:root:Reading timestep 141/144
+INFO:root:Reading timestep 142/144
+INFO:root:Reading timestep 143/144
+INFO:root:Reading timestep 144/144
+INFO:root:Retrieving CPC.CV data. at hourly resolution...
+
+## You are using the Python ARM Radar Toolkit (Py-ART), an open source
+## library for working with weather radar data. Py-ART is partly
+## supported by the U.S. Department of Energy as part of the Atmospheric
+## Radiation Measurement (ARM) Climate Research Facility, an Office of
+## Science user facility.
+##
+## If you use this software to prepare a publication, please cite:
+##
+##     JJ Helmus and SM Collis, JORS 2016, doi: 10.5334/jors.119
+
