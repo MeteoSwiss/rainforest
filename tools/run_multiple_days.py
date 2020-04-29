@@ -12,9 +12,9 @@ import datetime
 import subprocess
 from rainforest.common.constants import SLURM_HEADER_PY
 from rainforest.common.retrieve_data import retrieve_prod
-
-# days = ['20170725','20180122','20181027']
-days = []
+# 
+days = ['20170725','20180122','20181027']
+# days = []
 days.extend([        '20190806','20191015','20200129'])
 
 
@@ -87,7 +87,7 @@ for d in days:
         os.makedirs(output)
     f = open(d + '_job', 'w')
     f.write(SLURM_HEADER_PY)
-    f.write("qpe_plot -i {:s} -o {:s} -V 80 -t 3 -m {:s}".format(folder, output,'"RZC, CPC, RF_dualpol","RF_dualpol_ac"'))
+    f.write("qpe_plot -i {:s} -o {:s} -V 80 -t 3 -m {:s} -f 10,7 -d 2,2 -c 'vertical'".format(folder, output,'"RZC, CPC, RF_hpol","RF_dualpol"'))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
     

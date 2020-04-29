@@ -149,7 +149,7 @@ def qpe_plot(data, subplots = None, figsize = None,
         subplots = (1,n)
     
     if np.any(figsize == None):
-        figsize = (4 * subplots[1], 4 * subplots[0])
+        figsize = (4 * subplots[1], 3 * subplots[0])
         
     fig,ax = plt.subplots(subplots[0], subplots[1], sharex = True,
                           sharey = True, figsize = figsize)
@@ -296,20 +296,21 @@ def score_plot(scores, title_prefix = '', figsize = (10,5)):
         ax[i].set_visible(False)
     fig.subplots_adjust(hspace=0.3)
     
-def qpe_scatterplot(ref, qpe_est, title_prefix = '', figsize = (10,7.5)):
+def qpe_scatterplot( qpe_est, ref, title_prefix = '', figsize = (10,7.5)):
     """Plots the results of multiple QPE models as a function of the
     reference gauge measurement
     
     
     Parameters
     ----------
-    ref: np.ndarray
-        contains the reference observations (gauge), must have the same shape
-        as any element in qpe_est
-
+  
     qpe_est : dict of arrays
         Every value in the dictionary is a set of QPE estimates, every key
         is a model
+
+    ref: np.ndarray
+        contains the reference observations (gauge), must have the same shape
+        as any element in qpe_est
         
         
     title_prefix: str (optional)
@@ -351,13 +352,13 @@ def qpe_scatterplot(ref, qpe_est, title_prefix = '', figsize = (10,7.5)):
     
     gmax = np.nanmax(ref)
     for i,m in enumerate(models_reordered):
-        pl = ax[i].hexbin(qpe_est[m].ravel(), ref.ravel(), bins = 'log',
+        pl = ax[i].hexbin(ref.ravel(), qpe_est[m].ravel(), bins = 'log',
                        mincnt = 1, vmax = len(ref.ravel())/100, vmin = 1)
         ax[i].plot([0,gmax],[0,gmax],'r')
         ax[i].grid()
         ax[i].set_title(m)
-        ax[i].set_xlabel(r'Gauge $R$ [mm]')
-        ax[i].set_ylabel(r'Radar $R$ [mm]')
+        ax[i].set_xlabel(r'Observation $R$ [mm]')
+        ax[i].set_ylabel(r'Prediction $R$ [mm]')
         
         plt.xlim([0,gmax])
         plt.ylim([0,gmax])

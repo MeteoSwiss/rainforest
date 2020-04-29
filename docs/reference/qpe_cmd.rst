@@ -130,6 +130,12 @@ Options:
                         Size of figure width,height in cm, e.g. 5,10, default
                         is automatically chosen depending on many QPE fields
                         are to be plotted
+  -x XLIM, --xlim=XLIM  Limits in the west-east direction, in Swiss
+                        coordinates, e.g. 100,300, default is 400,900
+  -c CBAR, --cbar=CBAR  Orientation of the colorbar, either 'vertical' or
+                        'horizontal', default is 'horizontal'
+  -y YLIM, --ylim=YLIM  Limits in the south-north direction, in Swiss
+                        coordinates, e.g. 500,700, default is 0,350
   -d DISPLAY, --display=DISPLAY
                         Specify how you want to display the QPE subplots as a
                         comma separated string, e.i '2,1' will put them on 2
