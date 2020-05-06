@@ -17,4 +17,4 @@ RADARS: 'all'
 OUTLIER_REMOVAL: 1
 GAUSSIAN_SIGMA: 0.5
 ADVECTION_CORRECTION: 0
-DN: 1 # Convert to digital number  using common/constants/constants.py:SCALE_CPC
+OUTPUT: 'DN' # either 'DN' (binary), 'float' (binary), or 'DN_gif'

@@ -31,6 +31,7 @@ from ..common.retrieve_data import retrieve_prod, get_COSMO_T
 from ..common.lookup import get_lookup
 from ..common.utils import split_by_time, nanadd_at, envyaml
 from ..common.radarprocessing import Radar
+from ..common.io_data import save_gif
 
 ###############################################################################
 # Centerpoints of all QPE grid cells
@@ -388,12 +389,15 @@ class QPEProcessor(object):
                     pass
                 
                 # Rescale qpe through rproxy
-                qpe = qpe * rproxy / rproxy_mean
-                # Reshape to Cartesian grid
+                disag = rproxy / rproxy_mean
+                disag = np.reshape(disag, (NBINS_X, NBINS_Y))
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
+                disag[np.isnan(disag)] = 0
+                qpe = qpe * disag
+               
                 
                 
-                
+            
                 # Postprocessing
                 if self.config['OUTLIER_REMOVAL']:
                     qpe = _outlier_removal(qpe)
@@ -418,13 +422,21 @@ class QPEProcessor(object):
                     
                 filepath += '/' + tstr
                 
-                if self.config['DN'] :
+                if self.config['FILE_FORMAT'] == 'DN' :
                     # Find idx from CPC scale
                     qpe = np.searchsorted(constants.SCALE_CPC, qpe)
                     qpe = qpe.astype('B') # Convert to byte
+                    qpe[constants.MASK_NAN] = 255
                     qpe.tofile(filepath)
-                else:
-                    qpe.astype(np.float32).tofile(filepath)
 
-        return qpe
-        
+                elif self.config['FILE_FORMAT'] == 'DN_gif':
+                    qpe[constants.MASK_NAN] = -99
+                    filepath += '.gif'
+                    save_gif(filepath, qpe)
+                
+                else:
+                    if self.config['FILE_FORMAT'] != 'float':
+                        logging.error('Invalid file_format, using float instead')
+                    qpe[constants.MASK_NAN] = np.nan
+                    qpe.to_file(filepath)
+                    

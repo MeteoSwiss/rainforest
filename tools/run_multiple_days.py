@@ -14,13 +14,13 @@ from rainforest.common.constants import SLURM_HEADER_PY
 from rainforest.common.retrieve_data import retrieve_prod
 # 
 days = ['20170725','20180122','20181027']
-# days = []
-days.extend([        '20190806','20191015','20200129'])
-
+days = ['20180122']
+# days.extend([        '20190806','20191015','20200129'])
 
 
 models = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p","RF_hpol":"RF_hpol_BETA_-0.5_BC_spline.p"}'
-outputfolder = '/scratch/wolfensb/qpe_runs/'
+models = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p"}'
+outputfolder = '/scratch/wolfensb/gif_files/'
 gauge = "'/store/msrad/radar/radar_database/gauge/*.csv.gz'" # beeware of quotes!
 config = '/store/msrad/radar/rainforest/tools/config.yml'
 
@@ -87,7 +87,7 @@ for d in days:
         os.makedirs(output)
     f = open(d + '_job', 'w')
     f.write(SLURM_HEADER_PY)
-    f.write("qpe_plot -i {:s} -o {:s} -V 80 -t 3 -m {:s} -f 10,7 -d 2,2 -c 'vertical'".format(folder, output,'"RZC, CPC, RF_hpol","RF_dualpol"'))
+    f.write("qpe_plot -i {:s} -o {:s} -V 20.1 -t 1 -m {:s} -f 10,7 -d 2,2 -c 'vertical'".format(folder, output,'"RZC, CPC, RF_hpol","RF_dualpol"'))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
     

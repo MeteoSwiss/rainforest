@@ -109,7 +109,8 @@ try: # when sphinx imports this module it crashes here because it considers nump
     X_QPE_CENTERS = 0.5 * (X_QPE[0:-1] + X_QPE[1:])
 except:
     X_QPE_CENTERS = [1]
-    
+
+MASK_NAN = np.load(str(Path(data_folder, 'mask_nan.npy')))
         
 SCALE_RGB = np.array([[0,255,255,255,0.000000],
 [1,255,254,254,0.000000],

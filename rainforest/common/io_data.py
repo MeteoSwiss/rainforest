@@ -11,7 +11,7 @@ December 2019
 
 
 import os
-from imageio import imread
+from imageio import imread, imwrite
 import glob
 import pandas as pd
 import numpy as np
@@ -195,6 +195,31 @@ def read_cart(cart_file):
         data[data < constants.MIN_RZC_VALID] = 0
         data = np.flipud(np.squeeze(data))
     return data
+    
+def save_gif(gif_file, precip):
+    '''
+    Saves a precipitation map in float to a gif file (AQC format)
+    
+    Parameters
+    ----------
+    gif_file: str 
+         Full path of the file to write as a a string
+    precip : 2D array
+        2D array containing the precipitation intensities
+           
+        
+    '''
+    # Rescale ascending order of values
+    scale = constants.SCALE_RGB[np.argsort(constants.SCALE_RGB[:,4]),:]
+    idx = np.searchsorted(scale[:,4],precip.ravel())
+    
+    dn = scale[idx,1:4]
+    N,M = precip.shape
+    dn_gif = np.zeros((N,M,4),dtype = np.uint8)
+    dn_gif[:,:,0:3] = np.reshape(dn,(N,M,3)).astype(np.uint8)
+    dn_gif[:,:,3] = 255 # fourth dimension always seems to contain 255
+    
+    imwrite(gif_file,dn_gif)
     
 def read_gif(gif_file):
     '''

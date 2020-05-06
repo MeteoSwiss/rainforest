@@ -58,7 +58,7 @@ The configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/Y
    OUTLIER_REMOVAL: 1
    GAUSSIAN_SIGMA: 0.5
    ADVECTION_CORRECTION: 0
-   DN: 1 # Convert to digital number  using common/constants/constants.py:SCALE_CPC
+   FILE_FORMAT: DN
 
 The parameters are the following
 
@@ -81,7 +81,7 @@ The parameters are the following
 -   **OUTLIER_REMOVAL** : if set to 1, a local outlier filtering will be applied (e.g. remove values with z-scores in 3 x 3 window above +3 or below -3)
 -   **GAUSSIAN_SIGMA** : size in pixels of the Gaussian smoothing that is applied on the QPE product, if set to 0 no smoothing is used
 -   **ADVECTION_CORRECTION** : if set to 1, the QPE will be corrected for advection using `this method <https://journals.ametsoc.org/doi/pdf/10.1175/1520-0426%281999%29016%3C0198%3ARTRREP%3E2.0.CO%3B2>`_ with two consecutive timesteps
-
+-   **FILE_FORMAT** : the format of output files, either 'float', in this case it will be saved in binary format in float, 'DN', binary format but after conversion to bytes using the lookup table in constants.py SCALE_CPC or 'DN_gif', in gif format using the lookup table in constants.py SCALE_RGB
 .. warning::
     When defining the  configuration file, it is highly advised to be consistent with the :doc:`configuration file <db_options>` used to update the database, since the machine learning model will be trained on this particular setup. If you are not sure how you should setup these parameters always use the default file in */store/msrad/radar/rainforest/rainforest/qpe/default_config.yml*. 
 
@@ -104,6 +104,7 @@ Plots a series of QPE realizations stored in different subfolders within a main 
 .. image:: qpeplot20181622100.png
     :width: 500px
     :align: center
+
     :height: 300px
     :alt: alternate text
     
