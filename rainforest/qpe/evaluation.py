@@ -187,5 +187,4 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
     plt.savefig(outputfolder + 'scatterplots60_' + timerange+ '.png', 
                 bbox_inches='tight',
                 dpi = 300)
-    import pdb
-    pdb.set_trace()
+    
