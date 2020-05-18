@@ -343,11 +343,11 @@ def qpe_scatterplot( qpe_est, ref, title_prefix = '', figsize = (10,7.5)):
         fig, ax = plt.subplots(1, len(models),
                                figsize = figsize,sharey=True, sharex = True)
         
-    
-    try :
+    if type(ax) == np.ndarray :
         ax = ax.ravel()
-    except:
-        pass
+    elif type(ax) != list:
+        ax = [ax]
+   
     plt.setp(ax, aspect=1.0, adjustable='box')
     
     gmax = np.nanmax(ref)

@@ -19,12 +19,14 @@ from scipy.interpolate import interp1d
 from pyart.aux_io import read_metranet
 from pyart.aux_io import read_cartesian_metranet
 from pyart.util import join_radar
+from matplotlib import colors
+from PIL import Image
 
 import datetime
 import xmltodict
 
 from . import constants
-from .utils import sweepnumber_fromfile
+from .utils import sweepnumber_fromfile, hex_to_rgb
 from . import retrieve_data as retrieve
 from .lookup import get_lookup
 
@@ -210,16 +212,22 @@ def save_gif(gif_file, precip):
         
     '''
     # Rescale ascending order of values
-    scale = constants.SCALE_RGB[np.argsort(constants.SCALE_RGB[:,4]),:]
-    idx = np.searchsorted(scale[:,4],precip.ravel())
+    scale = constants.SCALE_RGB
+    idx = np.searchsorted(scale['values'],precip.ravel())
     
-    dn = scale[idx,1:4]
     N,M = precip.shape
-    dn_gif = np.zeros((N,M,4),dtype = np.uint8)
-    dn_gif[:,:,0:3] = np.reshape(dn,(N,M,3)).astype(np.uint8)
-    dn_gif[:,:,3] = 255 # fourth dimension always seems to contain 255
     
-    imwrite(gif_file,dn_gif)
+    dn = np.reshape(idx,(N,M)).astype(np.uint8)
+    dn[precip < 0] = 255 # ensure correct masking
+    cmap =  colors.ListedColormap(scale['colors'])
+ 
+    pil_im = Image.fromarray(dn, mode='P')
+    pil_im.save(
+    fp=gif_file,
+    loop=0,
+    palette=cmap
+    )
+
     
 def read_gif(gif_file):
     '''
@@ -237,8 +245,9 @@ def read_gif(gif_file):
     '''
     
     scale  = constants.SCALE_RGB
-    colors = scale[:,1:4]
-    values = scale[:,4]
+    colors = np.array([hex_to_rgb(c) for c in scale['colors']])
+    values = scale['values']
+    
     colors_bin = colors[:,0]*255**2 + colors[:,1]*255 + colors[:,2]
 
     img = imread(gif_file).astype(np.uint64)
