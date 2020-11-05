@@ -248,17 +248,18 @@ def read_gif(gif_file):
     colors = np.array([hex_to_rgb(c) for c in scale['colors']])
     values = scale['values']
     
-    colors_bin = colors[:,0]*255**2 + colors[:,1]*255 + colors[:,2]
-
     img = imread(gif_file).astype(np.uint64)
-
-    img_bin = img[:,:,0]*255**2 + img[:,:,1]*255 + img[:,:,2]
-
-    precip = np.empty((img.shape[0],img.shape[1]))
-    precip[:] = -1
-    for i in range(len(colors_bin)):
-        precip[img_bin == colors_bin[i]] = values[i]
-        
+    if len(img.shape) == 3:
+        colors_bin = colors[:,0]*255**2 + colors[:,1]*255 + colors[:,2]
+        img_bin = img[:,:,0]*255**2 + img[:,:,1]*255 + img[:,:,2]
+    
+        precip = np.empty((img.shape[0],img.shape[1]))
+        precip[:] = -99
+        for i in range(len(colors_bin)):
+            precip[img_bin == colors_bin[i]] = values[i]
+    elif len(img.shape) == 2:
+        precip = values[img]
+    precip[precip <0] = np.nan
     return precip
     
     

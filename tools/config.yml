@@ -15,6 +15,6 @@ SWEEPS: 'all'
 RADARS: 'all'
 # Post-processing
 OUTLIER_REMOVAL: 1
-GAUSSIAN_SIGMA: 0.5
+GAUSSIAN_SIGMA: 0
 ADVECTION_CORRECTION: 0
 FILE_FORMAT: 'DN_gif' # Convert to digital number  using common/constants/constants.py:SCALE_CPC

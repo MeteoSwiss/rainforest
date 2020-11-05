@@ -87,12 +87,13 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
     
     logging.info('Reading gauge data from pattern {:s}'.format(gaugepattern))
     df = read_df(gaugepattern)
-    stations = np.unique(df['STATION'])
+    
     
     logging.info('Converting to pandas dataframe...')
     t0 = timestamp_from_datetime(tsteps[0])
     t1 = timestamp_from_datetime(tsteps[-1])
     df = df[(df['TIMESTAMP'] >= t0) & (df['TIMESTAMP'] <= t1)].compute()
+    stations = np.unique(df['STATION'])
     
     logging.info('Getting lookup table')
     lut = get_lookup('station_to_qpegrid')
@@ -102,7 +103,7 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
     for m in models:
         precip_qpe[m] = np.zeros((len(tsteps), len(stations))) 
     precip_ref = np.zeros((len(tsteps), len(stations)))
-    wind_ref = np.zeros((len(tsteps), len(stations)))
+   
     for i, tstep in enumerate(tsteps): # Loop on timesteps
         logging.info('Reading timestep {:d}/{:d}'.format(i+1, len(tsteps)))
         #  Get reference precip
@@ -110,16 +111,17 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
         measures_10 = df[df['TIMESTAMP'] == tstamp]
         idx = np.searchsorted(stations, measures_10['STATION']) # idx of stations for this timestep
         precip_ref[i, idx] = measures_10['RRE150Z0'] * 6
-        wind_ref[i,idx]= measures_10['FKL010Z0'] 
+      
         # Get QPE precip
         for m in models:
             for f in qpe_files10_filt[tstep][m]:
                 data = read_cart(f)
                 for j,s in enumerate(stations):
                     precip_qpe[m][i,j] += data[lut[s]['00'][0], lut[s]['00'][1]]
-            # Get avg over 10min period
+                    
             precip_qpe[m][i] /= len(qpe_files10_filt[tstep][m])
-            
+   
+    #Get avg over 10min peri
     scores10 = {}
     # COmpute 10min scores
     valid_ref = np.isfinite(precip_ref.ravel())
@@ -149,8 +151,6 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
         models.append('CPC.CV')
         
     precip_ref60 = np.array([np.nanmean(precip_ref[hours == h], axis = 0) 
-            for h in hours_u[cnt == 6]] )
-    wind_ref60 = np.array([np.nanmean(wind_ref[hours == h], axis = 0) 
             for h in hours_u[cnt == 6]] )
     
     scores60 = {}
@@ -187,4 +187,5 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
     plt.savefig(outputfolder + 'scatterplots60_' + timerange+ '.png', 
                 bbox_inches='tight',
                 dpi = 300)
-    
+
+   

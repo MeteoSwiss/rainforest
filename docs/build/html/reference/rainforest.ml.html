@@ -392,6 +392,84 @@ needed.  Both arguments passed are str objects.</p>
 
 </dd></dl>
 
+<dl class="class">
+<dt id="rainforest.ml.rfdefinitions.RandomForestRegressorBC">
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.ml.rfdefinitions.</code><code class="sig-name descname">RandomForestRegressorBC</code><span class="sig-paren">(</span><em class="sig-param">variables</em>, <em class="sig-param">beta</em>, <em class="sig-param">degree=1</em>, <em class="sig-param">bctype='cdf'</em>, <em class="sig-param">n_estimators=100</em>, <em class="sig-param">criterion='mse'</em>, <em class="sig-param">max_depth=None</em>, <em class="sig-param">min_samples_split=2</em>, <em class="sig-param">min_samples_leaf=1</em>, <em class="sig-param">min_weight_fraction_leaf=0.0</em>, <em class="sig-param">max_features='auto'</em>, <em class="sig-param">max_leaf_nodes=None</em>, <em class="sig-param">min_impurity_decrease=0.0</em>, <em class="sig-param">min_impurity_split=None</em>, <em class="sig-param">bootstrap=True</em>, <em class="sig-param">oob_score=False</em>, <em class="sig-param">n_jobs=None</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">verbose=0</em>, <em class="sig-param">warm_start=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.ensemble.forest.RandomForestRegressor</span></code></p>
+<p>This is an extension of the RandomForestRegressor regressor class of
+sklearn that does additional bias correction, is able
+to apply a rounding function to the outputs on the fly and adds a
+bit of metadata:</p>
+<blockquote>
+<div><p><em>bctype</em> : type of bias correction method
+<em>variables</em> : name of input features
+<em>beta</em> : weighting factor in vertical aggregation
+<em>degree</em> : order of the polyfit used in some bias-correction methods</p>
+</div></blockquote>
+<p>For <em>bc_type</em> tHe available methods are currently “raw”:
+simple linear fit between prediction and observation, “cdf”: linear fit
+between sorted predictions and sorted observations and “spline” :
+spline fit between sorted predictions and sorted observations. Any
+new method should be added in this class in order to be used.</p>
+<p>For any information regarding the sklearn parent class see</p>
+<p><a class="reference external" href="https://github.com/scikit-learn/scikit-learn/blob/b194674c4/sklearn/ensemble/_forest.py#L1150">https://github.com/scikit-learn/scikit-learn/blob/b194674c4/sklearn/ensemble/_forest.py#L1150</a></p>
+<dl class="method">
+<dt id="rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">y</em>, <em class="sig-param">sample_weight=None</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit both estimator and a-posteriori bias correction
+:param X: The input samples. Use <code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code> for maximum</p>
+<blockquote>
+<div><p>efficiency. Sparse matrices are also supported, use sparse
+<code class="docutils literal notranslate"><span class="pre">csc_matrix</span></code> for maximum efficiency.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sample_weight</strong> (<em>array-like of shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em><em>, </em><em>default=None</em>) – Sample weights. If None, then samples are equally weighted. Splits
+that would create child nodes with net zero or negative weight are
+ignored while searching for a split in each node. In the case of
+classification, splits are also ignored if they would result in any
+single class carrying a negative weight in either child node.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>self</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict">
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">X</em>, <em class="sig-param">round_func=None</em>, <em class="sig-param">bc=True</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict regression target for X.
+The predicted regression target of an input sample is computed as the
+mean predicted regression targets of the trees in the forest.
+:param X: The input samples. Internally, its dtype will be converted to</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
+converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>round_func</strong> (<em>lambda function</em>) – Optional function to apply to outputs (for example to discretize them
+using MCH lookup tables). If not provided f(x) = x will be applied
+(i.e. no function)</p></li>
+<li><p><strong>bc</strong> (<em>bool</em>) – if True the bias correction function will be applied</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>y</strong> – The predicted values.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array-like of shape (n_samples,) or (n_samples, n_outputs)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="function">
 <dt id="rainforest.ml.rfdefinitions.read_rf">
 <code class="sig-prename descclassname">rainforest.ml.rfdefinitions.</code><code class="sig-name descname">read_rf</code><span class="sig-paren">(</span><em class="sig-param">rf_name</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.read_rf" title="Permalink to this definition">¶</a></dt>

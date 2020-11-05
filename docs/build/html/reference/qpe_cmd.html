@@ -99,8 +99,8 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-module">rainforest.qpe.qpe module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#rainforest-qpe-qpe-compute-module">rainforest.qpe.qpe_compute module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_compute">rainforest.qpe.qpe_compute module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a></li>
 </ul>
@@ -286,7 +286,7 @@ the double and single quotes, which are required</p>
 <span class="nt">OUTLIER_REMOVAL</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="nt">GAUSSIAN_SIGMA</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.5</span>
 <span class="nt">ADVECTION_CORRECTION</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
-<span class="nt">DN</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span> <span class="c1"># Convert to digital number  using common/constants/constants.py:SCALE_CPC</span>
+<span class="nt">FILE_FORMAT</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">DN</span>
 </pre></div>
 </div>
 <p>The parameters are the following</p>
@@ -314,6 +314,7 @@ the double and single quotes, which are required</p>
 <li><p><strong>OUTLIER_REMOVAL</strong> : if set to 1, a local outlier filtering will be applied (e.g. remove values with z-scores in 3 x 3 window above +3 or below -3)</p></li>
 <li><p><strong>GAUSSIAN_SIGMA</strong> : size in pixels of the Gaussian smoothing that is applied on the QPE product, if set to 0 no smoothing is used</p></li>
 <li><p><strong>ADVECTION_CORRECTION</strong> : if set to 1, the QPE will be corrected for advection using <a class="reference external" href="https://journals.ametsoc.org/doi/pdf/10.1175/1520-0426%281999%29016%3C0198%3ARTRREP%3E2.0.CO%3B2">this method</a> with two consecutive timesteps</p></li>
+<li><p><strong>FILE_FORMAT</strong> : the format of output files, either ‘float’, in this case it will be saved in binary format in float, ‘DN’, binary format but after conversion to bytes using the lookup table in constants.py SCALE_CPC or ‘DN_gif’, in gif format using the lookup table in constants.py SCALE_RGB</p></li>
 </ul>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -327,7 +328,6 @@ the double and single quotes, which are required</p>
 <div class="section" id="qpe-plot">
 <span id="id6"></span><h2><em>qpe_plot</em><a class="headerlink" href="#qpe-plot" title="Permalink to this headline">¶</a></h2>
 <p>Plots a series of QPE realizations stored in different subfolders within a main folder (as given by <em>qpe_compute</em>), using a custom colorscale, where low precipitation intensities are displayed in linear scale and high precipitation intensities in logarithmic scale.</p>
-<a class="reference internal image-reference" href="../_images/qpeplot20181622100.png"><img alt="alternate text" class="align-center" src="../_images/qpeplot20181622100.png" style="width: 500px; height: 300px;" /></a>
 <p><strong>qpe_plot [options]</strong></p>
 <dl>
 <dt>Options:</dt><dd><dl class="option-list">
@@ -358,6 +358,18 @@ borders, default is True</p>
 <dd><p>Size of figure width,height in cm, e.g. 5,10, default
 is automatically chosen depending on many QPE fields
 are to be plotted</p>
+</dd>
+<dt><kbd><span class="option">-x <var>XLIM</var></span>, <span class="option">--xlim=<var>XLIM</var></span></kbd></dt>
+<dd><p>Limits in the west-east direction, in Swiss
+coordinates, e.g. 100,300, default is 400,900</p>
+</dd>
+<dt><kbd><span class="option">-c <var>CBAR</var></span>, <span class="option">--cbar=<var>CBAR</var></span></kbd></dt>
+<dd><p>Orientation of the colorbar, either ‘vertical’ or
+‘horizontal’, default is ‘horizontal’</p>
+</dd>
+<dt><kbd><span class="option">-y <var>YLIM</var></span>, <span class="option">--ylim=<var>YLIM</var></span></kbd></dt>
+<dd><p>Limits in the south-north direction, in Swiss
+coordinates, e.g. 500,700, default is 0,350</p>
 </dd>
 <dt><kbd><span class="option">-d <var>DISPLAY</var></span>, <span class="option">--display=<var>DISPLAY</var></span></kbd></dt>
 <dd><p>Specify how you want to display the QPE subplots as a

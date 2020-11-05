@@ -12,15 +12,14 @@ import datetime
 import subprocess
 from rainforest.common.constants import SLURM_HEADER_PY
 from rainforest.common.retrieve_data import retrieve_prod
-# 
+#  
 days = ['20170725','20180122','20181027']
-days = ['20180122']
-# days.extend([        '20190806','20191015','20200129'])
+# days = ['20180122']
+days.extend([        '20190806','20191015','20200129'])
 
-
-models = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p","RF_hpol":"RF_hpol_BETA_-0.5_BC_spline.p"}'
-models = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p"}'
-outputfolder = '/scratch/wolfensb/gif_files/'
+models = '{"RF_dualpol_noS":"RF_dualpol_BETA_-0.5_BC_spline.p","RF_hpol_noS":"RF_hpol_BETA_-0.5_BC_spline.p"}'
+# models = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p"}'
+outputfolder = '/scratch/wolfensb/qpe_runs/'
 gauge = "'/store/msrad/radar/radar_database/gauge/*.csv.gz'" # beeware of quotes!
 config = '/store/msrad/radar/rainforest/tools/config.yml'
 
@@ -54,7 +53,7 @@ for d in days:
     folder_rzc = str(Path(outputfolder, d, 'RZC'))
     if not os.path.exists(folder_rzc):
         os.makedirs(folder_rzc)
-    folder_cpc = str(Path(outputfolder, d, 'CPC'))
+    folder_cpc = str(Path(outputfolder, d, 'CPCH'))
     if not os.path.exists(folder_cpc):
         os.makedirs(folder_cpc)
         
@@ -62,7 +61,7 @@ for d in days:
     end = datetime.datetime.strptime(d, '%Y%m%d') + datetime.timedelta(days = 1)
 
     retrieve_prod(folder_rzc, start, end, 'RZC')
-    retrieve_prod(folder_cpc, start, end, 'CPC', pattern = '*5.801.gif') 
+    retrieve_prod(folder_cpc, start, end, 'CPCH', pattern = '*5.801.gif') 
     
 # %%
 # Evaluate QPE
@@ -75,7 +74,7 @@ for d in days:
     f = open(d + '_job', 'w')
     f.write(SLURM_HEADER_PY)
     f.write("qpe_evaluation -q {:s} -g {:s} -o {:s} -m {:s} ".format(folder, gauge, output,
-            'RZC,CPC.CV,RF_dualpol,RF_dualpol_AC,RF_hpol'))
+            'CPCH,CPC_RF'))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
         # %%

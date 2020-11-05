@@ -388,6 +388,20 @@ inferred from the vpr filename</p>
 </dl>
 </dd></dl>
 
+<dl class="function">
+<dt id="rainforest.common.io_data.save_gif">
+<code class="sig-prename descclassname">rainforest.common.io_data.</code><code class="sig-name descname">save_gif</code><span class="sig-paren">(</span><em class="sig-param">gif_file</em>, <em class="sig-param">precip</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.io_data.save_gif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a precipitation map in float to a gif file (AQC format)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gif_file</strong> (<em>str</em>) – Full path of the file to write as a a string</p></li>
+<li><p><strong>precip</strong> (<em>2D array</em>) – 2D array containing the precipitation intensities</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 <div class="section" id="module-rainforest.common.retrieve_data">
 <span id="rainforest-common-retrieve-data-module"></span><h2>rainforest.common.retrieve_data module<a class="headerlink" href="#module-rainforest.common.retrieve_data" title="Permalink to this headline">¶</a></h2>
@@ -632,7 +646,7 @@ parameter. This is usually set to 2 at MeteoSwiss</p></li>
 
 <dl class="function">
 <dt id="rainforest.common.radarprocessing.hydroClass_single">
-<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=&lt;Mock name='mock.array()' id='46912667579056'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.radarprocessing.</code><code class="sig-name descname">hydroClass_single</code><span class="sig-paren">(</span><em class="sig-param">radars</em>, <em class="sig-param">zh</em>, <em class="sig-param">zdr</em>, <em class="sig-param">kdp</em>, <em class="sig-param">rhohv</em>, <em class="sig-param">temp</em>, <em class="sig-param">weights=array([1.</em>, <em class="sig-param">1.</em>, <em class="sig-param">1.</em>, <em class="sig-param">0.75</em>, <em class="sig-param">0.5 ])</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.radarprocessing.hydroClass_single" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the hydrometeor classes for columnar data, note that all input
 arrays except weights must have the same length</p>
 <dl class="field-list simple">
@@ -680,6 +694,79 @@ hydrometeor classification</p></li>
 <div class="section" id="module-rainforest.common.graphics">
 <span id="rainforest-common-graphics-module"></span><h2>rainforest.common.graphics module<a class="headerlink" href="#module-rainforest.common.graphics" title="Permalink to this headline">¶</a></h2>
 <p>Set of functions to display QPE precipitation data and verification scores</p>
+<dl class="class">
+<dt id="rainforest.common.graphics.MidpointNormalize">
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">MidpointNormalize</code><span class="sig-paren">(</span><em class="sig-param">vmin=None</em>, <em class="sig-param">vmax=None</em>, <em class="sig-param">transition=None</em>, <em class="sig-param">clip=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.MidpointNormalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.colors.Normalize</span></code></p>
+<p>Normalizing that is linear up to a certain transition value, logarithmic
+afterwards</p>
+<p>If <em>vmin</em> or <em>vmax</em> is not given, they are initialized from the
+minimum and maximum value respectively of the first input
+processed.  That is, <em>__call__(A)</em> calls <em>autoscale_None(A)</em>.
+If <em>clip</em> is <em>True</em> and the given value falls outside the range,
+the returned value will be 0 or 1, whichever is closer.
+Returns 0 if:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">vmin</span><span class="o">==</span><span class="n">vmax</span>
+</pre></div>
+</div>
+<p>Works with scalars or arrays, including masked arrays.  If
+<em>clip</em> is <em>True</em>, masked values are set to 1; otherwise they
+remain masked.  Clipping silently defeats the purpose of setting
+the over, under, and masked colors in the colormap, so it is
+likely to lead to surprises; therefore the default is
+<em>clip</em> = <em>False</em>.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="rainforest.common.graphics.QPE_cmap">
+<em class="property">class </em><code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">QPE_cmap</code><a class="headerlink" href="#rainforest.common.graphics.QPE_cmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.colors.LinearSegmentedColormap</span></code></p>
+<p>Colormap that uses purple tones for small values, and then a transition
+from blue to red for values above the transition</p>
+<p>Create color map from linear mapping segments</p>
+<p>segmentdata argument is a dictionary with a red, green and blue
+entries. Each entry should be a list of <em>x</em>, <em>y0</em>, <em>y1</em> tuples,
+forming rows in a table. Entries for alpha are optional.</p>
+<p>Example: suppose you want red to increase from 0 to 1 over
+the bottom half, green to do the same over the middle half,
+and blue over the top half.  Then you would use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;red&#39;</span><span class="p">:</span>   <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                   <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span>  <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+                   <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span>  <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)],</span>
+
+         <span class="s1">&#39;green&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                   <span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                   <span class="p">(</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+                   <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span>  <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)],</span>
+
+         <span class="s1">&#39;blue&#39;</span><span class="p">:</span>  <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                   <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                   <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span>  <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]}</span>
+</pre></div>
+</div>
+<p>Each row in the table for a given color is a sequence of
+<em>x</em>, <em>y0</em>, <em>y1</em> tuples.  In each sequence, <em>x</em> must increase
+monotonically from 0 to 1.  For any input value <em>z</em> falling
+between <em>x[i]</em> and <em>x[i+1]</em>, the output value of a given color
+will be linearly interpolated between <em>y1[i]</em> and <em>y0[i+1]</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">row</span> <span class="n">i</span><span class="p">:</span>   <span class="n">x</span>  <span class="n">y0</span>  <span class="n">y1</span>
+               <span class="o">/</span>
+              <span class="o">/</span>
+<span class="n">row</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span> <span class="n">x</span>  <span class="n">y0</span>  <span class="n">y1</span>
+</pre></div>
+</div>
+<p>Hence y0 in the first row and y1 in the last row are never used.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">LinearSegmentedColormap.from_list</span></code></dt><dd><p>Static method; factory function for generating a smoothly-varying LinearSegmentedColormap.</p>
+</dd>
+<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">makeMappingArray</span></code></dt><dd><p>For information about making a mapping array.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
 <dl class="function">
 <dt id="rainforest.common.graphics.plot_crossval_stats">
 <code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">plot_crossval_stats</code><span class="sig-paren">(</span><em class="sig-param">stats</em>, <em class="sig-param">output_folder</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.plot_crossval_stats" title="Permalink to this definition">¶</a></dt>
@@ -698,7 +785,7 @@ rf.py:model_intercomparison function</p></li>
 
 <dl class="function">
 <dt id="rainforest.common.graphics.qpe_plot">
-<code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">qpe_plot</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">subplots=None</em>, <em class="sig-param">figsize=None</em>, <em class="sig-param">vmin=0.04</em>, <em class="sig-param">vmax=120</em>, <em class="sig-param">transition=10</em>, <em class="sig-param">ch_border=True</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.qpe_plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">qpe_plot</code><span class="sig-paren">(</span><em class="sig-param">data</em>, <em class="sig-param">subplots=None</em>, <em class="sig-param">figsize=None</em>, <em class="sig-param">vmin=0.04</em>, <em class="sig-param">vmax=120</em>, <em class="sig-param">transition=10</em>, <em class="sig-param">ch_border=True</em>, <em class="sig-param">xlim=None</em>, <em class="sig-param">ylim=None</em>, <em class="sig-param">cbar_orientation='horizontal'</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.qpe_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots one or multiple QPE realizations using a special colormap, that
 shows a clear transition between low and high precipitation intensities,
 for low precipitation it is linear whereas for high precipitation it is
@@ -720,6 +807,9 @@ be shown with the color corresponding to vmax</p></li>
 <li><p><strong>transition</strong> (<em>float</em><em> (</em><em>optional</em><em>)</em>) – The transition value from which to change colormap and switch
 from linear to logarithmic scale</p></li>
 <li><p><strong>ch_border</strong> (<em>bool</em><em> (</em><em>optiona</em><em>)</em>) – Whether to overlay the shapefile of the Swiss borders</p></li>
+<li><p><strong>xlim</strong> (<em>2 element tuple</em><em> (</em><em>optional</em><em>)</em>) – limits of the plots in the west-east direction (in Swiss coordinates)</p></li>
+<li><p><strong>ylim</strong> (<em>2 element tuple</em><em> (</em><em>optional</em><em>)</em>) – limits of the plots in the south-north direction (in Swiss coordinates)</p></li>
+<li><p><strong>cbar_orientation</strong> (<em>str</em><em> (</em><em>optional</em><em>)</em>) – colorbar orientation, either ‘horizontal’ or ‘vertical’</p></li>
 <li><p><strong>**kwargs</strong> – All additional arguments that can be passed to imshow</p></li>
 </ul>
 </dd>
@@ -734,50 +824,22 @@ from linear to logarithmic scale</p></li>
 
 <dl class="function">
 <dt id="rainforest.common.graphics.qpe_scatterplot">
-<code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">qpe_scatterplot</code><span class="sig-paren">(</span><em class="sig-param">ref</em>, <em class="sig-param">qpe_est</em>, <em class="sig-param">title_prefix=''</em>, <em class="sig-param">figsize=(10</em>, <em class="sig-param">7.5)</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.qpe_scatterplot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.graphics.</code><code class="sig-name descname">qpe_scatterplot</code><span class="sig-paren">(</span><em class="sig-param">qpe_est</em>, <em class="sig-param">ref</em>, <em class="sig-param">title_prefix=''</em>, <em class="sig-param">figsize=(10</em>, <em class="sig-param">7.5)</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.qpe_scatterplot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots the results of multiple QPE models as a function of the
 reference gauge measurement</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ref</strong> (<em>np.ndarray</em>) – contains the reference observations (gauge), must have the same shape
-as any element in qpe_est</p></li>
 <li><p><strong>qpe_est</strong> (<em>dict of arrays</em>) – Every value in the dictionary is a set of QPE estimates, every key
 is a model</p></li>
+<li><p><strong>ref</strong> (<em>np.ndarray</em>) – contains the reference observations (gauge), must have the same shape
+as any element in qpe_est</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="simple">
 <dt>title_prefix: str (optional)</dt><dd><p>a prefix for the suptitle (global titl</p>
 </dd>
-</dl>
-<p>width = 0.9
-# Convert dict to array
-success = True
-all_keys = []
-all_dims = []
-cdict = stats
-while success:</p>
-<blockquote>
-<div><dl class="simple">
-<dt>try:</dt><dd><p>keys = list(cdict.keys())
-all_keys.append(keys)
-all_dims.append(len(keys))
-cdict = cdict[keys[0]]</p>
-</dd>
-<dt>except:</dt><dd><p>success = False
-pass</p>
-</dd>
-</dl>
-</div></blockquote>
-<p># convert to array
-data = np.reshape(list(nested_dict_values(stats)), all_dims)</p>
-<p># Flip method/bound axis
-data = np.swapaxes(data, 1,4)
-all_keys[1], all_keys[4] = all_keys[4], all_keys[1]
-all_dims[1], all_dims[4] = all_dims[4], all_dims[1]
-e)</p>
-<dl class="simple">
 <dt>figsize: 2-element tuple (optional)</dt><dd><p>Tuple indicating the size of the figure in inches in both directions
 (w,h)</p>
 </dd>
@@ -1036,6 +1098,11 @@ will be used</p></li>
 </dd></dl>
 
 <dl class="function">
+<dt id="rainforest.common.utils.hex_to_rgb">
+<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">hex_to_rgb</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.hex_to_rgb" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="rainforest.common.utils.idx_cart">
 <code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">idx_cart</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.idx_cart" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the Cartesian index of a set of coordinates x and y</p>
@@ -1091,13 +1158,10 @@ it will return 1 Jan 2020 10:00</p>
 The scores are</p>
 <blockquote>
 <div><ul class="simple">
-<li><p>ME: mean error (linear bias)</p></li>
-<li><p>CORR: Pearson correlation of estimation and reference</p></li>
-<li><p>STDE: standard deviation of the errors</p></li>
-<li><p>MAE: mean absolute error</p></li>
-<li><p>bias:  (ME/mean(ref_data) + 1) in dB</p></li>
 <li><p>scatter: 0.5 * (Qw84(x) - Qw16(x)), where Qw is a quantile weighted
 by ref_data / sum(ref_data) and x is est_data / ref_data in dB scale</p></li>
+<li><p>RMSE: root mean  square error (linear error)</p></li>
+<li><p>bias:  (ME/mean(ref_data) + 1) in dB</p></li>
 <li><p>ED: the energy distance which is a measure of the distance between
 two distributions (<a class="reference external" href="https://en.wikipedia.org/wiki/Energy_distance">https://en.wikipedia.org/wiki/Energy_distance</a>)</p></li>
 </ul>
@@ -1217,7 +1281,7 @@ dictionary PYART_NAMES_MAPPING in the constants.py module</p>
 
 <dl class="function">
 <dt id="rainforest.common.utils.stack_uneven">
-<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=&lt;Mock name='mock.nan' id='46912668919120'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">rainforest.common.utils.</code><code class="sig-name descname">stack_uneven</code><span class="sig-paren">(</span><em class="sig-param">arrays</em>, <em class="sig-param">fill_value=nan</em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.utils.stack_uneven" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fits mmltiple into a single numpy array, even if they are
 different sizes, assigning a fill_value to parts with no data</p>
 <dl class="field-list simple">
