@@ -15,8 +15,7 @@ import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../'))
 
-# import mock
- 
+import mock 
 MOCK_MODULES = ['pyart.aux_io','pyart','yaml','shapefile','pyart.map','pyart.retrieve','pyart.map.polar_to_cartesian',
 'pyart.util','pyart.map.polar_to_cartesian','pyart.correct','pysteps']
 for mod_name in MOCK_MODULES:
