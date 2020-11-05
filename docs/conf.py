@@ -19,7 +19,7 @@ import mock
 MOCK_MODULES = ['pyart.aux_io','pyart','yaml','shapefile','pyart.map','pyart.retrieve','pyart.map.polar_to_cartesian',
 'pyart.util','pyart.map.polar_to_cartesian','pyart.correct','pysteps']
 for mod_name in MOCK_MODULES:
-     sys.modules[mod_name] = mock.Mock()
+     sys.modules[mod_name] = mock.MagicMock()
 
 
 # -- Project information -----------------------------------------------------
