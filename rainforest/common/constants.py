@@ -111,6 +111,7 @@ except:
     X_QPE_CENTERS = [1]
 
 MASK_NAN = np.load(str(Path(data_folder, 'mask_nan.npy')))
+
         
 dic = np.load(str(Path(data_folder, 'scale_RGB.npz')))
 SCALE_RGB = {'colors':dic['arr_0'],'values':dic['arr_1']}

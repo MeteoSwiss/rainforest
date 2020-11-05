@@ -5,8 +5,5 @@ sklearn
 scipy
 dask
 pandas
-yaml
-pyart
 pyspark
 xmltodict
-pysteps
