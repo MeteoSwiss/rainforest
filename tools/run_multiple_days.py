@@ -38,21 +38,20 @@ for d in days:
     if not os.path.exists(folder):
         os.makedirs(folder)
     f = open(d + '_job', 'w')
-    f.write(SLURM_HEADER_PY)
+    f.write(SLURM_HEADER_PY) 
     start = d + '0000'
     end = datetime.datetime.strptime(d, '%Y%m%d') + datetime.timedelta(days = 1)
     end = datetime.datetime.strftime(end, '%Y%m%d%H%M')
     f.write("qpe_compute -s {:s} -e {:s} -m '{:s}' -o {:s} -c {:s}".format(start, end, models,folder, config))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
-    
-    
+  
 # %%
 # Download RZC, CPC
 for d in days:
     folder_rzc = str(Path(outputfolder, d, 'RZC'))
-    if not os.path.exists(folder_rzc):
-        os.makedirs(folder_rzc)
+    if not os.path.exists(folder_rzc): 
+        os.makedirs(folder_rzc) 
     folder_cpc = str(Path(outputfolder, d, 'CPCH'))
     if not os.path.exists(folder_cpc):
         os.makedirs(folder_cpc)

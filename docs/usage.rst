@@ -5,7 +5,14 @@ Usage
 
 Access library
 --------------------------------------
-On Kesch simply run the command
+On Kesch simply add the following line to your ~/.bashrc file
+
+.. code-block:: console
+
+    export PATH="/store/msrad/utils/anaconda3/bin:$PATH"
+
+
+Reload the session and then simply run the command
 
 .. code-block:: console
 
