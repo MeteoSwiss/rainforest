@@ -46,6 +46,8 @@ rainforest/common/data/coords_COSMO2_T.nc
 rainforest/common/data/data_radars.csv
 rainforest/common/data/data_stations.csv
 rainforest/common/data/lbias_qpegrid.dat
+rainforest/common/data/mask_nan.npy
+rainforest/common/data/scale_RGB.npz
 rainforest/common/data/z_qpegrid.npy
 rainforest/common/data/lookup_data/lut_cartcoords_radA.p
 rainforest/common/data/lookup_data/lut_cartcoords_radD.p
@@ -213,6 +215,7 @@ rainforest/ml/rf_train.py
 rainforest/ml/rfdefinitions.py
 rainforest/ml/utils.py
 rainforest/ml/rf_models/RF_dualpol_BETA_-0.5_BC_spline.p
+rainforest/ml/rf_models/RF_hpol_BETA_-0.5_BC_spline.p
 rainforest/ml/rf_models/__init__.py
 rainforest/qpe/__init__.py
 rainforest/qpe/default_config.yml
