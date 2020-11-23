@@ -16,7 +16,7 @@
 
 .libPaths("/store/msclim/share/CATs/cats/lib-R3.5.2/")
 library('mchdwh')
-.libPaths("/store/msrad/utils/anaconda3/envs/radardb/r_libraries/")
+.libPaths("/store/msrad/utils/anaconda3-wolfensb/envs/radardb/r_libraries/")
 library('R.utils')
 library('plyr')
 library('lubridate')

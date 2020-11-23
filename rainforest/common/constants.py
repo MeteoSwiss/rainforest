@@ -33,7 +33,7 @@ THRESHOLD_SOLID = 2 # Below 2 °C is considerd to be solid precipitation
 METSTATIONS = pd.read_csv(str(Path(data_folder, 'data_stations.csv')), 
                            sep=';', encoding='latin-1')
 
-###############
+###############HE
 # RADARS
 ###############
 
@@ -294,6 +294,8 @@ AVG_METHODS[2] = lambda x, axis: np.nansum(x, axis = axis)
 
 WARNING_RAM = 512 # megabytes
 SLURM_HEADER_R = '''#!/bin/sh
+module load PrgEnv-gnu/19.2
+module load r/3.6.1-fosscuda-2019b
 #SBATCH -N 1     # nodes requested
 #SBATCH -c 1      # cores requested
 #SBATCH -t 06:0:00  # time requested in hour:minute:second
