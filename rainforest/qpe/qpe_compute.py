@@ -39,7 +39,7 @@ def main():
     parser.add_option("-m", "--models", dest = "models", type = str,
                       default = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_raw.p"}',
                       help='Specify which models you want to use in the form of a json line' +
-                      ', the models must be in the folder /qpe/rf_models/, for example \'{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p}\'' +
+                      ', the models must be in the folder /ml/rf_models/, for example \'{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p}\'' +
                       ', please note the double and single quotes, which are required',
                       metavar="MODELS")
     

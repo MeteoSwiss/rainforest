@@ -29,7 +29,7 @@ Options:
   -m MODELS, --models=MODELS
                         Specify which models you want to use in the form of a
                         json line, the models must be in the folder
-                        /qpe/rf_models/, for example
+                        /ml/rf_models/, for example
                         '{"RF_dualpol":"dualpol_model_BC_raw.p"}', please note
                         the double and single quotes, which are required
                     
@@ -128,9 +128,9 @@ Options:
                         Whether or not to overlay the shapefile of swiss
                         borders, default is True
   -f FIGSIZE, --figsize=FIGSIZE
-                        Size of figure width,height in cm, e.g. 5,10, default
-                        is automatically chosen depending on many QPE fields
-                        are to be plotted
+                        Size of figure width,height in inches, e.g. 5,10,
+                        default is automatically chosen depending on how many
+                        QPE fields are to be plotted
   -x XLIM, --xlim=XLIM  Limits in the west-east direction, in Swiss
                         coordinates, e.g. 100,300, default is 400,900
   -c CBAR, --cbar=CBAR  Orientation of the colorbar, either 'vertical' or
@@ -139,10 +139,12 @@ Options:
                         coordinates, e.g. 500,700, default is 0,350
   -d DISPLAY, --display=DISPLAY
                         Specify how you want to display the QPE subplots as a
-                        comma separated string, e.i '2,1' will put them on 2
+                        comma separated string, e.g 2,1 will put them on 2
                         rows, one column. Default is to put them in one row
   -t TRANSITION, --transition=TRANSITION
-                        Size of figure width,height in cm, default is 10
+                        Precipitation intensity at which the colormap changes
+                        (purple for lower intensities, rainbow for larger
+                        intensities), default is 10
   -v VMIN, --vmin=VMIN  Minimum precip. intensity to display, default = 0.04
   -V VMAX, --vmax=VMAX  Maximum precip. intensity to display, default = 120
   -m MODELS, --models=MODELS
@@ -150,6 +152,7 @@ Options:
                         you want to use, default is to use all available, must
                         be comma separated and put into quotes, e.g.
                         'dualpol,hpol,RZC'
+
 
 
 **Example**

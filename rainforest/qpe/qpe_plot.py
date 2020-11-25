@@ -48,12 +48,12 @@ def main():
                       metavar="SHAPEFILE", default = 1)
     
     parser.add_option("-f", "--figsize", dest = "figsize", type = str,
-                      help="Size of figure width,height in cm, e.g. 5,10, default is automatically chosen depending on many QPE fields are to be plotted", 
+                      help="Size of figure width,height in inches, e.g. 5,10, default is automatically chosen depending on how many QPE fields are to be plotted", 
                       metavar="FIGSIZE", default = None)
 
     parser.add_option("-x", "--xlim", dest = "xlim", type = str,
                       help="Limits in the west-east direction, in Swiss coordinates, e.g. 100,300, default is 400,900", 
-                      metavar="XLIM", default = None)
+                      metavar="XLIM", default = '400,900')
     
     parser.add_option("-c", "--cbar", dest = "cbar", type = str,
                     help="Orientation of the colorbar, either 'vertical' or 'horizontal', default is 'horizontal'", 
@@ -61,15 +61,15 @@ def main():
     
     parser.add_option("-y", "--ylim", dest = "ylim", type = str,
                     help="Limits in the south-north direction, in Swiss coordinates, e.g. 500,700, default is 0,350", 
-                      metavar="YLIM", default = None)
+                      metavar="YLIM", default = '0,350')
     
     
     parser.add_option("-d", "--display", dest = "display", type = str,
-                      help="Specify how you want to display the QPE subplots as a comma separated string, e.i '2,1' will put them on 2 rows, one column. Default is to put them in one row", 
+                      help="Specify how you want to display the QPE subplots as a comma separated string, e.g 2,1 will put them on 2 rows, one column. Default is to put them in one row", 
                       metavar="DISPLAY", default = None)
     
     parser.add_option("-t", "--transition", dest = "transition", type = float,
-                      help="Size of figure width,height in cm, default is 10", 
+                      help="Precipitation intensity at which the colormap changes (purple for lower intensities, rainbow for larger intensities), default is 10", 
                       metavar="TRANSITION", default = 3)    
 
     parser.add_option("-v", "--vmin", dest = "vmin", type = float,

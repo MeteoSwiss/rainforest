@@ -10,6 +10,7 @@ Command line interface to the database
 # Global imports
 import datetime
 import os
+import numpy as np
 from pathlib import Path
 from prompt_toolkit.shortcuts import prompt
 from prompt_toolkit.styles import Style
@@ -41,7 +42,9 @@ def check_input(inpt, check):
         if type(check) == list:
             assert(any([check_input(inpt, c) for c in check]))
         else:
-            if '%Y' in check: # datetime input
+            if type(check) == type:
+                inpt = check(inpt)
+            elif '%Y' in check: # datetime input
                 datetime.datetime.strptime(inpt, check)
             elif check == 'json':
                 json.loads(inpt)
@@ -53,6 +56,10 @@ def check_input(inpt, check):
             elif check == 'makedirs':
                 if not os.path.exists(inpt):
                     os.makedirs(inpt)
+            elif check == 'list_2_numbers':
+                inpt_sep = inpt.split(',')
+                assert(len(inpt_sep) == 2)
+                inpt_sep = np.array([float(i) for i in inpt_sep])
             else:
                 assert(inpt == check)
             
@@ -318,18 +325,10 @@ QPE menu
                             default = str(default_config_path))
                         
                     
-                    success = False
-                    while not success:
-                        o = prompt('Enter the location where the generated files will be stored: ')
-                        try:
-                            if not os.path.exists(o):
-                                os.makedirs(o)
-                            assert(os.path.exists(o))
-                            success = True
-                        except:
-                            pass
-        
-                    folder_models = Path(script_path, 'qpe', 
+                    o = prompt_check('Enter the location where the generated files will be stored: ',
+                                     check = 'makedirs')
+                 
+                    folder_models = Path(script_path, 'ml', 
                                                'rf_models')
                     txt = 'Enter the name of the RF models to use in the form of a json line of the following format '+ \
                                    '{"model1_name":"model1_filename",model2_name":"model2_filename,...,modeln_name":"modeln_filename}' + \
@@ -354,7 +353,71 @@ QPE menu
                         file.close()
                         print('Submitting job')
                         subprocess.call('sbatch {:s}'.format(fname), shell = True)
-                
+                        
+                elif code == 'plot':
+                    
+                    i = prompt_check('Enter the location where the input data (QPE runs) are stored: ',
+                                     check = 'pathexists')
+                 
+                    o = prompt_check('Enter the location where the generated plots will be stored: ',
+                                  check = 'makedirs')
+                    txt = 'Indicate start time of the plots (format YYYYMMDDHHMM, HHMM is optional), leave empty to select whole timerange: '
+                    s = prompt_check(txt, ['%Y%m%d','%Y%m%d%H%M', ''])
+                            
+                    txt = 'Indicate end time of the plots (format YYYYMMDDHHMM, HHMM is optional), leave empty to select whole timerange: '
+                    e = prompt_check(txt, ['%Y%m%d','%Y%m%d%H%M', ''])
+                    
+                    txt = 'Do you want to overlay Swiss border shapefile ("1" or "0"): '
+                    shp = prompt_check(txt, ['1','0'], default = '1')
+                    
+                    txt = 'Enter figure size in inches, comma separated w,h,. i.e. 5,10. Leave empty to choose automatically: '
+                    fig = prompt_check(txt, ['','list_2_numbers'], default = '')
+     
+                    
+                    txt = 'Enter west-east limits of the plots in Swiss Coordinates (km), as comma-separated values: '
+                    xlim = prompt_check(txt, ['list_2_numbers'], default = '400,900')
+       
+                    
+                    txt = 'Enter south-north limits of the plots in Swiss Coordinates (km), as comma-separated values: '
+                    ylim = prompt_check(txt, ['list_2_numbers'], default = '0,350')
+       
+
+                    txt = 'Enter orientation of the colorbar: "vertical" or "horizontal": '
+                    cbar = prompt_check(txt, ['horizontal','vertical'], 
+                                        default = 'horizontal')
+                  
+                    txt = 'Enter minimum precip intensity to plot: '
+                    vmin = prompt_check(txt, float, default = '0.04')
+                    
+                    txt = 'Enter maximum precip intensity to plot: '
+                    vmax = prompt_check(txt, float, default = '120')
+                    
+                    txt = 'Enter precip intensity at which the colorbar changes (from purple to rainbow progression): '
+                    trans = prompt_check(txt, float, default = '10')
+       
+                    txt = 'Specify how you want to organize the QPE subplots as a comma separated string, e.g "2,1", leave empty to put them all in one row: '
+                    disp = prompt_check(txt, ['','list_2_numbers'], default = '') 
+                    
+                    txt = "Specify which models (i.e. subfolders in the qpefolder you want to use, must be comma separated e.g. dualpol,hpol,RZC, leave empty to use all available: "
+                    models = prompt_check(txt, [str,''], default = '')
+                    
+                    
+                    cmd = "qpe_plot -i {:s} -o {:s} -S {:s} -x {:s} -c {:s} -y {:s} -v {:s} -V {:s} -t {:s}'".format(
+                                   i,o,shp,xlim,cbar,ylim, vmin, vmax, trans)
+                    if s != '':
+                        cmd += ' -s {:s}'.format(s)
+                    if e != '':
+                        cmd += ' -e {:s}'.format(e)
+                    if fig != '':
+                        cmd += '-f {:s}'.format(fig)
+                    if disp != '':
+                        cmd += '-d {:s}'.format(disp)
+                    if models != '':
+                        cmd += '-m {:s}'.format(models)
+                    
+                    print('Submitting job {:s}'.format(cmd))
+                    subprocess.call(cmd, shell = True)
+                        
         except KeyboardInterrupt:
             current_menu = 'main'
             print(title1, style=style)
