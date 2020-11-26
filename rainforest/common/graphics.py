@@ -6,6 +6,7 @@ Set of functions to display QPE precipitation data and verification scores
 """
 # Global imports
 import matplotlib as mpl
+mpl.use('Agg')
 from matplotlib.colors import Normalize
 import matplotlib.pyplot as plt
 import numpy as np
@@ -149,7 +150,7 @@ def qpe_plot(data, subplots = None, figsize = None,
         subplots = (1,n)
     
     if np.any(figsize == None):
-        figsize = (4 * subplots[1], 3 * subplots[0])
+        figsize = (4 * subplots[1], 3 * subplots[0]+1)
         
     fig,ax = plt.subplots(subplots[0], subplots[1], sharex = True,
                           sharey = True, figsize = figsize)

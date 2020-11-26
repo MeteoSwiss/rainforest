@@ -395,14 +395,14 @@ QPE menu
                     txt = 'Enter precip intensity at which the colorbar changes (from purple to rainbow progression): '
                     trans = prompt_check(txt, float, default = '10')
        
-                    txt = 'Specify how you want to organize the QPE subplots as a comma separated string, e.g "2,1", leave empty to put them all in one row: '
+                    txt = 'Specify how you want to organize the QPE subplots as a comma separated string, "nrows,ncols" e.g "2,1" , leave empty to put them all in one row: '
                     disp = prompt_check(txt, ['','list_2_numbers'], default = '') 
                     
                     txt = "Specify which models (i.e. subfolders in the qpefolder you want to use, must be comma separated e.g. dualpol,hpol,RZC, leave empty to use all available: "
                     models = prompt_check(txt, [str,''], default = '')
                     
                     
-                    cmd = "qpe_plot -i {:s} -o {:s} -S {:s} -x {:s} -c {:s} -y {:s} -v {:s} -V {:s} -t {:s}'".format(
+                    cmd = "qpe_plot -i {:s} -o {:s} -S {:s} -x {:s} -c {:s} -y {:s} -v {:s} -V {:s} -t {:s}".format(
                                    i,o,shp,xlim,cbar,ylim, vmin, vmax, trans)
                     if s != '':
                         cmd += ' -s {:s}'.format(s)
@@ -415,8 +415,36 @@ QPE menu
                     if models != '':
                         cmd += '-m {:s}'.format(models)
                     
-                    print('Submitting job {:s}'.format(cmd))
-                    subprocess.call(cmd, shell = True)
+                              
+                    print('You want to plot a series of QPE realizations with the following parameters...')
+                    
+                    print('Input data folder: ' + i)
+                    print('Output folder: ' + o)
+                    print('Start time (empty for first timestep available): ' + s)
+                    print('End time (empty for last timestep available): ' + e)
+                    print('Add Swiss border shapefile: ' + shp)
+                    print('West-East limits in CH coords (km): '+xlim)
+                    print('South-North limits in CH coords (km): '+ylim)
+                    print('Minimum intensity to plot: '+vmin)
+                    print('Maximum intensity to plot: '+vmax)
+                    print('Transition intensity in colormap: '+trans)
+                    print('Orientation of colorbar: '+cbar)
+                    print('Size of output figure: width,height in inches, empty to choose automatically: '+ fig)
+                    print('Subplots organization in figure (leave empty to put all in a row): ' + disp)
+                    print('List of QPE models to plot (empty to use all available in folder): ' + models)
+                    
+                    
+                    ok = prompt('Do you want to start y/n: ')
+                    if ok == 'y':
+                        print('Creating slurm job')
+                        fname = 'qpeplot.job'
+                        file = open(fname,'w')
+                        file.write(constants.SLURM_HEADER_PY)
+                        file.write(cmd)
+                        file.close()
+                        print('Submitting job')
+                        subprocess.call('sbatch {:s}'.format(fname), shell = True)
+                
                         
         except KeyboardInterrupt:
             current_menu = 'main'
