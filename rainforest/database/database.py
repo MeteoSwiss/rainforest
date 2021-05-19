@@ -196,7 +196,7 @@ class Database(object):
         est_size = 10**-6 * (shape[0] * shape[1]) * 4
         
         if to_memory and est_size > constants.WARNING_RAM:
-            logging.WARN("""Query output is larger than maximum allowed size,
+            logging.warning("""Query output is larger than maximum allowed size,
                          returning uncached version dataframe instead""")
             to_memory = False
         
