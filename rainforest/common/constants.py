@@ -239,18 +239,22 @@ FOLDER_CPCCV = '/store/msrad/radar/cpc_validation/'
 COSMO1_START = datetime.datetime(2015,10,1)
 FOLDER_RADAR = '/store/msrad/radar/swiss/data/'
 FOLDER_COSMO1 = '/store/s83/owm/COSMO-1/'
+FOLDER_COSMO1E = '/store/s83/osm/COSMO-1E/'
 FOLDER_COSMO1_T = '/store/s83/owm/COSMO-1/ORDERS/MDR/'
+FOLDER_COSMO1E_T = '/store/s83/osm/COSMO-1E/ORDER/MDR/'
 FOLDER_COSMO2_T = '/store/msrad/cosmo/cosmo2/data/'
 FILTER_COMMAND = '~owm/bin/fxfilter'
 CONVERT_COMMAND = '~owm/bin/fxconvert'
 OFFSET_CCS4 = [297,-100]
 FILES_COSMO1_T = sorted(glob.glob(FOLDER_COSMO1_T + '*.nc'))
 TIMES_COSMO1_T = np.array([datetime.datetime.strptime(f[-13:-3],'%Y%m%d%H')
-     for f in FILES_COSMO1_T])
+      for f in FILES_COSMO1_T])
+FILES_COSMO1E_T = sorted(glob.glob(FOLDER_COSMO1E_T + '*.nc'))
+TIMES_COSMO1E_T = np.array([datetime.datetime.strptime(f[-13:-3],'%Y%m%d%H')
+      for f in FILES_COSMO1E_T])
 
-
-###############
-# Radar processing
+ ###############
+ # Radar processing
 ###############
 
 PYART_NAMES_MAPPING = {'reflectivity':'ZH',

@@ -73,10 +73,16 @@ def get_COSMO_T(time, sweeps = None, radar = None):
         raise ValueError(dedent(msg))
         
     # Get the closest COSMO-1 or 2 file in time
-    
-    idx_closest = np.where(time >= constants.TIMES_COSMO1_T)[0][-1]
-    file_COSMO = constants.FILES_COSMO1_T[idx_closest]
-    dt = (time - constants.TIMES_COSMO1_T[idx_closest]).total_seconds()
+    if time.year < 2021: 
+        times_cosmo = constants.TIMES_COSMO1_T
+        files_cosmo = constants.FILES_COSMO1_T
+    else:
+        times_cosmo = constants.TIMES_COSMO1E_T
+        files_cosmo = constants.FILES_COSMO1E_T
+
+    idx_closest = np.where(time >= times_cosmo)[0][-1]
+    file_COSMO = constants.files_cosmo[idx_closest]
+    dt = (time - constants.files_cosmo[idx_closest]).total_seconds()
 
     file_COSMO = netCDF4.Dataset(file_COSMO)
     idx_time = np.argmin(np.abs(dt - file_COSMO.variables['time'][:]))    
@@ -148,8 +154,13 @@ def get_COSMO_variables(time, variables, sweeps = None, radar = None,
     # Round time to nearest hour
     t_near = round_to_hour(time)
     
+    if t_near.year < 2021:
+        folder_cosmo = constants.FOLDER_COSMO1
+    else:
+        folder_cosmo = constants.FOLDER_COSMO1E
+
     # Get the closest COSMO-1 or 2 file in time
-    grb = constants.FOLDER_COSMO1 + 'ANA{:s}/laf{:s}'.format(str(t_near.year)[2:],
+    grb = folder_cosmo + 'ANA{:s}/laf{:s}'.format(str(t_near.year)[2:],
                                 datetime.datetime.strftime(t_near,'%Y%m%d%H')) 
     
     # Extract fields and convert to netCDF
