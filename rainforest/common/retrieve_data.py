@@ -57,8 +57,14 @@ def get_COSMO_T(time, sweeps = None, radar = None):
  
     if np.any(sweeps == None):
         sweeps = range(1,21)
-        
-    if time > constants.COSMO1_START and time < constants.TIMES_COSMO1_T[0]:
+
+    if time > constants.COSMO1E_START and time < constants.TIMES_COSMO1E_T[0]:
+        msg = """No COSMO1E temp file available for this timestep,
+        retrieving COSMO1 temp file instead
+        """
+        logging.warning(dedent(msg))
+
+    elif time > constants.COSMO1_START and time < constants.TIMES_COSMO1_T[0]:
         msg = """No temp file available for this timestep, using the slow 
         more exhaustive function instead
         """
@@ -73,7 +79,7 @@ def get_COSMO_T(time, sweeps = None, radar = None):
         raise ValueError(dedent(msg))
         
     # Get the closest COSMO-1 or 2 file in time
-    if time.year < 2021: 
+    if time < constants.TIMES_COSMO1E_T[0]: 
         times_cosmo = constants.TIMES_COSMO1_T
         files_cosmo = constants.FILES_COSMO1_T
     else:
@@ -81,8 +87,8 @@ def get_COSMO_T(time, sweeps = None, radar = None):
         files_cosmo = constants.FILES_COSMO1E_T
 
     idx_closest = np.where(time >= times_cosmo)[0][-1]
-    file_COSMO = constants.files_cosmo[idx_closest]
-    dt = (time - constants.files_cosmo[idx_closest]).total_seconds()
+    file_COSMO = files_cosmo[idx_closest]
+    dt = (time - files_cosmo[idx_closest]).total_seconds()
 
     file_COSMO = netCDF4.Dataset(file_COSMO)
     idx_time = np.argmin(np.abs(dt - file_COSMO.variables['time'][:]))    
@@ -154,13 +160,16 @@ def get_COSMO_variables(time, variables, sweeps = None, radar = None,
     # Round time to nearest hour
     t_near = round_to_hour(time)
     
-    if t_near.year < 2021:
+    if t_near < constants.COSMO1E_START:
         folder_cosmo = constants.FOLDER_COSMO1
+        subfolder = ''
     else:
         folder_cosmo = constants.FOLDER_COSMO1E
+        subfolder = 'det/'
 
     # Get the closest COSMO-1 or 2 file in time
-    grb = folder_cosmo + 'ANA{:s}/laf{:s}'.format(str(t_near.year)[2:],
+    grb = folder_cosmo + 'ANA{:s}/{:s}laf{:s}'.format(str(t_near.year)[2:],
+                                subfolder,
                                 datetime.datetime.strftime(t_near,'%Y%m%d%H')) 
     
     # Extract fields and convert to netCDF
