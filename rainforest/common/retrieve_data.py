@@ -64,7 +64,7 @@ def get_COSMO_T(time, sweeps = None, radar = None):
         """
         logging.warning(dedent(msg))
 
-    elif time > constants.COSMO1_START and time < constants.TIMES_COSMO1_T[0]:
+    if time > constants.COSMO1_START and time < constants.TIMES_COSMO1_T[0]:
         msg = """No temp file available for this timestep, using the slow 
         more exhaustive function instead
         """
@@ -88,11 +88,11 @@ def get_COSMO_T(time, sweeps = None, radar = None):
 
     idx_closest = np.where(time >= times_cosmo)[0][-1]
     file_COSMO = files_cosmo[idx_closest]
-    dt = (time - files_cosmo[idx_closest]).total_seconds()
+    dt = (time - times_cosmo[idx_closest]).total_seconds()
 
     file_COSMO = netCDF4.Dataset(file_COSMO)
     idx_time = np.argmin(np.abs(dt - file_COSMO.variables['time'][:]))    
-    T = file_COSMO.variables['T'][idx_time,:,:,:]
+    T = np.squeeze(file_COSMO.variables['T'][idx_time,:,:,:])
 
     T_at_radar = {}
     for r in radar:
