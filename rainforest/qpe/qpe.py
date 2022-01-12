@@ -64,7 +64,8 @@ def _qpe_to_chgrid(qpe, time):
     data['units'] = 'mm/hr'
     data['long_name'] = 'Rainforest estimated rain rate'
     data['coordinates'] = 'elevation azimuth range'
-    data['product'] = 'CHRF'
+    data['product'] = b'RR'
+    data['prodname'] = b'CHRF'
     
     grid.fields['radar_estimated_rain_rate'] = data
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
