@@ -22,6 +22,9 @@ from pathlib import Path
 from scipy.ndimage import gaussian_filter
 from scipy.signal import convolve2d
 from scipy.ndimage import map_coordinates
+from pyart.testing import make_empty_grid
+from pyart.aux_io.odim_h5_writer import write_odim_grid_h5
+from pyart.aux_io.odim_h5 import proj4_to_dict
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -43,6 +46,32 @@ NBINS_Y = len(Y_QPE_CENTERS)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+def _qpe_to_chgrid(qpe, time):
+    grid = make_empty_grid([1, NBINS_X, NBINS_Y], [[0,0],
+                                                   [np.min(X_QPE_CENTERS),
+                                                   np.max(X_QPE_CENTERS)],
+                                                   [np.min(Y_QPE_CENTERS),
+                                                   np.max(Y_QPE_CENTERS)]])
+    grid.time['units'] = 'seconds since {:s}'.format(
+                    datetime.datetime.strftime(time, '%Y-%m-%dT%H:%M:%SZ'))
+    grid.origin_latitude['data'] = 46.9524
+    grid.origin_longitude['data'] = 7.43958333
+    grid.projection = proj4_to_dict('+proj=somerc +lat_0=46.9524055556 '+\
+         '+lon_0=7.43958333333 +k_0=1 +x_0=0 +y_0=0 +datum=WGS84 '+\
+         '+units=m +no_defs')
+    data = {}
+    data['data'] = qpe
+    data['units'] = 'mm/hr'
+    data['long_name'] = 'Rainforest estimated rain rate'
+    data['coordinates'] = 'elevation azimuth range'
+    data['product'] = 'CHRF'
+    
+    grid.fields['radar_estimated_rain_rate'] = data
+    grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
+    grid.metadata['version'] = b'H5rad 2.3'
+    return grid  
+    
+    
 def _outlier_removal(image, N = 3, threshold = 3):
     """
     Performs localized outlier correction by standardizing the data in a moving
@@ -422,21 +451,22 @@ class QPEProcessor(object):
                     
                 filepath += '/' + tstr
                 
-                if self.config['FILE_FORMAT'] == 'DN' :
+                if self.config['DATA_FORMAT'] == 'DN' :
                     # Find idx from CPC scale
                     qpe = np.searchsorted(constants.SCALE_CPC, qpe)
                     qpe = qpe.astype('B') # Convert to byte
                     qpe[constants.MASK_NAN] = 255
-                    qpe.tofile(filepath)
+                else:
+                    qpe[constants.MASK_NAN] = np.nan
 
-                elif self.config['FILE_FORMAT'] == 'DN_gif':
+                if self.config['FILE_FORMAT'] == 'DN_gif':
                     qpe[constants.MASK_NAN] = -99
                     filepath += '.gif'
                     save_gif(filepath, qpe)
                 
-                else:
-                    if self.config['FILE_FORMAT'] != 'float':
-                        logging.error('Invalid file_format, using float instead')
-                    qpe[constants.MASK_NAN] = np.nan
-                    qpe.to_file(filepath)
+                elif self.config['FILE_FORMAT'] == 'ODIM':
+                    grid = _qpe_to_chgrid(qpe, t)
+                    filepath += '.h5'
+                    write_odim_grid_h5(filepath, grid)
+                    
                     

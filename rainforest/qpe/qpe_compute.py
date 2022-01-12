@@ -37,7 +37,7 @@ def main():
                       metavar="CONFIG")
     
     parser.add_option("-m", "--models", dest = "models", type = str,
-                      default = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_raw.p"}',
+                      default = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p"}',
                       help='Specify which models you want to use in the form of a json line' +
                       ', the models must be in the folder /ml/rf_models/, for example \'{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p}\'' +
                       ', please note the double and single quotes, which are required',
@@ -58,6 +58,7 @@ def main():
         
     options.start = datetime.datetime.strptime(options.start, '%Y%m%d%H%M')
     options.end = datetime.datetime.strptime(options.end, '%Y%m%d%H%M')
-    
+    print(options.config, options.models)
+    print(options.start, options.end)    
     qpe = QPEProcessor(options.config, options.models)
     qpe.compute(options.outputfolder, options.start, options.end)
