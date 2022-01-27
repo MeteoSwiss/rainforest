@@ -23,8 +23,7 @@ current_folder = os.path.dirname(current_file)
 
 FOLDER_RF = str(Path(current_folder,  'rf_models'))
 
-
-    
+  
 ##################
 # Add here all classes/functions used in the construction of the pickled 
 # instances
@@ -185,7 +184,7 @@ class MyCustomUnpickler(pickle.Unpickler):
         return super().find_class(module, name)
     
     
-def read_rf(rf_name):
+def read_rf(rf_name, filepath):
     """
     Reads a randomForest model from the RF models folder using pickle. All custom
     classes and functions used in the construction of these pickled models
@@ -207,9 +206,12 @@ def read_rf(rf_name):
     if rf_name[-2:] != '.p':
         rf_name += '.p'
     
-    if os.path.dirname(rf_name) == '':
-        rf_name = str(Path(FOLDER_RF, rf_name))
-    
+    if filepath == '': 
+        if os.path.dirname(rf_name) == '':
+            rf_name = str(Path(FOLDER_RF, rf_name))
+    else:
+        rf_name = str(Path(filepath, rf_name))
+        
     unpickler = MyCustomUnpickler(open(rf_name, 'rb'))
     if not os.path.exists(rf_name):
         raise IOError('RF model {:s} does not exist!'.format(rf_name))

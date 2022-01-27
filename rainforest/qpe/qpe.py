@@ -7,6 +7,9 @@ Daniel Wolfensberger
 MeteoSwiss/EPFL
 daniel.wolfensberger@epfl.ch
 December 2019
+
+Modified by D. Wolfensberger and R. Gugerli 
+January 2022
 """
 
 
@@ -457,7 +460,6 @@ class QPEProcessor(object):
                 disag[np.isnan(disag)] = 0
                 qpe = qpe * disag
                
-
                 # Postprocessing
                 if self.config['OUTLIER_REMOVAL']:
                     qpe = _outlier_removal(qpe)
@@ -482,22 +484,33 @@ class QPEProcessor(object):
                     
                 filepath += '/' + tstr
                 
-                if self.config['DATA_FORMAT'] == 'DN' :
-                    # Find idx from CPC scale
-                    qpe = np.searchsorted(constants.SCALE_CPC, qpe)
-                    qpe = qpe.astype('B') # Convert to byte
-                    qpe[constants.MASK_NAN] = 255
-                else:
-                    qpe[constants.MASK_NAN] = np.nan
-
-                if self.config['FILE_FORMAT'] == 'DN_gif':
-                    qpe[constants.MASK_NAN] = -99
-                    filepath += '.gif'
-                    save_gif(filepath, qpe)
-                
-                elif self.config['FILE_FORMAT'] == 'ODIM':
-                    grid = _qpe_to_chgrid(qpe, t)
-                    filepath += '.h5'
-                    write_odim_grid_h5(filepath, grid)
+                # Output in binary data and .gif format
+                if (self.config['DATA_FORMAT'] == 'DN'):
+                    if (self.config['FILE_FORMAT'] == 'DN'):
+                        # Find idx from CPC scale
+                        qpe = np.searchsorted(constants.SCALE_CPC, qpe)
+                        qpe = qpe.astype('B') # Convert to byte
+                        qpe[constants.MASK_NAN] = 255
+                        qpe.tofile(filepath)
+                        
+                    else:
+                        if (self.config['FILE_FORMAT'] != 'gif'): 
+                            logging.error('Invalid file_format with data format DN, using gif output instead')
+                        qpe[constants.MASK_NAN] = -99
+                        filepath += '.gif'
+                        save_gif(filepath, qpe)
+                        
+                # Output in binary data and .gif format                    
+                if (self.config['DATA_FORMAT'] == 'float'):
+                    if (self.config['FILE_FORMAT'] == 'float'):
+                        qpe[constants.MASK_NAN] = np.nan
+                        qpe.astype(np.float32).tofile(filepath)
+                        
+                    else:
+                        if (self.config['FILE_FORMAT'] != 'ODIM'): 
+                            logging.error('Invalid file format with data format float, using ODIM HDF5 output instead')
+                        grid = _qpe_to_chgrid(qpe, t)
+                        filepath += '.h5'
+                        write_odim_grid_h5(filepath, grid)
                     
                     
