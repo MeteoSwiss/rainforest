@@ -14,6 +14,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import numpy as np 
+from pyproj import Transformer
 import datetime
 import os
 import logging
@@ -46,26 +47,57 @@ NBINS_Y = len(Y_QPE_CENTERS)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-def _qpe_to_chgrid(qpe, time):
+def _qpe_to_chgrid(qpe, time, precision = 2):
+    """
+    Creates a pyart grid object from a QPE array
+    
+    Parameters
+    ----------
+    qpe : ndarray
+        2D numpy array containing the QPE data in the Swiss QPE grid
+    time : datetime
+        Start time of the scan
+    precision : int
+        Precision to use when storing the QPE data in the grid, default is 2
+        (0.01)
+           
+    Returns
+    -------
+    A pyart Grid object
+    """
+    
+    swiss = 21781
+    wgs =   4326
+    transformer = Transformer.from_crs(swiss, wgs)
+    UL_LON, UL_LAT = transformer.transform(Y_QPE_CENTERS[0]*1000, 
+                               X_QPE_CENTERS[0]*1000)
+    LR_LON, LR_LAT = transformer.transform(Y_QPE_CENTERS[-1]*1000,
+                               X_QPE_CENTERS[-1]*1000)
+    
     grid = make_empty_grid([1, NBINS_X, NBINS_Y], [[0,0],
-                                                   [np.min(X_QPE_CENTERS),
-                                                   np.max(X_QPE_CENTERS)],
-                                                   [np.min(Y_QPE_CENTERS),
-                                                   np.max(Y_QPE_CENTERS)]])
+                                                   [UL_LON, LR_LON],
+                                                   [UL_LAT, LR_LAT]])
+    time_start = time - datetime.timedelta(seconds = 5 * 60)
     grid.time['units'] = 'seconds since {:s}'.format(
-                    datetime.datetime.strftime(time, '%Y-%m-%dT%H:%M:%SZ'))
+                    datetime.datetime.strftime(time_start, 
+                                               '%Y-%m-%dT%H:%M:%SZ'))
+    grid.time['data'] = np.arange(0, 5 *60)
     grid.origin_latitude['data'] = 46.9524
     grid.origin_longitude['data'] = 7.43958333
-    grid.projection = proj4_to_dict('+proj=somerc +lat_0=46.9524055556 '+\
-         '+lon_0=7.43958333333 +k_0=1 +x_0=0 +y_0=0 +datum=WGS84 '+\
-         '+units=m +no_defs')
+    grid.projection = proj4_to_dict("+proj=somerc +lat_0=46.95240555555556 "+\
+            "+lon_0=7.439583333333333 +k_0=1 +x_0=2600000 +y_0=1200000 "+\
+            "+ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 "+\
+                "+units=m +no_defs")
     data = {}
-    data['data'] = qpe
+    data['data'] = np.around(qpe, precision)
     data['units'] = 'mm/hr'
     data['long_name'] = 'Rainforest estimated rain rate'
     data['coordinates'] = 'elevation azimuth range'
     data['product'] = b'RR'
     data['prodname'] = b'CHRF'
+    data['nodata'] = np.nan
+    data['_FillValue'] = np.nan
+    
     
     grid.fields['radar_estimated_rain_rate'] = data
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
@@ -81,7 +113,7 @@ def _outlier_removal(image, N = 3, threshold = 3):
     Parameters
     ----------
     image : ndarray
-        2D numpy array, of shape
+        2D numpy array
     N : int
         size of the moving window, for both rows and columns ( the window is
         square)
@@ -239,7 +271,7 @@ class QPEProcessor(object):
                 logging.error('Failed to retrieve data for radar {:s}'.format(rad))
                 
     def compute(self, output_folder, t0, t1, timestep = 5,
-                                                    basename = 'RF%y%j%H%M'):
+                                                    basename = 'RFQ%y%j%H%M'):
         """
         Computes QPE values for a given time range and stores them in a 
         folder, in a binary format
@@ -258,9 +290,9 @@ class QPEProcessor(object):
             change the time here, f.ex. 10 min, will compute the QPE only every
             two sets of radar scans
         basename: str (optional)
-            Pattern for the filenames, default is  'RF%y%j%H%M' which uses 
+            Pattern for the filenames, default is  'RFQ%y%j%H%M' which uses 
             the same standard as other MeteoSwiss products 
-            (example RF191011055)
+            (example RFQ191011055)
         
         """
         
@@ -425,9 +457,7 @@ class QPEProcessor(object):
                 disag[np.isnan(disag)] = 0
                 qpe = qpe * disag
                
-                
-                
-            
+
                 # Postprocessing
                 if self.config['OUTLIER_REMOVAL']:
                     qpe = _outlier_removal(qpe)
