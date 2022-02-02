@@ -18,7 +18,6 @@ import pandas as pd
 import datetime
 import logging
 
-import pysteps
 
 logging.basicConfig(level=logging.INFO)
 import os
@@ -31,6 +30,12 @@ from rainforest.common.lookup import get_lookup
 from rainforest.common.utils import read_task_file, envyaml
 from rainforest.common.retrieve_data import retrieve_prod, retrieve_CPCCV
 from rainforest.common.io_data import read_cart
+
+try:
+    import pysteps
+    _PYSTEPS_AVAILABLE = True
+except ImportError:
+    _PYSTEPS_AVAILABLE = False
 
 
 class Updater(object):
@@ -65,6 +70,9 @@ class Updater(object):
         products_decomposed = []
         for prod in self.products:
             if 'MV' in prod:
+                if not _PYSTEPS_AVAILABLE:
+                    logging.error("Pysteps is not available, product {:s} will not be extracted!")
+                    continue
                 products_decomposed.append(prod + '_x')
                 products_decomposed.append(prod + '_y')
             else:
