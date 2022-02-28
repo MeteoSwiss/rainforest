@@ -184,7 +184,7 @@ class MyCustomUnpickler(pickle.Unpickler):
         return super().find_class(module, name)
     
     
-def read_rf(rf_name, filepath):
+def read_rf(rf_name, filepath=''):
     """
     Reads a randomForest model from the RF models folder using pickle. All custom
     classes and functions used in the construction of these pickled models
@@ -196,6 +196,8 @@ def read_rf(rf_name, filepath):
         Name of the randomForest model, it must be stored in the folder
         /ml/rf_models and computed with the rf:RFTraining.fit_model function
  
+    filepath: str
+        Path to the model files, if not in default folder
         
     Returns
     -------

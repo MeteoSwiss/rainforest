@@ -17,6 +17,10 @@ from optparse import OptionParser
 from rainforest.qpe.qpe import QPEProcessor
 from rainforest.ml.rfdefinitions import read_rf
 
+# Suppress certain warnings
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 def main():
     parser = OptionParser()
     
@@ -43,6 +47,12 @@ def main():
                       ', please note the double and single quotes, which are required',
                       metavar="MODELS")
     
+    parser.add_option("-p", "--modelpath", dest = "modelpath", type=str,
+                      default = None,
+                      help ='Specify where the models are stored in case they are not saved under /ml/rf_models/',
+                      metavar='MODELPATHS')
+    
+    
     (options, args) = parser.parse_args()
     
     if options.config == None:
@@ -51,7 +61,10 @@ def main():
         
     options.models = json.loads(options.models)
     for k in options.models.keys():
-        options.models[k] = read_rf(options.models[k])
+        if options.modelpath == None:
+            options.models[k] = read_rf(options.models[k])
+        else:
+            options.models[k] = read_rf(options.models[k], filepath=options.modelpath)
     
     if not os.path.exists(options.outputfolder):
         os.makedirs(options.outputfolder)

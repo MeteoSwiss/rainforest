@@ -48,8 +48,6 @@ rainforest/common/__pycache__/wgs84_ch1903.cpython-36.pyc
 rainforest/common/__pycache__/wgs84_ch1903.cpython-38.pyc
 rainforest/common/__pycache__/wquantiles.cpython-35.pyc
 rainforest/common/__pycache__/wquantiles.cpython-36.pyc
-rainforest/common/data/coords_COSMO1.nc
-rainforest/common/data/coords_COSMO1_T.nc
 rainforest/common/data/coords_COSMO2.nc
 rainforest/common/data/coords_COSMO2_T.nc
 rainforest/common/data/data_radars.csv
@@ -223,10 +221,6 @@ rainforest/ml/rf.py
 rainforest/ml/rf_train.py
 rainforest/ml/rfdefinitions.py
 rainforest/ml/utils.py
-rainforest/ml/rf_models/RF_dualpol_BETA_-0.5_BC_spline.p
-rainforest/ml/rf_models/RF_dualpol_BETA_-0.5_BC_spline_bkp.p
-rainforest/ml/rf_models/RF_hpol_BETA_-0.5_BC_spline.p
-rainforest/ml/rf_models/RF_hpol_BETA_-0.5_BC_spline_bkp.p
 rainforest/ml/rf_models/__init__.py
 rainforest/qpe/__init__.py
 rainforest/qpe/default_config.yml
