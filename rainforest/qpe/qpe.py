@@ -9,7 +9,7 @@ daniel.wolfensberger@epfl.ch
 December 2019
 
 Modified by D. Wolfensberger and R. Gugerli
-January 2022
+March 2022
 """
 
 
@@ -25,6 +25,7 @@ from pathlib import Path
 from scipy.ndimage import gaussian_filter
 from scipy.signal import convolve2d
 from scipy.ndimage import map_coordinates
+
 from pyart.testing import make_empty_grid
 from pyart.aux_io.odim_h5_writer import write_odim_grid_h5
 from pyart.aux_io.odim_h5 import proj4_to_dict
@@ -55,7 +56,7 @@ NBINS_Y = len(Y_QPE_CENTERS)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-def _qpe_to_chgrid(qpe, time, precision = 2):
+def _qpe_to_chgrid(qpe, time, radar_list, precision=2):
     """
     Creates a pyart grid object from a QPE array
 
@@ -68,6 +69,9 @@ def _qpe_to_chgrid(qpe, time, precision = 2):
     precision : int
         Precision to use when storing the QPE data in the grid, default is 2
         (0.01)
+    quality : dictionnary
+        Containing all radars with corresponding timestamps that are missing
+        
 
     Returns
     -------
@@ -98,14 +102,23 @@ def _qpe_to_chgrid(qpe, time, precision = 2):
     data['long_name'] = 'Rainforest estimated rain rate'
     data['coordinates'] = 'elevation azimuth range'
     data['product'] = b'RR'
-    data['prodname'] = b'CHRF'
+    data['prodname'] = b'CHRFQ'
     data['nodata'] = np.nan
     data['_FillValue'] = np.nan
-
 
     grid.fields['radar_estimated_rain_rate'] = data
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
     grid.metadata['version'] = b'H5rad 2.3'
+    # Add missing radar information
+    quality = 'ADLPW'
+    if len(radar_list) != 0:
+        rad_list = list(radar_list.keys())
+        qual_new = quality
+        for rad in rad_list:
+            qual_new = qual_new.replace(rad, '-')
+        quality = qual_new
+    grid.metadata['radar'] = quality.encode()
+
     return grid
 
 
@@ -315,6 +328,7 @@ class QPEProcessor(object):
 
         qpe_prev = {}
         X_prev = {}
+        missing_files = {}
 
         for i, t in enumerate(timeserie): # Loop on timesteps
             logging.info('====')
@@ -338,28 +352,35 @@ class QPEProcessor(object):
             # Get COSMO temperature for all radars for this timestamp
             T_cosmo = get_COSMO_T(t, radar = self.config['RADARS'])
             radobjects = {}
+
             for rad in self.config['RADARS']:
-                radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                          self.status_files[rad][t])
-                radobjects[rad].visib_mask(self.config['VISIB_CORR']['MIN_VISIB'],
-                                 self.config['VISIB_CORR']['MAX_CORR'])
-                radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
-                radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
-                radobjects[rad].add_cosmo_data(T_cosmo[rad])
+                if self.radar_files[rad].get(t) != None:
+                    radobjects[rad] = Radar(rad, self.radar_files[rad][t],
+                            self.status_files[rad][t])
+                    radobjects[rad].visib_mask(self.config['VISIB_CORR']['MIN_VISIB'],
+                                    self.config['VISIB_CORR']['MAX_CORR'])
+                    radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
+                    radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
+                    radobjects[rad].add_cosmo_data(T_cosmo[rad])
 
-                # Delete files
-                for f in self.radar_files[rad][t]:
-                    if os.path.exists(f):
-                        os.remove(f)
-                if os.path.exists(self.status_files[rad][t]):
-                    os.remove(self.status_files[rad][t])
-
-
+                    # Delete files
+                    for f in self.radar_files[rad][t]:
+                        if os.path.exists(f):
+                            os.remove(f)
+                    if os.path.exists(self.status_files[rad][t]):
+                        os.remove(self.status_files[rad][t])
+                else:
+                    missing_files[rad] = t
+            
             for sweep in self.config['SWEEPS']: # Loop on sweeps
                 logging.info('---')
                 logging.info('Processing sweep ' + str(sweep))
 
                 for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W
+                    # If there is no radar file for the specific radar, continue to next radar
+                    if rad not in radobjects.keys():
+                        logging.info('Processing radar {} - no data for this timestep!'.format(rad))
+                        continue
                     logging.info('Processing radar ' + str(rad))
                     if sweep not in radobjects[rad].radsweeps.keys():
                         continue
@@ -511,8 +532,6 @@ class QPEProcessor(object):
                     else:
                         if (self.config['FILE_FORMAT'] != 'ODIM'):
                             logging.error('Invalid file format with data format float, using ODIM HDF5 output instead')
-                        grid = _qpe_to_chgrid(qpe, t)
+                        grid = _qpe_to_chgrid(qpe, t, radar_list=missing_files)
                         filepath += '.h5'
                         write_odim_grid_h5(filepath, grid)
-
-
