@@ -318,12 +318,15 @@ class QPEProcessor(object):
             if not os.path.exists(str(Path(output_folder, model))):
                 os.makedirs(str(Path(output_folder, model)))
 
+        # Retrieve one timestamp before beginning for lead time
+        tL = t0-datetime.timedelta(minutes=timestep)
+        
         # Retrieve data for time range
-        self.fetch_data(t0, t1)
+        self.fetch_data(tL, t1)
 
         # Get all timesteps in time range
-        n_incr = int((t1 - t0).total_seconds() / (60 * timestep))
-        timeserie = t0 + np.array([datetime.timedelta(minutes = timestep * i)
+        n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
+        timeserie = tL + np.array([datetime.timedelta(minutes=timestep*i)
                             for i in range(n_incr + 1)])
 
         qpe_prev = {}
@@ -463,10 +466,10 @@ class QPEProcessor(object):
                 rproxy_mean = (Xcomb[:,idx_zh]/constants.A_QPE)**(1/constants.B_QPE)
                 rproxy_mean[np.isnan(rproxy_mean)] = 0
 
-
                 # Remove axis with only zeros
                 validrows = (Xcomb>0).any(axis=1)
 
+                # Convert radar data to precipitation estimates
                 qpe = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
                 try:
                     qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
@@ -491,14 +494,16 @@ class QPEProcessor(object):
 
                 if i == 0:
                     qpe_prev[k] = qpe
+                    # Because of lead time, we can go out here:
+                    logging.info('Processing time '+str(t)+' was only used as lead time and discarded')
+                    continue
 
                 comp = np.array([qpe_prev[k].copy(), qpe.copy()])
                 qpe_prev[k] = qpe
                 if self.config['ADVECTION_CORRECTION'] and i > 0:
                     if not _PYSTEPS_AVAILABLE:
-                        logging.error("Pysteps is not available, not qpe disaggregation will be performed!")
+                        logging.error("Pysteps is not available, no qpe disaggregation will be performed!")
                     qpe = _disaggregate(comp)
-
 
                 tstr = datetime.datetime.strftime(t, basename)
                 filepath = output_folder + '/' + k
