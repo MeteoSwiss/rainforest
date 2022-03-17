@@ -529,9 +529,9 @@ class QPEProcessor(object):
                         save_gif(filepath, qpe)
 
                 # Output in binary data and .gif format
+                qpe[constants.MASK_NAN] = np.nan
                 if (self.config['DATA_FORMAT'] == 'float'):
                     if (self.config['FILE_FORMAT'] == 'float'):
-                        qpe[constants.MASK_NAN] = np.nan
                         qpe.astype(np.float32).tofile(filepath)
 
                     else:
