@@ -331,11 +331,13 @@ class QPEProcessor(object):
 
         qpe_prev = {}
         X_prev = {}
-        missing_files = {}
 
         for i, t in enumerate(timeserie): # Loop on timesteps
             logging.info('====')
             logging.info('Processing time '+str(t))
+
+            # Log missing radar files
+            missing_files = {}
 
             # Initialize RF features
             rf_features_cart = {}
