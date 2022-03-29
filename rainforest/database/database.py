@@ -343,13 +343,17 @@ class Database(object):
                                str(datetime.utcfromtimestamp(tstamp_end_old)))
                     userinput = input(textwrap.dedent(warning))
                     if userinput == 'q':
-                        raise KeyboardInterrupt()
-                                             
+                        raise KeyboardInterrupt()                                     
         
         # Write metadata file
         mdata = copy.deepcopy(config_g)
         yaml.dump(mdata, open(mdata_path,'w'))
 
+        # If timestamp is datetime format, convert to string
+        if isinstance(t0, datetime):
+            t0 = t0.strftime("%Y%m%d%H%M")
+        if isinstance(t1, datetime):        
+            t1 = t1.strftime("%Y%m%d%H%M") 
         
         # Split all stations in subsets
         max_nb_jobs = config_g['MAX_NB_SLURM_JOBS']
@@ -363,7 +367,7 @@ class Database(object):
             file = open(fname,'w')
             logging.info('Writing task file {:s}'.format(fname))
             file.write(constants.SLURM_HEADER_R)
-            file.write('Rscript {:s}/retrieve_dwh_data.r {:s} {:s} {:f} "{:s}" "{:s}" {:s} {:d} {:d}'.format(
+            file.write('Rscript {:s}/retrieve_dwh_data.r "{:s}" "{:s}" {:f} "{:s}" "{:s}" {:s} {:d} {:d}'.format(
                        cwd,
                        t0,
                        t1,
@@ -375,7 +379,7 @@ class Database(object):
                        overwrite))
             file.close()
             logging.info('Submitting job {:d}'.format(i))
-            subprocess.call('sbatch {:s}'.format(fname), shell = True)
+            #subprocess.call('sbatch {:s}'.format(fname), shell = True)
         logging.info("""All jobs have been submitted, please wait a few hours
                      for completion...""")
      
