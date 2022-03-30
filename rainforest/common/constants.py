@@ -299,11 +299,21 @@ AVG_METHODS[2] = lambda x, axis: np.nansum(x, axis = axis)
 
 WARNING_RAM = 512 # megabytes
 SLURM_HEADER_R = '''#!/bin/sh
-module load PrgEnv-gnu/19.2
-module load r/3.6.1-fosscuda-2019b
 #SBATCH -N 1     # nodes requested
 #SBATCH -c 1      # cores requested
-#SBATCH -t 06:0:00  # time requested in hour:minute:second
+#SBATCH -t 12:0:00  # time requested in hour:minute:second
+#SBATCH --partition=postproc
+#SBATCH --account=msrad
+#SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
+#SBATCH --output=db_update-%a.out
+#SBATCH --error=db_update-%a.err
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
+
+export MODULEPATH="/store/msclim/share/modulefiles/modules/all:${MODULEPATH}"
+module load /store/msclim/share/modulefiles/modules/all/cat/tsa-R3.5.2
+source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh
+conda activate rainforest_RandPython
 '''
 
 
