@@ -7,6 +7,12 @@ Daniel Wolfensberger
 MeteoSwiss/EPFL
 daniel.wolfensberger@epfl.ch
 December 2019
+
+Modified by 
+Rebecca Gugerli
+MeteoSwiss/EPFL
+March 2022
+
 """
 
 
@@ -30,6 +36,7 @@ from .utils import sweepnumber_fromfile, hex_to_rgb
 from . import retrieve_data as retrieve
 from .lookup import get_lookup
 
+from pyart.aux_io.odim_h5 import read_odim_grid_h5
 def read_xls(xls_file):
     """Reads an excel file such as those used for CPC vlaidation
 
@@ -177,8 +184,11 @@ def read_cart(cart_file):
     
     if extension == '.gif' or 'CPC' in cart_file:
         data = read_gif(cart_file)
-    elif 'RF' in cart_file:
-         # Get from filesize if it is DN or float
+    elif extension == '.h5':
+         odim_dummy = read_odim_grid_h5(cart_file)
+         data = odim_dummy.fields[list(odim_dummy.fields.keys())[0]]['data']
+    elif 'RFQ' in cart_file:
+        # Get from filesize if it is DN or float
          size = os.path.getsize(cart_file)
          DN = False
          nbins_x, nbins_y = constants.NBINS_X, constants.NBINS_Y
