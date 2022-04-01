@@ -16,9 +16,10 @@ import numpy as np
 import copy
 import datetime
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Local imports
-from ..common.utils import read_df, get_qpe_files, perfscores
+from ..common.utils import read_df, get_qpe_files, get_qpe_files_multiple_dirs, perfscores
 from ..common.utils import timestamp_from_datetime, nearest_time
 from ..common.lookup import get_lookup
 from ..common.io_data import read_cart
@@ -58,9 +59,14 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
                         
      
     """
-    logging.info('Getting all files from qpe folder {:s}'.format(qpefolder))
-
-    tmp = get_qpe_files(qpefolder, time_agg = 10, list_models = list_models)
+    
+    if type(qpefolder) == list:
+        logging.info('Getting all files from multiple qpe folders')
+        tmp = get_qpe_files_multiple_dirs(qpefolder, time_agg = 10, list_models = list_models)
+    else:
+        logging.info('Getting all files from qpe folder {:s}'.format(qpefolder))
+        tmp = get_qpe_files(qpefolder, time_agg = 10, list_models = list_models)
+        
     # Get only timesteps where at least 2 files are available during 10 min period
     qpe_files10 = copy.deepcopy(tmp)
     for k in tmp.keys():
@@ -68,7 +74,6 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
             if len(tmp[k][m]) < 2:
                 del qpe_files10[k][m]
                 
-        
     # number of models by timestep
     nmodels = np.array([len(d) for d in qpe_files10.values()])
    
@@ -136,7 +141,6 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
     hours_u,cnt = np.unique(hours, return_counts = True)
     precip_qpe60 = {}
 
-        
     for m in models:
         data = precip_qpe[m]
         precip_qpe60[m] = np.array([np.nanmean(data[hours == h], axis = 0) 
@@ -164,6 +168,12 @@ def evaluation(qpefolder, gaugepattern, list_models = None,
     # Make score plots
     timerange = datetime.datetime.strftime(tsteps[0], '%Y%m%d%H%M') + '_' +\
         datetime.datetime.strftime(tsteps[-1], '%Y%m%d%H%M')
+        
+    # Save the data as parquet
+    for m in models:
+        df_precip = pd.DataFrame(precip_qpe[m],columns=stations, index=tsteps) 
+        df_precip.to_csv(outputfolder+'/'+str(m)+'_qpe10min_'+timerange+'.csv', float_format='%.3f')
+    
     title = datetime.datetime.strftime(tsteps[0], '%d %b %Y %H:%M')
     title += ' - ' +  datetime.datetime.strftime(tsteps[-1], '%d %b %Y %H:%M')
     score_plot(scores10, title + ', agg = 10 min ', figsize = (13,8))

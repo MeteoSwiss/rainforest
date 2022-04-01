@@ -541,7 +541,7 @@ def read_df(pattern, dbsystem = 'dask', sqlContext = None):
                            header = True, inferSchema = True)
         else:
             if '.gz' in files[0]:
-                df = dd.read_csv(pattern, compression  = 'gzip')
+                df = dd.read_csv(pattern, compression  = 'gzip', dtype={'TIMESTAMP':'float64'} )
             else:
                 df = dd.read_csv(pattern)
     else:
@@ -618,6 +618,88 @@ def get_qpe_files(input_folder, t0 = None, t1 = None, time_agg = None,
         
         files = glob.glob(sub + '/*')
         for f in files:
+            try:
+                t = str(re.match('.*[a-zA-Z]([0-9]{9}).*',f)[1])
+                t = datetime.datetime.strptime(t,'%y%j%H%M')
+                if time_agg != None:
+                    t = nearest_time(t, time_agg)
+                    
+                if t0 != None:
+                    if t < t0:
+                        continue
+                if t1 != None:
+                    if t > t1:
+                        continue
+                    
+                if t not in all_files.keys():
+                    all_files[t] = {}
+                if model not in all_files[t].keys():
+                    all_files[t][model] = []
+                
+                all_files[t][model].append(f)   
+            except:
+                pass
+            
+    return all_files
+
+def get_qpe_files_multiple_dirs(input_folder, t0 = None, t1 = None, time_agg = None,
+                                list_models = None):
+    """
+    Gets the list of all qpe files from multiple folders sorted according to DOY (as saved by qpe_compute)
+    and separates them by qpe type and timestep
+    
+    Parameters
+    ----------
+    input_folder : str
+        main directory where the qpe files are saved, it contains one subfolder
+        for every qpe model (type) that was used
+    t0 : datetime (optional)
+        Starting time of the period to retrieve, will be used to filter files,
+        if not provided starting time will be time of first file
+    t1 : datetime (optional)
+        End time of the period to retrieve, will be used to filter files,
+        if not provided end time will be time of last file
+    time_agg : minutes (optional)
+        Will aggregate all files to a reference time in minutes (e.g. use 10 to
+        put together all files that correspond to a single gauge measurement)
+    list_models: (optional)
+        List of qpe types to retrieve , if not provided all folders in the first input_folder
+        will be used
+    Returns
+    -------
+    A dictionary where every key is a QPE model and every value is a list
+    with all files in chronological order
+    """
+    
+    # If there is only one input folder, use function above
+    if (type(input_folder) != list):
+        logging.info('Only one directory is given, switch to get_qpe_files() routine')
+        all_files = get_qpe_files(input_folder, t0, t1, time_agg,list_models)
+        return all_files
+    
+    # Create a model list
+    if (list_models == None):
+        list_models = []
+        for sub in glob.glob(input_folder[0] + '/*'):
+            list_models.append(os.path.basename(sub))
+    
+    # Create file lists for each model
+    file_list = {}
+    for model in list_models:
+        files = []
+        for infolder in input_folder:
+            dir = os.path.join(infolder+model)
+            # Check whether directory exists
+            if not os.path.isdir(dir):
+                continue
+            # Append all files
+            files += glob.glob(dir+'/*')
+        file_list[model] = files
+    
+    # Get the filepaths and names according to model and timestep
+    all_files = {}
+    for model in file_list.keys():
+        for f in file_list[model]:
             try:
                 t = str(re.match('.*[a-zA-Z]([0-9]{9}).*',f)[1])
                 t = datetime.datetime.strptime(t,'%y%j%H%M')
