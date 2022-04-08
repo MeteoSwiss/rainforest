@@ -359,7 +359,7 @@ class QPEProcessor(object):
             radobjects = {}
 
             for rad in self.config['RADARS']:
-                # if file does not exist:
+                # if file does not exist, add to missing file list
                 if self.radar_files[rad].get(t) == None:
                     missing_files[rad] = t
                     continue
@@ -368,25 +368,29 @@ class QPEProcessor(object):
                 radobjects[rad] = Radar(rad, self.radar_files[rad][t],
                                         self.status_files[rad][t])
                 
-                # if problem with radar file, exclude it
+                # if problem with radar file, exclude it and add to missing files list
                 if len(radobjects[rad].radarfields) == 0:
                     missing_files[rad] = t
-                    logging.info('Removing timestep {:s} of {:s}'.format(str(t), rad))
+                    logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 
                 # Process the radar data
-                    radobjects[rad].visib_mask(self.config['VISIB_CORR']['MIN_VISIB'],
-                                    self.config['VISIB_CORR']['MAX_CORR'])
-                    radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
-                    radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
-                    radobjects[rad].add_cosmo_data(T_cosmo[rad])
+                radobjects[rad].visib_mask(self.config['VISIB_CORR']['MIN_VISIB'],
+                                self.config['VISIB_CORR']['MAX_CORR'])
+                radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
+                radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
+                radobjects[rad].add_cosmo_data(T_cosmo[rad])
 
-                    # Delete files
-                    for f in self.radar_files[rad][t]:
-                        if os.path.exists(f):
-                            os.remove(f)
-                    if os.path.exists(self.status_files[rad][t]):
-                        os.remove(self.status_files[rad][t])
+                # Delete files if config files requires
+                try:
+                    if self.config['CLEANUP'] == 'delete_all':
+                        for f in self.radar_files[rad][t]:
+                            if os.path.exists(f):
+                                os.remove(f)
+                        if os.path.exists(self.status_files[rad][t]):
+                            os.remove(self.status_files[rad][t])
+                except:
+                    logging.error('No cleanup was defined, unzipped files remain in temp-folder')
             
             for sweep in self.config['SWEEPS']: # Loop on sweeps
                 logging.info('---')
