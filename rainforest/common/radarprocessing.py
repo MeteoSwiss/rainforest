@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Dec 16 17:38:52 2019
-
-@author: wolfensb
+@author: wolfensb, gugerlir
 """
 
 
@@ -67,8 +66,7 @@ class Radar(object):
                 zh = radinstance.get_field(0,'ZH')
                 visib_sweep = visib_sweep[0:len(zh),:]
                 radinstance.add_field('VISIB',{'data': visib_sweep})
-                
-                
+                                
                 self.radsweeps[sweep] = radinstance
                 self.sweeps.append(sweep)
             except:
@@ -92,12 +90,14 @@ class Radar(object):
                 logging.error('Could not add vpr file!')
                 pass
             
-    
         # To keep track of the nature of data fields
-        self.radarfields = list(self.radsweeps[self.sweeps[0]].fields.keys())
-        self.cosmofields = [] # updated later
-        self.precipfield  = [] # updated later
-  
+        try:
+            self.radarfields = list(self.radsweeps[self.sweeps[0]].fields.keys())
+            self.cosmofields = [] # updated later
+            self.precipfield  = [] # updated later
+        except:
+            self.radarfields = []
+              
     def snr_mask(self, snr_threshold):
         """
         Masks the radar data at low SNR

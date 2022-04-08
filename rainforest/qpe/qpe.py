@@ -359,9 +359,22 @@ class QPEProcessor(object):
             radobjects = {}
 
             for rad in self.config['RADARS']:
-                if self.radar_files[rad].get(t) != None:
-                    radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                            self.status_files[rad][t])
+                # if file does not exist:
+                if self.radar_files[rad].get(t) == None:
+                    missing_files[rad] = t
+                    continue
+                
+                # Read raw radar file and create a RADAR object
+                radobjects[rad] = Radar(rad, self.radar_files[rad][t],
+                                        self.status_files[rad][t])
+                
+                # if problem with radar file, exclude it
+                if len(radobjects[rad].radarfields) == 0:
+                    missing_files[rad] = t
+                    logging.info('Removing timestep {:s} of {:s}'.format(str(t), rad))
+                    continue
+                
+                # Process the radar data
                     radobjects[rad].visib_mask(self.config['VISIB_CORR']['MIN_VISIB'],
                                     self.config['VISIB_CORR']['MAX_CORR'])
                     radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
@@ -374,8 +387,6 @@ class QPEProcessor(object):
                             os.remove(f)
                     if os.path.exists(self.status_files[rad][t]):
                         os.remove(self.status_files[rad][t])
-                else:
-                    missing_files[rad] = t
             
             for sweep in self.config['SWEEPS']: # Loop on sweeps
                 logging.info('---')
