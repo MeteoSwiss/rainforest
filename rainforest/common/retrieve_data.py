@@ -91,7 +91,13 @@ def get_COSMO_T(time, sweeps = None, radar = None):
     dt = (time - times_cosmo[idx_closest]).total_seconds()
 
     file_COSMO = netCDF4.Dataset(file_COSMO)
-    idx_time = np.argmin(np.abs(dt - file_COSMO.variables['time'][:]))    
+    # old version
+    #idx_time = np.argmin(np.abs(dt - file_COSMO.variables['time'][:]))
+    # new:
+    # The dimension 'time' in the COSMO-1E comes in the unit of hours since filename
+    cosmo_hours = [times_cosmo[idx_closest]+datetime.timedelta(hours=(int(hh))) for hh in file_COSMO.variables['time'][:]]
+    idx_time = np.argmin(np.abs([(time-hh).total_seconds() for hh in cosmo_hours]))
+       
     T = np.squeeze(file_COSMO.variables['T'][idx_time,:,:,:])
 
     T_at_radar = {}
