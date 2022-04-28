@@ -198,7 +198,7 @@ def get_COSMO_variables(time, variables, sweeps = None, radar = None,
     # Interpolate for all radars and sweeps
     var_at_radar = {}
     for r in radar:
-        lut_rad = get_lookup('cosmo1T_to_rad', r)
+        lut_rad = get_lookup('cosmo1_to_rad', r)
         var_at_radar[r] = {}
         for v in variables:
             data = np.squeeze(file_COSMO.variables[v][:])
