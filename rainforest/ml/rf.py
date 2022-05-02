@@ -390,6 +390,7 @@ class RFTraining(object):
 
             reg = RandomForestRegressorBC(degree = 1, 
                           bctype = config['BIAS_CORR'],
+                          visib_weighting = config['VERT_AGG']['VISIB_WEIGHTING'],
                           variables = features,
                           beta = config['VERT_AGG']['BETA'],
                           **config['RANDOMFOREST_REGRESSOR'])

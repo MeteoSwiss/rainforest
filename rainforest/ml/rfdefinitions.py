@@ -63,7 +63,8 @@ class RandomForestRegressorBC(RandomForestRegressor):
     '''
     def __init__(self, 
                  variables, 
-                 beta, 
+                 beta,
+                 visib_weighting, 
                  degree = 1, 
                  bctype = 'cdf', 
                  n_estimators=100,
@@ -91,6 +92,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         self.bctype = bctype
         self.variables = variables
         self.beta = beta
+        self.visib_weighting = visib_weighting
 
     def fit(self, X,y, sample_weight = None):
         """

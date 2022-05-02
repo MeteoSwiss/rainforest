@@ -248,13 +248,13 @@ class QPEProcessor(object):
 
         self.model_weights_per_var = {}
         # keys of this dict are the variable used for the RF models, their values
-        # is a list of all vertical weighting to be used
+        # is a list of lists with 1. the vertical weighting beta parameters to be used, 2. if visib_weighting is used or not
         for k in self.models.keys():
             for var in self.models[k].variables:
                 if var not in self.model_weights_per_var.keys():
                     self.model_weights_per_var[var] = []
                 if models[k].beta not in self.model_weights_per_var[var]:
-                    self.model_weights_per_var[var].append(models[k].beta)
+                    self.model_weights_per_var[var].append((models[k].beta, models[k].visib_weighting))
 
     def fetch_data(self, t0, t1):
         """
@@ -344,7 +344,7 @@ class QPEProcessor(object):
             weights_cart = {}
             for var in self.model_weights_per_var.keys():
                 for weight in self.model_weights_per_var[var]:
-                    if weight not in rf_features_cart.keys():
+                    if weight not in list(rf_features_cart.keys()):
                         rf_features_cart[weight] = {}
 
                     rf_features_cart[weight][var] = np.zeros((NBINS_X, NBINS_Y))
@@ -442,9 +442,12 @@ class QPEProcessor(object):
 
                         for weight in rf_features_cart.keys():
                             # Compute altitude weighting
-                            W = 10 ** (weight * (datasweep['HEIGHT']/1000.))
+                            W = 10 ** (weight[0] * (datasweep['HEIGHT']/1000.))
                             W[invalid] = 0
-
+                            # Compute visib weighting
+                            if weight[1]:
+                                W *= datasweep['VISIB'] / 100
+                            
                             for var in rf_features_cart[weight].keys():
                                 if var in datasweep.keys():
                                     # Add variable to cart grid
@@ -463,7 +466,8 @@ class QPEProcessor(object):
                 model = self.models[k]
                 X = []
                 for v in model.variables:
-                    dat = rf_features_cart[model.beta][v] / weights_cart[model.beta]
+                    dat = (rf_features_cart[(model.beta,model.visib_weighting)][v] 
+                             / weights_cart[(model.beta,model.visib_weighting)])
                     X.append(dat.ravel())
 
                 X = np.array(X).T
