@@ -77,6 +77,9 @@ class Radar(object):
         
         if statusfile != None:
             try:
+                # For the rare occasion that more than one statusfile for this radar and time exists
+                if type(statusfile) == list:
+                    statusfile = statusfile[0]   
                 self.status =  read_status(statusfile)
                 self.compute_noise()
             except:
