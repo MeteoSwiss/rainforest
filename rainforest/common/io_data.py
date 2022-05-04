@@ -79,7 +79,7 @@ def read_status(status_file, add_wet_radome = False):
     """
     
     # Reads a xml status file 
-    status = xmltodict.parse(open(status_file,'r').read())
+    status = xmltodict.parse(open(status_file,'r').read().replace('-P/','-P_'))
     
     #  if wetradome is missing computes it
     radstat = status['status']['sweep'][-1]['RADAR']['STAT']
