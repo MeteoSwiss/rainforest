@@ -1,5 +1,6 @@
 # Routine to download automatically SMN and gauge data from the DWD using their R library
 # Daniel Wolfensberger, LTE - EPFL / MeteoSwiss, 2020
+# Rebecca Gugerli, LTE-EPFL/ MeteoSwiss, 2022
 # The routine is meant to be called in command line
 # Rscript retrieve_dwh_data.r t0 t1 threshold stations variables output_folder missing_value overwrite
 # t0 : start time in YYYYMMDDHHMM format
@@ -16,10 +17,13 @@
 
 .libPaths("/store/msclim/share/CATs/cats/lib-R3.5.2/")
 library('mchdwh')
-.libPaths("/store/msrad/utils/anaconda3-wolfensb/envs/radardb/r_libraries/")
+#.libPaths("/store/msrad/utils/anaconda3-wolfensb/envs/radardb/r_libraries/")
+#.libPaths("/scratch/rgugerli/test_rlib/")
+.libPaths()
 library('R.utils')
 library('plyr')
 library('lubridate')
+
 
 # This function adds new data to a file, with/without overwriting already present data
 append_to_file <- function(fname, df, overwrite = FALSE){
@@ -62,15 +66,16 @@ variables = strsplit(variables,',')[[1]]
 stations = gsub("[()]","",stations)
 stations = strsplit(stations,',')[[1]]
 
-#For testing
-
-# t0_str <- '201808101410'
-# tend_str <- '201808251000'
+# #For testing
+# t0_str <- '201810300000'
+# tend_str <- '201810301200'
 # threshold <- 0.1
-# stations = c('MRP')
-# variables = c('rre150z0')
-# output_folder = '/scratch/wolfensb/dbase_tests/gauge/'
-# script.basename = '/users/wolfensb/RADAR_GAUGE_DB/'
+# stations = c('ARO','LSN')
+# variables = "rre150z0,tre200s0,fkl010z0,rre150z0_adj"
+# variables = gsub("[()]","",variables)
+# variables = strsplit(variables,',')[[1]]
+# output_folder = '/scratch/rgugerli/rainforest_debug/dbase_tests/'
+# script.basename = '/scratch/rgugerli/rainforest_debug/rainforest/rainforest/'
 # missing_value <- -9999
 # overwrite <- TRUE
 
@@ -79,67 +84,102 @@ station_info_path = file.path(dirname(script.basename), 'common', 'data', 'data_
 station_info = data.table::fread(station_info_path, sep = ';')
 station_info <- as.data.frame(station_info)
 
+
 for(i in 1:length(stations)){
   print(paste('Retrieving station ',stations[i]))
   isvalid = TRUE
-  tryCatch({
-  if((station_info[["Type"]][ station_info[["Abbrev"]] == stations[i] ]) != 'SwissMetNet'){ 
-    variables_var <- c('rre150z0')
-  }
-  else{
-    variables_var <- variables
-  }
-  }, error=function(e){print(e); isvalid = FALSE})
-  
+  # tryCatch({
+  # if((station_info[["Type"]][ station_info[["Abbrev"]] == stations[i] ]) != 'SwissMetNet'){ 
+  #   #variables_var <- c('rre150z0')
+  #   variables_var <- variables
+  # }
+  # else{
+  #   variables_var <- variables
+  # }
+  # }, error=function(e){print(e); isvalid = FALSE})
+  variables_var <- variables
   if(!isvalid){
     next
   }
+  
   tryCatch({
-  data <- dwhget_surface(nat_abbr = stations[i], param_short = variables_var, date = c(t0_str,tend_str))
-  # Reorganize data into multidimensional array
-  data <- reshape_data(x=data, reshape="stp")
-  
-  # Fill up missing columns
-  for(j in 1:length(variables)){
-    if(!(variables[j] %in% colnames(data))){
-      data[variables[j]] = missing_value
-    }
-  }
-  
-  # Time of beginning of measurement
-  tstamps <- as.POSIXct(strptime(data$datetime,'%Y%m%d%H%M',tz='UTC')) - 60 * 5
-  stahours_all <- paste(data[["nat_abbr"]],format(ceiling_date(tstamps,'hour'), format="%Y%m%d%H"))
-  data[["stahours"]] = stahours_all
-  
-  # Get all wet hours
-  rain_h <- aggregate(data[["rre150z0"]], by=list(data[["stahours"]]), FUN=sum, na.rm=TRUE)
-  hours_wet <- rain_h[["x"]] >= threshold
-  stahours_wet <- rain_h[["Group.1"]][hours_wet]
-  
-  zhours_wet <- stahours_all %in% stahours_wet
-  zdata_wet <- data[zhours_wet,c('datetime',variables)]
-  
-  name_out <- paste(output_folder, '/', stations[i], '.csv.gz', sep = '')
-  # date format must be changed to linux timestamp
-  zdata_wet$datetime = as.numeric(as.POSIXct(strptime(zdata_wet$datetime,'%Y%m%d%H%M',tz='UTC')))
-  colnames(zdata_wet)[1] = 'timestamp'
-  
-  # Finally since the R format of hdf5 is not compatible with dask and pandas
-  # I choose to stay with csv
-  zdata_wet[is.na(zdata_wet)] = missing_value
-  
-  # Add station info
-  zdata_wet <- cbind(station = stations[i], zdata_wet)
-  
+      data <- dwhget_surface(nat_abbr = stations[i], param_short = variables_var, date = c(t0_str,tend_str))
+      # Reorganize data into multidimensional array
+      data <- reshape_data(x=data, reshape="stp")
+      
+      # Fill up missing columns
+      for(j in 1:length(variables)){
+        if(!(variables[j] %in% colnames(data))){
+          data[variables[j]] = missing_value
+          # Add a tag for CatchEfficiency
+          if(variables[j] == 'fkl010z0'){
+          CE <- FALSE
+          print(paste('Transfer function not applicable for ',stations[i],sep = ''))
+          }
+        } else {
+          CE <- TRUE
+        }
+      }
+      
+      data['rre150z0_adj'] <- data['rre150z0']
+      if(CE){
+        tryCatch({
+          print(paste('Adjustment of gauge measurement ', stations[i]))
+          # Add Kochendorfer Equation (see https://hess.copernicus.org/articles/21/3525/2017/hess-21-3525-2017.pdf)
+          wind <- data[["fkl010z0"]]
+          wind[wind > 9] <- 9.
+          # Mixed precipitation (-2<=tair<=2)
+          a_mixed <- 0.624
+          b_mixed <- 0.185
+          c_mixed <- 0.364
+          CEmixed_KD4 <- a_mixed * exp(-b_mixed * wind)  + c_mixed
+          index_mixed <- (data$tre200s0 >= -2) & (data$tre200s0 <= 2) 
+          data$rre150z0_adj[index_mixed] <- data$rre150z0[index_mixed] / CEmixed_KD4[index_mixed]
+          # solid precipitation (<-2)
+          a_solid <- 0.865
+          b_solid <- 0.298
+          c_solid <- 0.225
+          CEsolid_KD4 <- a_solid * exp(-b_solid * wind)  + c_solid
+          index_solid <- (data$tre200s0 < -2)
+          data$rre150z0_adj[index_solid] <- data$rre150z0[index_solid] / CEsolid_KD4[index_solid]
+          data$rre150z0_adj=signif(data$rre150z0_adj, digits = 3)
+          }, error=function(e){print(e);print(paste('Catch efficiency failed for ',stations[i],sep = ''))})
+        }
 
-  # Reorder if needed to always get same col order
-  right_order = c('station','timestamp', variables)
-  zdata_wet = zdata_wet[,right_order]
-  colnames(zdata_wet) <- toupper(colnames(zdata_wet))
-  
-  zdata_wet = append_to_file(name_out, zdata_wet, overwrite)
-  write.table(zdata_wet, gzfile(name_out), sep=',',col.names = T, row.names = F)
-  
-  }, error=function(e){print(e);print(paste('Data not available for ',stations[i],sep = ''))})
+      # Time of beginning of measurement
+      tstamps <- as.POSIXct(strptime(data$datetime,'%Y%m%d%H%M',tz='UTC')) - 60 * 5
+      stahours_all <- paste(data[["nat_abbr"]],format(ceiling_date(tstamps,'hour'), format="%Y%m%d%H"))
+      data[["stahours"]] = stahours_all
+      
+      # Get all wet hours
+      rain_h <- aggregate(data[["rre150z0"]], by=list(data[["stahours"]]), FUN=sum, na.rm=TRUE)
+      hours_wet <- rain_h[["x"]] >= threshold
+      stahours_wet <- rain_h[["Group.1"]][hours_wet]
+      
+      zhours_wet <- stahours_all %in% stahours_wet
+      zdata_wet <- data[zhours_wet,c('datetime',variables)]
+
+      name_out <- paste(output_folder, '/', stations[i], '.csv.gz', sep = '')
+      # date format must be changed to linux timestamp
+      zdata_wet$datetime = as.numeric(as.POSIXct(strptime(zdata_wet$datetime,'%Y%m%d%H%M',tz='UTC')))
+      colnames(zdata_wet)[1] = 'timestamp'
+      
+      # Finally since the R format of hdf5 is not compatible with dask and pandas
+      # I choose to stay with csv
+      zdata_wet[is.na(zdata_wet)] = missing_value
+      
+      # Add station info
+      zdata_wet <- cbind(station = stations[i], zdata_wet)
+
+      # Reorder if needed to always get same col order
+      right_order = c('station','timestamp', variables)
+      zdata_wet = zdata_wet[,right_order]
+      colnames(zdata_wet) <- toupper(colnames(zdata_wet))
+      
+      zdata_wet = append_to_file(name_out, zdata_wet, overwrite)
+      write.table(zdata_wet, gzfile(name_out), sep=',',col.names = T, row.names = F)
+      
+    }, error=function(e){print(e);print(paste('Data not available for ',stations[i],sep = ''))})
   }
 
+print(paste(t0_str, tend_str))
