@@ -235,6 +235,7 @@ BORDER_SHP = shapefile.Reader(str(path_shp))
 ###############
 FOLDER_DATABASE = '/store/msrad/radar/radar_database/'
 FOLDER_RADAR = '/store/msrad/radar/swiss/data/'
+FOLDER_RADARH = '/store/msrad/radar/polarHR/data/'
 FOLDER_CPCCV = '/store/msrad/radar/cpc_validation/'
 COSMO1_START = datetime.datetime(2015,10,1)
 COSMO1E_START = datetime.datetime(2019,7,2)

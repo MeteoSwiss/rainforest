@@ -298,11 +298,15 @@ def _retrieve_prod_daily(folder_out, start_time, end_time, product_name,
     """ This is a version that works only for a given day (i.e. start and end
     time on the same day)
     """
-    
+    if product_name[0:2] == 'MH':
+        folder_radar = constants.FOLDER_RADARH
+    else:
+        folder_radar = constants.FOLDER_RADAR
+ 
     folder_out += '/'
     
     suffix =  str(start_time.year)[-2:] + str(start_time.timetuple().tm_yday).zfill(3)
-    folder_in = constants.FOLDER_RADAR + str(start_time.year) + '/' +  suffix + '/'
+    folder_in = folder_radar + str(start_time.year) + '/' +  suffix + '/'
     name_zipfile = product_name + suffix+'.zip'
     
     # Get list of files in zipfile

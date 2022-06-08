@@ -101,6 +101,7 @@ rainforest/common/data/lookup_data/lut_visibility_radD.p
 rainforest/common/data/lookup_data/lut_visibility_radL.p
 rainforest/common/data/lookup_data/lut_visibility_radP.p
 rainforest/common/data/lookup_data/lut_visibility_radW.p
+rainforest/common/data/lookup_data/pickle
 rainforest/common/data/lut_boscacci/lut_PLA.csv
 rainforest/common/data/lut_boscacci/lut_PLD.csv
 rainforest/common/data/lut_boscacci/lut_PLL.csv
