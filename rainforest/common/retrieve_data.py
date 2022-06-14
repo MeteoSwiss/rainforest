@@ -27,7 +27,117 @@ from .lookup import get_lookup
 from .utils import round_to_hour
 from . import io_data as io # avoid circular
 
+
+#-----------------------------------------------------------------------------------------
+def get_COSMO_HZT_files(folder_out, start_time, end_time,pattern_type='shell'):
+    """ Function to get the filelist of available data
+    """
+    dt = datetime.timedelta(hours=1)
+    delta = end_time - start_time
+    if delta.total_seconds()== 0:
+        times = [start_time]
+    else:
+        times = start_time + np.arange(int(delta.total_seconds()/(60*60)) + 2)*dt
+    dates = []
+    for t in times:
+        dates.append(datetime.datetime(year = t.year, month = t.month,
+                                       day = t.day))
+    dates = np.unique(dates)
+    
+    t0 = start_time
+    t1 = end_time
+    
+    all_files = []
+    for i, d in enumerate(dates):
+        if i == 0:
+            start_time = datetime.datetime(year = t0.year, month = t0.month,
+                                           day = t0.day, hour=t0.hour)
+            print('*first start time: ', start_time)
+        else:
+            start_time = datetime.datetime(year = d.year, month = d.month,
+                                           day = d.day)
+            print('*all other start times', start_time)
+        if (i == len(dates) - 1):
+            end_time = datetime.datetime(year = t1.year, month = t1.month,
+                                         day = t1.day, hour=t1.hour) + datetime.timedelta(hours=1)
+            print('*end_time: ', end_time)
+
+        files = _get_COSMO_HZT_files_daily(folder_out, start_time, end_time,
+                                            pattern_type)
+
+        if files != None:
+            all_files.extend(files)
         
+    return all_files
+
+#-----------------------------------------------------------------------------------------
+def _get_COSMO_HZT_files_daily(folder_out, start_time, end_time, pattern_type = 'shell'):
+    
+    """ This is a version that works only for a given day (i.e. start and end
+    time on the same day)
+    """
+    
+    folder_out += '/'
+    
+    suffix =  str(start_time.year)[-2:] + str(start_time.timetuple().tm_yday).zfill(3)
+    folder_in = constants.FOLDER_RADAR + str(start_time.year) + '/' +  suffix + '/'
+    name_zipfile = 'HZT'+ suffix+'.zip'
+    
+    try:
+        # Get list of files in zipfile
+        zipp = zipfile.ZipFile(folder_in + name_zipfile)
+        content_zip = np.sort(np.array(zipp.namelist()))
+        
+        # Sort filelist to most recent prediction
+        content_filt = np.array([c for c in content_zip if c.endswith('800')])
+        times_filt = np.array([datetime.datetime.strptime(c[3:12],
+                            '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_filt])
+    except:
+        logging.error('Zip file with HZT data does not exist for '+start_time.strftime('%d-%b-%y'))
+        files = None
+        return
+        
+    # Check that an hourly estimate is available
+    all_hours = pd.date_range(start=times_filt[0], end=times_filt[-1], freq='H')
+    
+    if len(all_hours) != len(times_filt):
+        # Find time that is missing:
+        for hh in all_hours:
+            if not hh in times_filt:
+                basename = 'HZT{}0L.80'.format(hh.strftime('%y%j%H%M'))
+                # Check if forecast hour is available:
+                # for fh in [1,2,3,4,5,6]:
+                # Get nearest forecast hour
+                fh = 1
+                while basename+str(fh) in content_zip:
+                    print('adding', basename+str(fh), 'to array')
+                    times_filt = np.sort(np.append(times_filt, datetime.datetime(hh.year,hh.month,hh.day,hh.hour)))
+                    content_filt = np.sort(np.append(content_filt,basename+str(1)))
+                    fh += 1
+                    break
+    
+    # Get a list of all files to retrieve
+    conditions = np.array([np.logical_and(t >= start_time, t <= end_time)
+                          for t in times_filt])
+
+    if not np.any(conditions):
+        msg = '''
+        No file was found corresponding to this format, verify pattern and product_name
+        '''
+        raise ValueError(msg)
+        
+    files_to_retrieve = ' '.join(content_filt[conditions])
+   
+    cmd = 'unzip -j -o -qq "{:s}" {:s} -d {:s}'.format(folder_in + name_zipfile,
+         files_to_retrieve , folder_out)
+    subprocess.call(cmd, shell=True)
+        
+    files = sorted(np.array([folder_out + c for c in
+                            content_filt[conditions]]))    
+    
+    return files
+
+#-----------------------------------------------------------------------------------------
 def get_COSMO_T(time, sweeps = None, radar = None):
     
     """Retrieves COSMO temperature data from the CSCS repository, and 
@@ -117,6 +227,7 @@ def get_COSMO_T(time, sweeps = None, radar = None):
     
     return T_at_radar
 
+#-----------------------------------------------------------------------------------------
 def get_COSMO_variables(time, variables, sweeps = None, radar = None,
                         tmp_folder = '/tmp/', cleanup = True):
     
@@ -218,7 +329,7 @@ def get_COSMO_variables(time, variables, sweeps = None, radar = None,
         
     return var_at_radar
 
-
+#-----------------------------------------------------------------------------------------
 def retrieve_prod(folder_out, start_time, end_time, product_name,
                   pattern = None, pattern_type = 'shell', sweeps = None):
     
@@ -291,7 +402,7 @@ def retrieve_prod(folder_out, start_time, end_time, product_name,
             
     return all_files
 
-
+#-----------------------------------------------------------------------------------------
 def _retrieve_prod_daily(folder_out, start_time, end_time, product_name,
                   pattern = None, pattern_type = 'shell', sweeps = None):
     
@@ -357,7 +468,7 @@ def _retrieve_prod_daily(folder_out, start_time, end_time, product_name,
     
     return files
 
-
+#-----------------------------------------------------------------------------------------
 def retrieve_CPCCV(time, stations):
     
     """ Retrieves cross-validation CPC data for a set of stations from
