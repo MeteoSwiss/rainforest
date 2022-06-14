@@ -37,6 +37,7 @@ from . import retrieve_data as retrieve
 from .lookup import get_lookup
 
 from pyart.aux_io.odim_h5 import read_odim_grid_h5
+
 def read_xls(xls_file):
     """Reads an excel file such as those used for CPC vlaidation
 
@@ -162,7 +163,6 @@ def read_polar(polar_files, physic_value = True):
 
     return sweepnumbers, radar
     
-    
 def read_cart(cart_file):
     '''
     Generic function that reads a Cartesian radar file, either in gif or 
@@ -207,7 +207,24 @@ def read_cart(cart_file):
         data[data < constants.MIN_RZC_VALID] = 0
         data = np.flipud(np.squeeze(data))
     return data
+
+def read_NWP_HZT(cart_file):
+    """
+    Reads the HZT fields that are produced for operational use and returns a grid object
+
+    Args:
+        fileIn: path with filename
+
+    Returns:
+        data: Masked array of data
+    """
+
+    data = read_cartesian_metranet(cart_file)
+    data = list(data.fields.values())[0]['data'].data.copy()
+    data = np.flipud(np.squeeze(data))
     
+    return data
+
 def save_gif(gif_file, precip):
     '''
     Saves a precipitation map in float to a gif file (AQC format)
