@@ -17,13 +17,10 @@
 
 .libPaths("/store/msclim/share/CATs/cats/lib-R3.5.2/")
 library('mchdwh')
-#.libPaths("/store/msrad/utils/anaconda3-wolfensb/envs/radardb/r_libraries/")
-#.libPaths("/scratch/rgugerli/test_rlib/")
 .libPaths()
 library('R.utils')
 library('plyr')
 library('lubridate')
-
 
 # This function adds new data to a file, with/without overwriting already present data
 append_to_file <- function(fname, df, overwrite = FALSE){
@@ -84,19 +81,9 @@ station_info_path = file.path(dirname(script.basename), 'common', 'data', 'data_
 station_info = data.table::fread(station_info_path, sep = ';')
 station_info <- as.data.frame(station_info)
 
-
 for(i in 1:length(stations)){
   print(paste('Retrieving station ',stations[i]))
   isvalid = TRUE
-  # tryCatch({
-  # if((station_info[["Type"]][ station_info[["Abbrev"]] == stations[i] ]) != 'SwissMetNet'){ 
-  #   #variables_var <- c('rre150z0')
-  #   variables_var <- variables
-  # }
-  # else{
-  #   variables_var <- variables
-  # }
-  # }, error=function(e){print(e); isvalid = FALSE})
   variables_var <- variables
   if(!isvalid){
     next
@@ -106,6 +93,9 @@ for(i in 1:length(stations)){
       data <- dwhget_surface(nat_abbr = stations[i], param_short = variables_var, date = c(t0_str,tend_str))
       # Reorganize data into multidimensional array
       data <- reshape_data(x=data, reshape="stp")
+
+      # Assume transfer function (catch efficiency) is possible
+      CE <- TRUE
       
       # Fill up missing columns
       for(j in 1:length(variables)){
@@ -114,15 +104,15 @@ for(i in 1:length(stations)){
           # Add a tag for CatchEfficiency
           if(variables[j] == 'fkl010z0'){
           CE <- FALSE
+          data['rre150z0_adj'] = missing_value
           print(paste('Transfer function not applicable for ',stations[i],sep = ''))
           }
-        } else {
-          CE <- TRUE
         }
       }
       
-      data['rre150z0_adj'] <- data['rre150z0']
+
       if(CE){
+        data['rre150z0_adj'] <- data['rre150z0']
         tryCatch({
           print(paste('Adjustment of gauge measurement ', stations[i]))
           # Add Kochendorfer Equation (see https://hess.copernicus.org/articles/21/3525/2017/hess-21-3525-2017.pdf)
@@ -145,6 +135,9 @@ for(i in 1:length(stations)){
           data$rre150z0_adj=signif(data$rre150z0_adj, digits = 3)
           }, error=function(e){print(e);print(paste('Catch efficiency failed for ',stations[i],sep = ''))})
         }
+      else {
+          data['rre150z0_adj'] = missing_value
+      }
 
       # Time of beginning of measurement
       tstamps <- as.POSIXct(strptime(data$datetime,'%Y%m%d%H%M',tz='UTC')) - 60 * 5
@@ -182,4 +175,3 @@ for(i in 1:length(stations)){
     }, error=function(e){print(e);print(paste('Data not available for ',stations[i],sep = ''))})
   }
 
-print(paste(t0_str, tend_str))
