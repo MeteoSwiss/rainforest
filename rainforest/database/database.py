@@ -379,7 +379,7 @@ class Database(object):
                        overwrite))
             file.close()
             logging.info('Submitting job {:d}'.format(i))
-            #subprocess.call('sbatch {:s}'.format(fname), shell = True)
+            subprocess.call('sbatch {:s}'.format(fname), shell = True)
         logging.info("""All jobs have been submitted, please wait a few hours
                      for completion...""")
      
