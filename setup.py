@@ -10,7 +10,7 @@ from setuptools import setup
 
 setup(name        = "rainforest",
         description = "QPE python library by wod",
-        version     = "1.0",
+        version     = "2.1",
         author = 'Daniel Wolfensberger - LTE EPFL/MeteoSwiss',
         author_email = 'daniel.wolfensberger@epfl.ch',
         license = 'GPL-3.0',
