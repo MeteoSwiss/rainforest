@@ -123,14 +123,14 @@ for(i in 1:length(stations)){
           b_mixed <- 0.185
           c_mixed <- 0.364
           CEmixed_KD4 <- a_mixed * exp(-b_mixed * wind)  + c_mixed
-          index_mixed <- (data$tre200s0 >= -2) & (data$tre200s0 <= 2) 
+          index_mixed <- (data$tre200s0 >= -2) & (data$tre200s0 <= 2)  & (!is.na(data$tre200s0))
           data$rre150z0_adj[index_mixed] <- data$rre150z0[index_mixed] / CEmixed_KD4[index_mixed]
           # solid precipitation (<-2)
           a_solid <- 0.865
           b_solid <- 0.298
           c_solid <- 0.225
           CEsolid_KD4 <- a_solid * exp(-b_solid * wind)  + c_solid
-          index_solid <- (data$tre200s0 < -2)
+          index_solid <- (data$tre200s0 < -2) & (!is.na(data$tre200s0))
           data$rre150z0_adj[index_solid] <- data$rre150z0[index_solid] / CEsolid_KD4[index_solid]
           data$rre150z0_adj=signif(data$rre150z0_adj, digits = 3)
           }, error=function(e){print(e);print(paste('Catch efficiency failed for ',stations[i],sep = ''))})

@@ -306,8 +306,8 @@ SLURM_HEADER_R = '''#!/bin/sh
 #SBATCH --partition=postproc
 #SBATCH --account=msrad
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output=db_update-%a.out
-#SBATCH --error=db_update-%a.err
+#SBATCH --output="db_gauges-%A_%a.out"
+#SBATCH --error="db_gauges-%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 
