@@ -643,9 +643,12 @@ class Database(object):
         if t0 != None and t1 != None and t1 > t0:
             logging.info('Limiting myself to time period {:s} - {:s}'.format(
                     str(t0), str(t1)))
-                       
-            tstamp_start = int(timestamp_from_datestr(t0))
-            tstamp_end = int(timestamp_from_datestr(t1))
+            if not isinstance(t0, datetime):
+                tstamp_start = int(timestamp_from_datestr(t0))
+                tstamp_end = int(timestamp_from_datestr(t1))
+            else:
+                tstamp_start = int(t0.timestamp())
+                tstamp_end = int(t1.timestamp())
                 
             tab = tab.loc[(tab['TIMESTAMP'] > tstamp_start) 
                             & (tab['TIMESTAMP'] <= tstamp_end)]
