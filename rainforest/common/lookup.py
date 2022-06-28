@@ -458,7 +458,7 @@ def calc_lookup(lookup_type, radar = None):
         
             pickle.dump(lut, open(str(lut_name), 'wb'))
             
-    elif lookup_type == 'cartcoords_rad':
+    elif lookup_type == 'qpegrid_to_rad':
         ''' Currently it just uses the csv files of Marco Boscacci and 
         converts them to pickle to be consistent with the other luts'''
         for r in radar:
