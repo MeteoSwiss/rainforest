@@ -447,7 +447,7 @@ class Updater(object):
             for r in self.radars: # Main loop
                 # Check if we need to process the radar
                 # If no station we want is in the list of stations seen by radar
-                visible_stations = list(self.lut['coords']['A'].keys())
+                visible_stations = list(self.lut['coords'][r].keys())
                 if not np.any(np.isin(stations_to_get, visible_stations)):
                     logging.info('No need to process radar {:s} for these stations...'.format(r))
                     continue
