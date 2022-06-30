@@ -7,6 +7,7 @@ Created on Mon Dec 16 17:38:52 2019
 
 
 import numpy as np
+from scipy.spatial import KDTree
 from scipy.spatial.distance import cdist
 from textwrap import  dedent
 import logging
@@ -17,10 +18,12 @@ from pyart.retrieve import compute_noisedBZ
 from pyart.correct import smooth_phidp_single_window
 from pyart.correct import calculate_attenuation_zphi
 from pyart.aux_io import read_metranet
+from pyart.testing import make_empty_ppi_radar
 
 from .utils import sweepnumber_fromfile, rename_fields
 from .io_data import read_status, read_vpr
 from . import constants
+from . import wgs84_ch1903
 from .lookup import get_lookup
 
 class Radar(object):
@@ -347,7 +350,100 @@ class Radar(object):
         if field_name_upper != field_name:
             data = 10 ** (0.1 * data)
         return data
-            
+
+def HZT_cartesian_to_polar(hzt, radar, sweeps = range(0, 20)):
+    """
+        Transform a Cartesian HZT object (height of freezing level) to a polar
+        Radar object with the freezing level at every gate on the Rad4Alp
+        domain
+        
+        Parameters
+        ----------
+        hzt : pyart Grid object
+            Grid object that contains the hzt data, as obtained with
+            pyart.aux_io.read_cartesian_metranet
+        radar: char
+            name of the radar, 'A','D','L','P' or 'W'
+        sweeps: list
+            list of Rad4Alp sweeps, from 0 to 20 to include in the polar radar
+            object
+    """
+        
+        
+    gps_converter = wgs84_ch1903.GPSConverter()
+
+    hzt_cart = hzt.fields['iso0_height']['data'][0]
+
+    lut = get_lookup('qpegrid_to_rad', radar)
+    
+    CHX = constants.X_QPE
+    CHY = constants.Y_QPE
+    
+    hzt_pol_all_sweeps = []
+    for s in sweeps:
+        lut_sweep = lut[lut[:,0] == s]
+        nrange = lut_sweep[:,2].max() + 1 
+        naz = lut_sweep[:,1].max() + 1
+        
+        # Get Cartesian and polar indexes
+        idxx = (lut_sweep[:,-1] - CHX[-1]).astype(int) - 1 
+        idxy = (lut_sweep[:,-2] - CHY[0]).astype(int) - 1
+        
+        idxaz = lut_sweep[:,1]
+        idxrange = lut_sweep[:,2]
+        
+        # Initialize polar arrays
+        hzt_pol = np.zeros((naz, nrange))
+        npts = np.zeros((naz, nrange))
+        
+        # Get part of Cart HZT that covers radar
+        toadd = hzt_cart[idxx.ravel(), idxy.ravel()]
+        
+        # update grid
+        hzt_pol[idxaz.ravel(), idxrange.ravel()] += toadd
+        npts[idxaz.ravel(), idxrange.ravel()] += np.ones(toadd.shape)
+        
+        hzt_pol /= npts
+        
+        # Fill holes with nearest neighbour interpolation
+        x,y=np.mgrid[0:naz, 0:nrange]
+        
+        xygood = np.array((x[~np.isnan(hzt_pol)],
+                           y[~np.isnan(hzt_pol)])).T
+        xybad = np.array((x[np.isnan(hzt_pol)],
+                          y[np.isnan(hzt_pol)])).T
+        
+        hzt_pol[np.isnan(hzt_pol)] = hzt_pol[~np.isnan(hzt_pol)][
+            KDTree(xygood).query(xybad)[1]]
+        
+        hzt_pol_all_sweeps.append(hzt_pol)
+    
+    # Make radar object
+    nrays_per_sweep = hzt_pol_all_sweeps[0].shape[0]
+    ngates = hzt_pol_all_sweeps[0].shape[1]
+    hztradar = make_empty_ppi_radar(ngates, nrays_per_sweep, len(sweeps))
+    
+    # Create single array from all sweeps
+    hzt_pol_field = np.zeros((nrays_per_sweep * len(sweeps), ngates)) + np.nan
+    for i in range(len(hzt_pol_all_sweeps)):
+        hzt_pol_field[i * nrays_per_sweep: (i+1) * nrays_per_sweep,
+                      0:hzt_pol_all_sweeps[i].shape[1]] = hzt_pol_all_sweeps[i]
+    hzt_dic = {'data':hzt_pol_field, 'units':'m', 
+               'long_name':'Height above freezing level',
+               'standard_name' :'HZT', 'coordinates':'elevation azimuth range'}
+    hztradar.add_field('iso0_height', hzt_dic)
+    hztradar.range['data'] = np.arange(len(hztradar.range['data'])) * 500 + 250
+
+    # Add radar coordinates
+    radar_pos = constants.RADARS[constants.RADARS.Abbrev == radar]
+    radar_lat = gps_converter.CHtoWGSlat(radar_pos.Y, radar_pos.X)
+    radar_lon = gps_converter.CHtoWGSlng(radar_pos.Y, radar_pos.X)
+    hztradar.longitude['data'] = np.array([float(radar_lon)])
+    hztradar.latitude['data'] = np.array([float(radar_lat)])
+    hztradar.altitude['data'] = np.array([float(radar_pos.Z)])
+    
+    return hztradar
+    
 
 def hydroClass_single(radars, zh, zdr, kdp, rhohv, temp, 
                       weights = np.array([1., 1., 1., 0.75, 0.5])):

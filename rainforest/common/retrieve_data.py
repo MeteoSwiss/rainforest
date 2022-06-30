@@ -12,6 +12,7 @@ December 2019
 
 import numpy as np
 import os
+import pandas as pd
 import zipfile
 import datetime
 import glob
@@ -136,7 +137,7 @@ def _get_COSMO_HZT_files_daily(folder_out, start_time, end_time, pattern_type = 
                             content_filt[conditions]]))    
     
     return files
-
+    
 #-----------------------------------------------------------------------------------------
 def get_COSMO_T(time, sweeps = None, radar = None):
     
