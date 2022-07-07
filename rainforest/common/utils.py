@@ -179,7 +179,11 @@ def timefromfilename(fname):
     """Returns the datetime of a file based on its name"""
     bname = os.path.basename(fname)
     tstr = bname[3:12]
-    return datetime.datetime.strptime(tstr,'%y%j%H%M')
+    time = datetime.datetime.strptime(tstr,'%y%j%H%M')
+    # If a forecast hour is taken from a future run:
+    if (bname.startswith('HZT')) & (bname[-2::] != '00'):
+        time = time + datetime.timedelta(hours=int(bname[-2::]))
+    return time
 
 def sweepnumber_fromfile(fname):
     """Returns the sweep number of a polar file based on its name"""
