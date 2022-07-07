@@ -22,6 +22,7 @@ import fnmatch
 import re
 from textwrap import dedent
 
+import pandas as pd # function used in retrieve_hzt_prod
 from . import constants 
 from .lookup import get_lookup
 from .utils import round_to_hour
@@ -29,8 +30,27 @@ from . import io_data as io # avoid circular
 
 
 #-----------------------------------------------------------------------------------------
-def get_COSMO_HZT_files(folder_out, start_time, end_time,pattern_type='shell'):
-    """ Function to get the filelist of available data
+def retrieve_hzt_prod(folder_out, start_time, end_time,pattern_type='shell'):
+    """ Retrieves the preprocessed HZT products from the CSCS repository for a specified
+    time range, unzips them and places them in a specified folder
+
+    Parameters
+    ----------
+    
+    folder_out: str
+        directory where to store the unzipped files
+    start_time : datetime.datetime instance
+        starting time of the time range
+    end_time : datetime.datetime instance
+        end time of the time range
+    pattern_type: either 'shell' or 'regex' (optional)
+        use 'shell' for standard shell patterns, which use * as wildcard
+        use 'regex' for more advanced regex patterns
+                
+    Returns
+    -------
+    A list containing all the filepaths of the retrieved files
+   
     """
     dt = datetime.timedelta(hours=1)
     delta = end_time - start_time
@@ -62,7 +82,7 @@ def get_COSMO_HZT_files(folder_out, start_time, end_time,pattern_type='shell'):
                                          day = t1.day, hour=t1.hour) + datetime.timedelta(hours=1)
             print('*end_time: ', end_time)
 
-        files = _get_COSMO_HZT_files_daily(folder_out, start_time, end_time,
+        files = _retrieve_hzt_prod_daily(folder_out, start_time, end_time,
                                             pattern_type)
 
         if files != None:
@@ -71,10 +91,28 @@ def get_COSMO_HZT_files(folder_out, start_time, end_time,pattern_type='shell'):
     return all_files
 
 #-----------------------------------------------------------------------------------------
-def _get_COSMO_HZT_files_daily(folder_out, start_time, end_time, pattern_type = 'shell'):
+def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type = 'shell'):
     
-    """ This is a version that works only for a given day (i.e. start and end
-    time on the same day)
+    """ Retrieves the preprocessed HZT products from the CSCS repository for a day,
+        Only used in for the function retrieve_hzt_prod
+
+    Parameters
+    ----------
+    
+    folder_out: str
+        directory where to store the unzipped files
+    start_time : datetime.datetime instance
+        starting time of the time range
+    end_time : datetime.datetime instance
+        end time of the time range
+    pattern_type: either 'shell' or 'regex' (optional)
+        use 'shell' for standard shell patterns, which use * as wildcard
+        use 'regex' for more advanced regex patterns
+                
+    Returns
+    -------
+    A list containing all the filepaths of the retrieved files
+   
     """
     
     folder_out += '/'
