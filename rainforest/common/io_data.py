@@ -208,7 +208,7 @@ def read_cart(cart_file):
         data = np.flipud(np.squeeze(data))
     return data
 
-def read_NWP_HZT(cart_file):
+def read_NWP_HZT_cart(cart_file):
     """
     Reads the HZT fields that are produced for operational use and returns a grid object
 
