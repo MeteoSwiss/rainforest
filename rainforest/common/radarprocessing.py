@@ -352,6 +352,80 @@ class Radar(object):
             data = 10 ** (0.1 * data)
         return data
 
+    def add_hzt_data(self, hzt_cart):
+        """
+            Transform a Cartesian HZT object (height of freezing level) and
+            adds the fields to this radar object.
+            
+            Parameters
+            ----------
+            hzt : Masked array as output from HZT_hourly_to_5min
+                  from Grid object that contains the hzt data, as obtained with
+                  pyart.aux_io.read_cartesian_metranet(filelist[tstamp_hzt0]).fields['iso0_height']['data'][0]
+
+        """
+
+        # Get lookup table for the radar
+        lut = get_lookup('qpegrid_to_rad', self.radname)
+    
+        # Get Swiss coordinates
+        CHX = constants.X_QPE
+        CHY = constants.Y_QPE        
+        
+        for s in self.sweeps:
+            radsweep = self.radsweeps[s]
+
+            lut_sweep = lut[lut[:,0] == s]
+            nrange = lut_sweep[:,2].max() + 1 
+            naz = lut_sweep[:,1].max() + 1
+        
+            # Get Cartesian and polar indexes
+            idxx = (lut_sweep[:,-1] - CHX[-1]).astype(int) - 1 
+            idxy = (lut_sweep[:,-2] - CHY[0]).astype(int) - 1
+        
+            idxaz = lut_sweep[:,1]
+            idxrange = lut_sweep[:,2]
+        
+            # Initialize polar arrays
+            hzt_pol = np.zeros((naz, nrange))
+            npts = np.zeros((naz, nrange))
+        
+            # Get part of Cart HZT that covers radar
+            toadd = hzt_cart[idxx.ravel(), idxy.ravel()]
+            
+            # update grid
+            hzt_pol[idxaz.ravel(), idxrange.ravel()] += toadd
+            npts[idxaz.ravel(), idxrange.ravel()] += np.ones(toadd.shape)
+            
+            # To avoid a division trhough 0, which causes a python runtime warning:
+            npts[npts == 0] = np.nan
+
+            hzt_pol /= npts
+        
+            # Fill holes with nearest neighbour interpolation
+            x,y=np.mgrid[0:naz, 0:nrange]
+            
+            xygood = np.array((x[~np.isnan(hzt_pol)],
+                            y[~np.isnan(hzt_pol)])).T
+            xybad = np.array((x[np.isnan(hzt_pol)],
+                            y[np.isnan(hzt_pol)])).T
+            
+            hzt_pol[np.isnan(hzt_pol)] = hzt_pol[~np.isnan(hzt_pol)][
+                KDTree(xygood).query(xybad)[1]]
+        
+            # Assure same sized fields
+            hzt_pol_field = np.zeros((radsweep.nrays, radsweep.ngates)) + np.nan
+            hzt_pol_field[:,0:hzt_pol.shape[1]] = hzt_pol
+
+            hzt_dic = {'data':hzt_pol_field, 'units':'m', 
+                    'long_name':'Height above freezing level',
+                    'standard_name' :'HZT', 
+                    'coordinates':'elevation azimuth range'}
+
+            radsweep.add_field('iso0_height', {'data': hzt_pol_field})
+        
+        self.cosmofields.append('iso0_height')
+
 def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     """ Function to interpolate the hourly isothermal fields to 5min resolution
         to make them consistant with the radar fields 
@@ -361,23 +435,24 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
         time : datetime object
             timestep to calculate
         filelist : dictionnary
-            list with timesteps, path and filename of radar and HZT files
+            list with timesteps, path and filename of HZT files only
             typically derived in database.retrieve_radar_data.Updater.retrieve_radar_files()
         tsteps_min: int
             resolution of new fields
 
-
         Returns
         ----------
-        dictionnary with datetime objects as keys and numpy.ma.core.MaskedArray
+        dictionnary with datetime objects as keys and numpy.ma.core.MaskedArray (Cartesian coordinates)
     """
+    if time.hours != 0:
+        logging.error('HZT temporal interpolation timestamp {} set to 0 minutes'.format(print(time))
 
     tstamp_hzt0 = datetime.datetime(time.year, time.month, time.day, time.hour,0)
     tstamp_hzt1 = tstamp_hzt0+ datetime.timedelta(hours=1)
 
     hzt = {}
-    hzt[tstamp_hzt0] = read_cartesian_metranet(filelist['hzt'][tstamp_hzt0]).fields['iso0_height']['data'][0]
-    hzt[tstamp_hzt1] = read_cartesian_metranet(filelist['hzt'][tstamp_hzt1]).fields['iso0_height']['data'][0]
+    hzt[tstamp_hzt0] = read_cartesian_metranet(filelist[tstamp_hzt0]).fields['iso0_height']['data'][0]
+    hzt[tstamp_hzt1] = read_cartesian_metranet(filelist[tstamp_hzt1]).fields['iso0_height']['data'][0]
 
     # Get the incremental difference for e.g. 5min steps (divided by 12):
     dt = datetime.timedelta(minutes=tsteps_min)
@@ -394,8 +469,7 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
 
     return hzt
 
-
-def HZT_cartesian_to_polar(hzt, radar, sweeps = range(0, 20)):
+def HZT_cartesian_to_polar(hzt, radar, sweeps=range(0, 20)):
     """
         Transform a Cartesian HZT object (height of freezing level) to a polar
         Radar object with the freezing level at every gate on the Rad4Alp
@@ -446,7 +520,9 @@ def HZT_cartesian_to_polar(hzt, radar, sweeps = range(0, 20)):
         # update grid
         hzt_pol[idxaz.ravel(), idxrange.ravel()] += toadd
         npts[idxaz.ravel(), idxrange.ravel()] += np.ones(toadd.shape)
-        
+        # To avoid a division trhough 0, which causes a python runtime warning:
+        npts[npts == 0] = np.nan
+    
         hzt_pol /= npts
         
         # Fill holes with nearest neighbour interpolation
