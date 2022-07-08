@@ -11,13 +11,14 @@ from scipy.spatial import KDTree
 from scipy.spatial.distance import cdist
 from textwrap import  dedent
 import logging
+import datetime
 
 from pyart.retrieve import kdp_leastsquare_single_window
 from pyart.retrieve import hydroclass_semisupervised
 from pyart.retrieve import compute_noisedBZ
 from pyart.correct import smooth_phidp_single_window
 from pyart.correct import calculate_attenuation_zphi
-from pyart.aux_io import read_metranet
+from pyart.aux_io import read_metranet, read_cartesian_metranet
 from pyart.testing import make_empty_ppi_radar
 
 from .utils import sweepnumber_fromfile, rename_fields
@@ -350,6 +351,49 @@ class Radar(object):
         if field_name_upper != field_name:
             data = 10 ** (0.1 * data)
         return data
+
+def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
+    """ Function to interpolate the hourly isothermal fields to 5min resolution
+        to make them consistant with the radar fields 
+
+        Parameters
+        ----------
+        time : datetime object
+            timestep to calculate
+        filelist : dictionnary
+            list with timesteps, path and filename of radar and HZT files
+            typically derived in database.retrieve_radar_data.Updater.retrieve_radar_files()
+        tsteps_min: int
+            resolution of new fields
+
+
+        Returns
+        ----------
+        dictionnary with datetime objects as keys and numpy.ma.core.MaskedArray
+    """
+
+    tstamp_hzt0 = datetime.datetime(time.year, time.month, time.day, time.hour,0)
+    tstamp_hzt1 = tstamp_hzt0+ datetime.timedelta(hours=1)
+
+    hzt = {}
+    hzt[tstamp_hzt0] = read_cartesian_metranet(filelist['hzt'][tstamp_hzt0]).fields['iso0_height']['data'][0]
+    hzt[tstamp_hzt1] = read_cartesian_metranet(filelist['hzt'][tstamp_hzt1]).fields['iso0_height']['data'][0]
+
+    # Get the incremental difference for e.g. 5min steps (divided by 12):
+    dt = datetime.timedelta(minutes=tsteps_min)
+    ndt = np.arange(1,12)
+    deltaHZT = (hzt[tstamp_hzt1]-hzt[tstamp_hzt0])/ (len(ndt)+1)
+
+    # Loop through all min increments and add the calculated increment of deltaHZT
+    for idx in ndt:
+        if idx == ndt[0]:
+            deltaHZT_temp = deltaHZT.copy()
+        else:
+            deltaHZT_temp += deltaHZT
+        hzt[tstamp_hzt0+dt*idx] = hzt[tstamp_hzt0]+deltaHZT_temp
+
+    return hzt
+
 
 def HZT_cartesian_to_polar(hzt, radar, sweeps = range(0, 20)):
     """
