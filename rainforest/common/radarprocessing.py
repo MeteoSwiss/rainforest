@@ -375,7 +375,9 @@ class Radar(object):
         for s in self.sweeps:
             radsweep = self.radsweeps[s]
 
-            lut_sweep = lut[lut[:,0] == s]
+            # lookup tables the sweeps are labelled 0-19
+            # while in self.sweeps, they range from 1-20
+            lut_sweep = lut[lut[:,0] == (s-1)]
             nrange = lut_sweep[:,2].max() + 1 
             naz = lut_sweep[:,1].max() + 1
         
@@ -419,12 +421,11 @@ class Radar(object):
 
             hzt_dic = {'data':hzt_pol_field, 'units':'m', 
                     'long_name':'Height above freezing level',
-                    'standard_name' :'HZT', 
-                    'coordinates':'elevation azimuth range'}
+                    'standard_name' :'HZT'}
 
-            radsweep.add_field('iso0_height', {'data': hzt_pol_field})
+            radsweep.add_field('ISO0_HEIGHT', {'data': hzt_pol_field})
         
-        self.cosmofields.append('iso0_height')
+        self.cosmofields.append('ISO0_HEIGHT')
 
 def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     """ Function to interpolate the hourly isothermal fields to 5min resolution
@@ -444,8 +445,9 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
         ----------
         dictionnary with datetime objects as keys and numpy.ma.core.MaskedArray (Cartesian coordinates)
     """
-    if time.hours != 0:
-        logging.error('HZT temporal interpolation timestamp {} set to 0 minutes'.format(print(time))
+    if time.minute != 0:
+        # Minutes are set to 0 below, here is only a notification
+        logging.info('HZT temporal interpolation timestamp {} set to 0 minutes'.format(time))
 
     tstamp_hzt0 = datetime.datetime(time.year, time.month, time.day, time.hour,0)
     tstamp_hzt1 = tstamp_hzt0+ datetime.timedelta(hours=1)
@@ -520,6 +522,7 @@ def HZT_cartesian_to_polar(hzt, radar, sweeps=range(0, 20)):
         # update grid
         hzt_pol[idxaz.ravel(), idxrange.ravel()] += toadd
         npts[idxaz.ravel(), idxrange.ravel()] += np.ones(toadd.shape)
+        
         # To avoid a division trhough 0, which causes a python runtime warning:
         npts[npts == 0] = np.nan
     
