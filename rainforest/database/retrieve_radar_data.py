@@ -27,8 +27,8 @@ from rainforest.common import constants
 from rainforest.common.lookup import get_lookup
 from rainforest.common.utils import split_by_time, read_task_file, envyaml
 from rainforest.common.utils import aggregate_multi, nested_dict_values
-from rainforest.common.radarprocessing import Radar, hydroClass_single
-from rainforest.common.retrieve_data import retrieve_prod, get_COSMO_T, get_COSMO_variables
+from rainforest.common.radarprocessing import HZT_hourly_to_5min, Radar, hydroClass_single
+from rainforest.common.retrieve_data import retrieve_hzt_prod, retrieve_prod, get_COSMO_T, get_COSMO_variables
 
 IGNORE_ERRORS = True
                    
@@ -62,6 +62,7 @@ class Updater(object):
         self.radar_variables.append('TCOUNT')
         self.cosmo_variables = self.radar_cfg['COSMO_VARIABLES']
         self.other_variables = self.radar_cfg['OTHER_VARIABLES']
+        self.temp_ref = self.radar_cfg['TEMP_REF']
         self.agg_methods = self.radar_cfg['AGGREGATION_METHODS']
         self.neighb_x = self.radar_cfg['NEIGHBOURS_X']
         self.neighb_y = self.radar_cfg['NEIGHBOURS_Y']
@@ -84,9 +85,17 @@ class Updater(object):
             # Note that hydro is treated a bit differently as it is computed
             # after aggregation to save time
             self.dims['nrv'] -= 1
-            
+
+        # Check that the temperature reference is also within the variable list that will be extracted:
+        if (self.temp_ref == 'ISO0_HEIGHT') & ('ISO0_HEIGHT' not in self.radar_variables):
+            logging.error('Temperature reference "temp_ref" is ISO0_HEIGHT,'\
+                        ' but HZT fields are missing in radar_variables')
+        if (self.temp_ref == 'TAIR') & ('T' not in self.cosmo_variables):
+            logging.error('Temperature reference "temp_ref" is TAIR,'\
+                        ' but T fields are missing in cosmo_variables')
+
     def retrieve_radar_files(self, radar, start_time, end_time, 
-                             include_vpr = True, include_status = True):
+                             include_vpr=True, include_status=True):
         """
         Retrieves a set of radar files for a given time range
         
@@ -110,7 +119,6 @@ class Updater(object):
         files_rad['radar'] = {}
         if include_vpr:
             files_rad['vpr'] = {}
-        
 
         try:
             files_r = retrieve_prod(self.config['TMP_FOLDER'], 
@@ -137,7 +145,12 @@ class Updater(object):
                                         product_name = 'ST' + radar,
                                         pattern = 'ST*')
                files_rad['status'] = files_s
-               
+
+            if self.temp_ref == 'ISO0_HEIGHT':
+               files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],
+                                                start_time, end_time)
+               files_rad['hzt'] = files_hzt
+
             files_rad = split_by_time(files_rad)
         except:
             raise
@@ -320,7 +333,6 @@ class Updater(object):
         if 'VPR' in self.other_variables:
             include_vpr = True
         else: 
-
             include_vpr = False
         
         if ('PRECIPRAD' in self.other_variables or 
@@ -329,6 +341,12 @@ class Updater(object):
             include_status = True
         else:
             include_status = False
+
+        # HZT retrieval
+        if self.temp_ref == 'ISO0_HEIGHT':
+            include_hzt = True
+        else:
+            include_hzt = False        
         
         # COSMO retrieval for T only is much faster...
         if self.cosmo_variables == ['T']:
@@ -443,8 +461,8 @@ class Updater(object):
   
             data_one_tstep = np.empty((len(stations_to_get),0), 
                                       dtype = np.float32)
-            
-            for r in self.radars: # Main loop
+            # MAIN LOOP
+            for r in self.radars:
                 # Check if we need to process the radar
                 # If no station we want is in the list of stations seen by radar
                 visible_stations = list(self.lut['coords'][r].keys())
@@ -453,6 +471,7 @@ class Updater(object):
                     continue
                 
                 logging.info('Processing radar ' + r)
+
                 try:
                     data_one_rad = []
                     
@@ -464,7 +483,24 @@ class Updater(object):
                         # Create radar object
                         radar = Radar(r, rad_files['radar'][tstamp],
                                       rad_files['status'][tstamp],
-                                      rad_files['vpr'][tstamp])
+                                      rad_files['vpr'][tstamp],
+                                      temp_ref=self.temp_ref)
+
+                        if self.temp_ref == "ISO0_HEIGHT":
+                            try:
+                                # Interpolate between timesteps
+                                if (tstamp.minute == 0) or (tidx == 0):
+                                    hztfields = HZT_hourly_to_5min(tstamp, rad_files['hzt'], tsteps_min=5)
+                                # Add the fields to the radar object
+                                radar.add_hzt_data(hztfields[tstamp])
+                                radar.add_height_over_iso0()
+                            except Exception as e:
+                                logging.error(e)
+                                logging.info('Ignoring exception with HZT files...')
+                                if IGNORE_ERRORS:
+                                    pass # can fail if only missing data 
+                                else:
+                                    raise
   
                         if len(self.cosmo_variables):
                             radar.add_cosmo_data(cosmo_data[r])
