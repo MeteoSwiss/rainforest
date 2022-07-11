@@ -34,7 +34,8 @@ class Radar(object):
     The different elevations are stored in a dictionary rather as in a
     single pyart radar instance as this was found to be faster in practice
     '''
-    def __init__(self, radname, polfiles, statusfile = None, vprfile = None):
+    def __init__(self, radname, polfiles, statusfile=None, vprfile=None,
+                temp_ref='TAIR'):
         """
         Creates an Radar class instance
         
@@ -58,7 +59,6 @@ class Radar(object):
         self.radsweeps = {}
         
         visib = get_lookup('visibility_rad', radname)
-        
     
         for f in polfiles:
             try:
@@ -96,7 +96,10 @@ class Radar(object):
             except:
                 logging.error('Could not add vpr file!')
                 pass
-            
+
+        # To get a variable to define the temperature reference
+        self.temp_ref = temp_ref
+
         # To keep track of the nature of data fields
         try:
             self.radarfields = list(self.radsweeps[self.sweeps[0]].fields.keys())
@@ -264,18 +267,31 @@ class Radar(object):
         """
         Corrects for attenuation using the ZPHI algorithm (Testud et al.)
         using the COSMO temperature to identify liquid precipitation
+        OR using the 0° isothermal altitude
         """
         
         for s in self.sweeps:
             radsweep = self.radsweeps[s]
-            ah, pia, cor_z, _, pida, cor_zdr = calculate_attenuation_zphi(
-                             radsweep,
-                             refl_field='ZH',
-                             zdr_field = 'ZDR',
-                             phidp_field = 'PHIDP',
-                             temp_field = 'T',
-                             temp_ref = 'temperature',
-                             doc = 15) 
+
+            if self.temp_ref == 'TAIR':
+                ah, pia, cor_z, _, pida, cor_zdr = calculate_attenuation_zphi(
+                                radsweep,
+                                refl_field='ZH',
+                                zdr_field = 'ZDR',
+                                phidp_field = 'PHIDP',
+                                temp_field = 'T',
+                                temp_ref = 'temperature',
+                                doc = 15)
+            elif self.temp_ref == 'ISO0_HEIGHT':
+                ah, pia, cor_z, _, pida, cor_zdr = calculate_attenuation_zphi(
+                                radsweep,
+                                refl_field='ZH',
+                                zdr_field = 'ZDR',
+                                phidp_field = 'PHIDP',
+                                iso0_field = 'height_over_iso0',
+                                temp_ref = 'height_over_iso0',
+                                doc = 15)
+
             radsweep.add_field('AH', ah)
             radsweep.add_field('ZH_CORR', cor_z)
             radsweep.add_field('ZDR_CORR', cor_zdr)
@@ -419,14 +435,29 @@ class Radar(object):
             hzt_pol_field = np.zeros((radsweep.nrays, radsweep.ngates)) + np.nan
             hzt_pol_field[:,0:hzt_pol.shape[1]] = hzt_pol
 
-            hzt_dic = {'data':hzt_pol_field, 'units':'m', 
-                    'long_name':'Height above freezing level',
+            hzt_dict = {'data':hzt_pol_field, 'units':'m', 
+                    'long_name':'Height of freezing level',
                     'standard_name' :'HZT'}
 
-            radsweep.add_field('ISO0_HEIGHT', {'data': hzt_pol_field})
+            radsweep.add_field('ISO0_HEIGHT', hzt_dict)
         
         self.cosmofields.append('ISO0_HEIGHT')
 
+    def add_height_over_iso0(self):
+        """ Function to derive the relative height over the 0° isothermal altitude
+            in meters by subtracting the altitude of the 0° isothermal altitude from 
+            the altitude of the radar gate
+        """
+        for s in self.sweeps:
+            radsweep = self.radsweeps[s]
+            height_over_iso0 = radsweep.gate_altitude['data']-radsweep.fields['ISO0_HEIGHT']['data']
+
+            iso0_dict = {'data':height_over_iso0, 'units':'m', 
+            'long_name':'height of freezing level with respect to radar gate altitude',
+            'standard_name' :'height_over_iso0'}
+            
+            radsweep.add_field('height_over_iso0', iso0_dict)
+            
 def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     """ Function to interpolate the hourly isothermal fields to 5min resolution
         to make them consistant with the radar fields 
