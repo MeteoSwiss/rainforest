@@ -27,7 +27,7 @@ from rainforest.common import constants
 from rainforest.common.lookup import get_lookup
 from rainforest.common.utils import split_by_time, read_task_file, envyaml
 from rainforest.common.utils import aggregate_multi, nested_dict_values
-from rainforest.common.radarprocessing import HZT_hourly_to_5min, Radar, hydroClass_single
+from rainforest.common.radarprocessing import HZT_hourly_to_5min, Radar, hydroClass_single, hydroClass_single_over_iso
 from rainforest.common.retrieve_data import retrieve_hzt_prod, retrieve_prod, get_COSMO_T, get_COSMO_variables
 
 IGNORE_ERRORS = True
@@ -87,7 +87,7 @@ class Updater(object):
             self.dims['nrv'] -= 1
 
         # Check that the temperature reference is also within the variable list that will be extracted:
-        if (self.temp_ref == 'ISO0_HEIGHT') & ('ISO0_HEIGHT' not in self.radar_variables):
+        if (self.temp_ref == 'ISO0_HEIGHT') & ('ISO0_HEIGHT' not in self.other_variables):
             logging.error('Temperature reference "temp_ref" is ISO0_HEIGHT,'\
                         ' but HZT fields are missing in radar_variables')
         if (self.temp_ref == 'TAIR') & ('T' not in self.cosmo_variables):
@@ -146,17 +146,35 @@ class Updater(object):
                                         pattern = 'ST*')
                files_rad['status'] = files_s
 
-            if self.temp_ref == 'ISO0_HEIGHT':
-               files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],
-                                                start_time, end_time)
-               files_rad['hzt'] = files_hzt
-
             files_rad = split_by_time(files_rad)
         except:
             raise
             logging.error("""Retrieval for radar {:s} at timesteps {:s}-{:s} 
                       failed""".format(radar, str(start_time), str(end_time)))
         return files_rad
+
+    def retrieve_iso0_files(self, start_time, end_time):
+        """
+        Retrieves a set of HZT files for a given time range
+        
+        Parameters
+        ----------
+        start_time : datetime.datetime instance
+            starting time of the time range
+        end_time : datetime.datetime instance
+            end time of the time range
+        """
+      
+        try:
+            files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],
+                                            start_time, end_time)
+            files_hzt = split_by_time(files_hzt)
+        except:
+            raise
+            logging.error("""Retrieval of hzt files at timesteps {:s}-{:s} 
+                      failed""".format(str(start_time), str(end_time)))
+        return files_hzt
+
 
     def process_single_timestep(self, list_stations, radar_object, tidx):
         """
@@ -279,13 +297,21 @@ class Updater(object):
                             
                         all_data[j,idx0_col] = radprecip
                         idx0_col += 1
-                        
+
+                    # HZT data
+                    if 'ISO0_HEIGHT' in self.other_variables[-2::]:
+                        idx = lut_coords[sta][sweep]['00']
+                        tmp = _data_at_station(radsweeps[sweep], 
+                                              self.other_variables[-2::],
+                                              idx)
+                        all_data[j, idx0_col : idx0_col + len(self.other_variables[-2::])] = tmp
+                    idx0_col += len(self.other_variables[-2::])
+
                     # COSMO data
                     idx = lut_coords[sta][sweep]['00']
                     tmp = _data_at_station(radsweeps[sweep], 
                                            self.cosmo_variables,
                                            idx)
-                    
                     all_data[j, idx0_col : idx0_col + self.dims['nc']] = tmp
                     idx0_col += self.dims['nc']
                     
@@ -342,12 +368,6 @@ class Updater(object):
         else:
             include_status = False
 
-        # HZT retrieval
-        if self.temp_ref == 'ISO0_HEIGHT':
-            include_hzt = True
-        else:
-            include_hzt = False        
-        
         # COSMO retrieval for T only is much faster...
         if self.cosmo_variables == ['T']:
             only_cosmo_T = True
@@ -451,14 +471,26 @@ class Updater(object):
                           
                     except Exception as e:
                         logging.error(e)
-                        logging.info('Ignoring exception...')
+                        logging.info('Ignoring exception with COSMO data...')
                         if IGNORE_ERRORS:
                             pass # can fail if only missing data 
                         else:
                             raise
             else:
                 cosmo_data = None
-  
+
+            if self.temp_ref == 'ISO0_HEIGHT':
+                # First timestep (already extracts fields over an hour)
+                if (i == 0):
+                    hzt_files = self.retrieve_iso0_files(tstart, tend)
+                    # Interpolate between timesteps
+                    hztfields = HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)
+                elif (tstart > np.max(list(hztfields.keys()))):
+                    hzt_files = self.retrieve_iso0_files(tstart, tend)
+                    # Interpolate between timesteps
+                    hztfields.update(HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5))
+
+            # Create array for one timestep  
             data_one_tstep = np.empty((len(stations_to_get),0), 
                                       dtype = np.float32)
             # MAIN LOOP
@@ -486,28 +518,21 @@ class Updater(object):
                                       rad_files['vpr'][tstamp],
                                       temp_ref=self.temp_ref)
 
+                        # Add ISO0_HEIGHT and height_over_iso0 to radar object
                         if self.temp_ref == "ISO0_HEIGHT":
-                            try:
-                                # Interpolate between timesteps
-                                if (tstamp.minute == 0) or (tidx == 0):
-                                    hztfields = HZT_hourly_to_5min(tstamp, rad_files['hzt'], tsteps_min=5)
-                                # Add the fields to the radar object
-                                radar.add_hzt_data(hztfields[tstamp])
-                                radar.add_height_over_iso0()
-                            except Exception as e:
-                                logging.error(e)
-                                logging.info('Ignoring exception with HZT files...')
-                                if IGNORE_ERRORS:
-                                    pass # can fail if only missing data 
-                                else:
-                                    raise
+                            radar.add_hzt_data(hztfields[tstamp])
+                            radar.add_height_over_iso0()
   
                         if len(self.cosmo_variables):
                             radar.add_cosmo_data(cosmo_data[r])
-                      
+
+                        # Process a single timestep                     
                         tmp = self.process_single_timestep(stations_to_get,
                                                                   radar, tidx + 1)
+                        # and add to the data_one_rad list
                         data_one_rad.append(tmp)
+
+                        # free memory (gc = garbage collector)
                         del radar
                         gc.collect()
                         
@@ -554,7 +579,7 @@ class Updater(object):
             except Exception as e:
                 logging.error(e)
                 
-                logging.info('Ignoring exception...')
+                logging.info('Ignoring exception on data remapping...')
                 if IGNORE_ERRORS:
                     pass # can fail if only missing data 
                 else:
@@ -649,21 +674,30 @@ class Updater(object):
                     zdr_idx = cols.index('ZDR_'+m)
                     kdp_idx = cols.index('KDP_'+m)
                     rhohv_idx = cols.index('RHOHV_'+m)
-                    T_idx = cols.index('T')
-                    
-                    hydro = hydroClass_single(rearranged[:,2], # radar
-                                              rearranged[:,zh_idx].astype(float),
-                                              rearranged[:,zdr_idx].astype(float),
-                                              rearranged[:,kdp_idx].astype(float),
-                                              rearranged[:,rhohv_idx].astype(float),
-                                              rearranged[:,T_idx].astype(float))
+                    if self.temp_ref == 'TAIR':
+                        T_idx = cols.index('T')
+                        hydro = hydroClass_single(rearranged[:,2], # radar
+                                                rearranged[:,zh_idx].astype(float),
+                                                rearranged[:,zdr_idx].astype(float),
+                                                rearranged[:,kdp_idx].astype(float),
+                                                rearranged[:,rhohv_idx].astype(float),
+                                                rearranged[:,T_idx].astype(float))
+                    elif self.temp_ref == 'ISO0_HEIGHT':
+                        # We need the relative height (see Besic et al. 2016)
+                        iso0_idx = cols.index('height_over_iso0')
+                        hydro = hydroClass_single_over_iso(rearranged[:,2], # radar
+                                                rearranged[:,zh_idx].astype(float),
+                                                rearranged[:,zdr_idx].astype(float),
+                                                rearranged[:,kdp_idx].astype(float),
+                                                rearranged[:,rhohv_idx].astype(float),
+                                                rearranged[:,iso0_idx].astype(float))                        
                     rearranged = np.column_stack((rearranged, hydro))
                     cols.append('HYDRO_'+m)
-            except: 
-                    
+            except Exception as e:
+                logging.error(e)
                 logging.error("""Could not compute hydrometeor classes, make 
                               sure that the variables ZH, ZDR, KDP, RHOHV and
-                              T (COSMO temp) are specified in the config file       
+                              T (COSMO temp) or iso0 (COSMO) are specified in the config file       
                               """)
                 raise # it will be caught later on
         return rearranged, cols

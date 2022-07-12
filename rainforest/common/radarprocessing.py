@@ -457,7 +457,9 @@ class Radar(object):
             'standard_name' :'height_over_iso0'}
             
             radsweep.add_field('height_over_iso0', iso0_dict)
-            
+
+        self.cosmofields.append('height_over_iso0')
+
 def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     """ Function to interpolate the hourly isothermal fields to 5min resolution
         to make them consistant with the radar fields 
@@ -664,6 +666,80 @@ def hydroClass_single(radars, zh, zdr, kdp, rhohv, temp,
         
      
         data = np.vstack((zh_sta,zdr_sta,kdp_sta,rhohv_sta,relh_sta)).T
+        
+        if len(data.shape) == 1:
+            data = np.array([data])
+    
+        dist = cdist(data, mass_centers,'minkowski',p=2,w=weights)
+        hydro[idx] = np.argmin(dist,axis=1)
+        hydro = hydro.astype(np.int8)
+    return hydro
+
+def hydroClass_single_over_iso(radars, zh, zdr, kdp, rhohv, H_ISO0, 
+                      weights = np.array([1., 1., 1., 0.75, 0.5])):
+    """
+    Computes the hydrometeor classes for columnar data, note that all input
+    arrays except weights must have the same length
+    
+    Parameters
+    ----------
+    radars : ndarray of char
+        Array of radar IDs, ('A','D','L','P','W')
+    zh : ndarray
+        Array of radar reflectivity in dBZ
+    zdr: ndarray
+        Array of diff. reflectivity in dB
+    kdp: ndarray
+        Array of specific phase shift on propagation in deg / km
+    rhohv: ndarray
+        Array of copolar correlation coefficient
+    iso0_height: ndarray
+        Array of 0° degree isotherm altitude
+    weights: ndarray (optional)
+        The weight of every input feature, zh, zdr, kdp, rhohv, temp in the
+        hydrometeor classification
+           
+    Returns
+    -------
+    The hydrometeor classes as ndarray with values from 0 to 8, corresponding to
+    the classes
+        0 : no data
+        1 : aggregates (AG)
+        2 : light rain (LR)
+        3 : ice crystals (CR)
+        4 : rimed particles (RP)
+        5 : rain (RN)
+        6 : vertically aligned ice (VI)
+        7 : wet snow (WS)
+        8 : melting hail (MH)
+        9: dry hail / high density graupel (IH/HDG)
+    """
+    
+    from pyart.retrieve.echo_class import _standardize
+    unique_radars = np.unique(radars)
+    hydro = np.zeros(len(radars)) + np.nan
+    
+    for r in unique_radars:
+        
+        idx = np.where(radars == r)[0]
+        mass_centers = np.array(constants.HYDRO_CENTROIDS[r])
+ 
+        mass_centers[:, 0] = _standardize(mass_centers[:, 0], 'dBZ') 
+        mass_centers[:, 1] = _standardize(mass_centers[:, 1], 'ZDR') 
+        mass_centers[:, 2] = _standardize(mass_centers[:, 2], 'KDP') 
+        mass_centers[:, 3] = _standardize(mass_centers[:, 3], 'RhoHV') 
+        mass_centers[:, 4] = _standardize(mass_centers[:, 4], 'H_ISO0') 
+    
+        # lapse_rate = -6.5
+        # relh = temp*(1000./lapse_rate)
+        zh_sta = _standardize(zh[idx],'dBZ')
+        zdr_sta = _standardize(zdr[idx],'ZDR')
+        kdp_sta = _standardize(kdp[idx],'KDP')
+        rhohv_sta = _standardize(rhohv[idx],'RhoHV')
+        iso0_sta = _standardize(H_ISO0[idx],'H_ISO0')
+        
+     
+        data = np.vstack((zh_sta,zdr_sta,kdp_sta,rhohv_sta,iso0_sta)).T
         
         if len(data.shape) == 1:
             data = np.array([data])
