@@ -337,7 +337,7 @@ class Updater(object):
 
                 except Exception as e:
                     logging.error(e)
-                    logging.info('Ignoring exception...')
+                    logging.info('Ignoring exception in process_single_timestep...')
                     if IGNORE_ERRORS:
                         pass # can fail if only missing data 
                     else:
@@ -386,12 +386,9 @@ class Updater(object):
         for i, tstep in enumerate(all_timesteps):
             
             logging.info('Processing timestep '+str(tstep))
-            # Works at 10 min resolution 
-            # retrieve radar data
-            tstart = datetime.datetime.utcfromtimestamp(float(tstep))
-            # Using six minutes ensures we include also the timesteps 5 min before
-            tend = tstart + datetime.timedelta(minutes = 5)
-            tstep_end = tstep + 10 * 60
+            # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
+            tstart = datetime.datetime.utcfromtimestamp(float(tstep)) - datetime.timedelta(minutes=5)
+            tend= datetime.datetime.utcfromtimestamp(float(tstep))
             
             stations_to_get = self.tasks[tstep]
 
@@ -402,60 +399,7 @@ class Updater(object):
                 current_day = day_of_year
   
             logging.info('---')
-            if day_of_year != current_day or i == len(all_timesteps) - 1:
-                logging.info('Saving new table for day {:s}'.format(str(current_day)))
-                name = self.output_folder + current_day + '.parquet'
-                try:
-          
-                    # Save data to file if end of loop or new day
-                    
-                    # Store data in new file
-                    data = np.array(all_data_daily)
 
-                    dic = OrderedDict()
-      
-                    for c, col in enumerate(colnames):
-    
-                        data_col = data[:,c]
-                        # Check required column type
-                        isin_listcols = [c == col.split('_')[0] for 
-                                             c in constants.COL_TYPES.keys()]
-                        if any(isin_listcols):
-                            idx = np.where(isin_listcols)[0][0]
-                            coltype = list(constants.COL_TYPES.values())[idx]
-                            try:
-                                data_col = data_col.astype(coltype)
-                            except:# for int
-                                data_col = data_col.astype(np.float).astype(coltype)
-                        else:
-                            data_col = data_col.astype(np.float32)
-                                
-                        dic[col] = data_col
-                                                 
-                    df = pd.DataFrame(dic)
-
-                    # Remove duplicate rows
-                    idx = 0
-                    for m in self.agg_methods:
-                        if idx == 0:
-                            df['TCOUNT'] = df['TCOUNT_' + m] 
-                        del df['TCOUNT_' + m]
-                        
-                    logging.info('Saving file ' + name)
-                    df.to_parquet(name, compression = 'gzip', index = False)
-                    
-                except Exception as e:
-                    logging.info('Could not save file ' + name)
-                    logging.error(e)
-                    if IGNORE_ERRORS:
-                        pass # can fail if only missing data 
-                    else:
-                        raise   
-                    
-                # Reset list
-                all_data_daily = []
-                # Reset day counter
-                current_day = day_of_year
                 
             if len(self.cosmo_variables):
                 if hour_of_year != current_hour:
@@ -571,7 +515,7 @@ class Updater(object):
                     raise
     
             try:
-                data_remapped, colnames = self._remap(data_one_tstep, tstep_end, 
+                data_remapped, colnames = self._remap(data_one_tstep, tstep, 
                                                  stations_to_get,
                                                  compute_hydro)
                 all_data_daily.extend(data_remapped)
@@ -583,12 +527,65 @@ class Updater(object):
                 if IGNORE_ERRORS:
                     pass # can fail if only missing data 
                 else:
-                    raise       
-                
+                    raise
+
+            if day_of_year != current_day or i == len(all_timesteps) - 1:
+                logging.info('Saving new table for day {:s}'.format(str(current_day)))
+                name = self.output_folder + current_day + '.parquet'
+                try:
+          
+                    # Save data to file if end of loop or new day
+                    
+                    # Store data in new file
+                    data = np.array(all_data_daily)
+
+                    dic = OrderedDict()
+      
+                    for c, col in enumerate(colnames):
+    
+                        data_col = data[:,c]
+                        # Check required column type
+                        isin_listcols = [c == col.split('_')[0] for 
+                                             c in constants.COL_TYPES.keys()]
+                        if any(isin_listcols):
+                            idx = np.where(isin_listcols)[0][0]
+                            coltype = list(constants.COL_TYPES.values())[idx]
+                            try:
+                                data_col = data_col.astype(coltype)
+                            except:# for int
+                                data_col = data_col.astype(np.float).astype(coltype)
+                        else:
+                            data_col = data_col.astype(np.float32)
+                                
+                        dic[col] = data_col
+                                                 
+                    df = pd.DataFrame(dic)
+
+                    # Remove duplicate rows
+                    idx = 0
+                    for m in self.agg_methods:
+                        if idx == 0:
+                            df['TCOUNT'] = df['TCOUNT_' + m] 
+                        del df['TCOUNT_' + m]
+                        
+                    logging.info('Saving file ' + name)
+                    df.to_parquet(name, compression = 'gzip', index = False)
+                    
+                except Exception as e:
+                    logging.info('Could not save file ' + name)
+                    logging.error(e)
+                    if IGNORE_ERRORS:
+                        pass # can fail if only missing data 
+                    else:
+                        raise   
+                    
+                # Reset list
+                all_data_daily = []
+                # Reset day counter
+                current_day = day_of_year
+
             del data_one_tstep
             gc.collect()
-             
-
                     
     
     def _remap(self, data, tstep, stations, compute_hydro = True):
