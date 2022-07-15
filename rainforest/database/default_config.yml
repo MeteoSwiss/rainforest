@@ -15,9 +15,9 @@ REFERENCE_RETRIEVAL:
     
 RADAR_RETRIEVAL:
     RADARS: ['A','D','L','W','P']
-    RADAR_VARIABLES : ['ZH','ZV','ZH_VISIB','ZV_VISIB','ZDR','KDP','RHOHV','SW','RVEL','AH','ZH_CORR','ZV_CORR','ZDR_CORR','VISIB','NH','NV','ISO0_HEIGHT'] #,'HYDRO']
-    COSMO_VARIABLES: ['T','U','V','W','P','QV'] # Only at center pixel
-    OTHER_VARIABLES: ['HEIGHT','VPR','RADPRECIP'] # Only at center pixel
+    RADAR_VARIABLES : ['ZH','ZV','ZH_VISIB','ZV_VISIB','ZDR','KDP','RHOHV','SW','RVEL','AH','ZH_CORR','ZV_CORR','ZDR_CORR','VISIB','NH','NV','HYDRO']
+    COSMO_VARIABLES: [] #['T','U','V','W','P','QV'] # Only at center pixel
+    OTHER_VARIABLES: ['HEIGHT','VPR','RADPRECIP','ISO0_HEIGHT','height_over_iso0'] # Only at center pixel
     TEMP_REF: 'ISO0_HEIGHT' # or 'TAIR'
     AGGREGATION_METHODS: ['max','min','mean'] # value at max/min of kdp for kdp and max/min of zh for all other variables
     SWEEPS: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
