@@ -20,6 +20,7 @@ from pyart.correct import smooth_phidp_single_window
 from pyart.correct import calculate_attenuation_zphi
 from pyart.aux_io import read_metranet, read_cartesian_metranet
 from pyart.testing import make_empty_ppi_radar
+from pyart.core.transforms import antenna_vectors_to_cartesian
 
 from .utils import sweepnumber_fromfile, rename_fields
 from .io_data import read_status, read_vpr
@@ -368,6 +369,22 @@ class Radar(object):
             data = 10 ** (0.1 * data)
         return data
 
+    def correct_gate_altitude(self):
+        """
+        Following the Swiss standard, we change the calculation of
+        the gate_altitude that is automatically done in pyart.
+        Instead of the constant radar scale factor of (ke) of 4/3, 
+        we now use 1.25
+        """
+
+        for s in self.sweeps:
+            radsweep = self.radsweeps[s]
+            _,_,heights = antenna_vectors_to_cartesian(radsweep.range['data'],
+                                radsweep.azimuth['data'], radsweep.elevation['data'], ke = 1.25)
+
+            radsweep.gate_altitude['data'] = heights + radsweep.altitude['data']
+
+
     def add_hzt_data(self, hzt_cart):
         """
             Transform a Cartesian HZT object (height of freezing level) and
@@ -448,6 +465,11 @@ class Radar(object):
             in meters by subtracting the altitude of the 0° isothermal altitude from 
             the altitude of the radar gate
         """
+
+        # Correct the automatically derived gate altitude
+        self.correct_gate_altitude()
+
+        # Add the height over iso0 to the sweeps
         for s in self.sweeps:
             radsweep = self.radsweeps[s]
             height_over_iso0 = radsweep.gate_altitude['data']-radsweep.fields['ISO0_HEIGHT']['data']
