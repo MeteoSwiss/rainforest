@@ -1,9 +1,9 @@
 NO_DATA_FILL: -9999
 TMP_FOLDER: '/scratch/${USER}/temp/'
 GAUGE_RETRIEVAL:
-    VARIABLES : ['tre200s0','prestas0','ure200s0','rre150z0','dkl010z0','fkl010z0']
+    VARIABLES : ['tre200s0','prestas0','ure200s0','rre150z0','dkl010z0','fkl010z0','rre150z0_adj']
     STATIONS : 'all'
-    MIN_R_HOURLY : 0.1
+    MIN_R_HOURLY : 0.01
     MAX_NB_SLURM_JOBS: 6
     
 REFERENCE_RETRIEVAL:
