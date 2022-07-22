@@ -185,7 +185,6 @@ def calc_lookup(lookup_type, radar = None):
             for sweep in sweeps:        
                 sweep_idx = sweep - 1
                 for station in stations:
-                    print("processing station ", station)
                     station_data = constants.METSTATIONS[constants.METSTATIONS.Abbrev 
                                                       == station]
                     x_sta =  float(station_data.X)
@@ -193,10 +192,16 @@ def calc_lookup(lookup_type, radar = None):
                     
                     # For x the columns in the Cartesian lookup tables are lower bounds
                     # e.g. x = 563, means that radar pixels are between 563 and 564
-                    x_llc_sta = np.int(x_sta/constants.CART_GRID_SIZE)
+                    #x_llc_sta = np.int(x_sta/constants.CART_GRID_SIZE)
                     # For y the columns in the Cartesian lookup tables are upper bounds
                     # e.g. x = 182, means that radar pixels are between 181 and 182            
-                    y_llc_sta = np.int(np.ceil(y_sta/constants.CART_GRID_SIZE))
+                    #y_llc_sta = np.int(np.ceil(y_sta/constants.CART_GRID_SIZE))
+                    
+                    # x and y are reversed (following the Swiss convention),
+                    # therefore, the station cell number needs to be 
+                    # defined as follows:
+                    x_llc_sta = np.int(np.ceil(x_sta/constants.CART_GRID_SIZE))
+                    y_llc_sta = np.int(y_sta/constants.CART_GRID_SIZE)
                     
                     # Distance from all gates to gauge
                     idx = lut_cart[np.logical_and(lut_cart[:,0] == sweep_idx,
@@ -225,8 +230,8 @@ def calc_lookup(lookup_type, radar = None):
                             y_llc = y_llc_sta + j 
                             
                             idx = lut_cart[np.logical_and(lut_cart[:,0] == sweep_idx,
-                                          np.logical_and(lut_cart[:,3] == x_llc, 
-                                          lut_cart[:,4] == y_llc)), 0:3]
+                                          np.logical_and(lut_cart[:,3] == y_llc, 
+                                          lut_cart[:,4] == x_llc)), 0:3]
                
                             key = str(i)+str(j)
                             if len( idx[:,1:3]):
