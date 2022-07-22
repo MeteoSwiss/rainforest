@@ -185,6 +185,7 @@ def calc_lookup(lookup_type, radar = None):
             for sweep in sweeps:        
                 sweep_idx = sweep - 1
                 for station in stations:
+                    print("processing station ", station)
                     station_data = constants.METSTATIONS[constants.METSTATIONS.Abbrev 
                                                       == station]
                     x_sta =  float(station_data.X)
@@ -364,6 +365,7 @@ def calc_lookup(lookup_type, radar = None):
         offset_y = int((neighb_y-1)/2)
         
         df_stations = df_stations.append(constants.RADARS)
+        stations = list(df_stations['Abbrev'])
             
     
         all_idx_sta = {}
@@ -372,6 +374,7 @@ def calc_lookup(lookup_type, radar = None):
         y,x = np.meshgrid(y_qpe,x_qpe)
         # Get x and y of all radar pixels                 
         for station in stations:
+            print('Processing station ', station)
             all_idx_sta[station] = {}
             station_data = df_stations[df_stations.Abbrev == station]
             y_sta =  float(station_data.Y)
@@ -386,9 +389,9 @@ def calc_lookup(lookup_type, radar = None):
             
           
             for i in range(-offset_y, offset_y + 1):
-                print(i)
+                #print(i)
                 for j in range(-offset_x, offset_x + 1):
-                    print(j)
+                    #print(j)
                     x_llc = x_llc_sta + j
                     y_llc = y_llc_sta + i 
                     # Find index of station in cart grid
@@ -401,7 +404,7 @@ def calc_lookup(lookup_type, radar = None):
                         all_idx_sta[station][key] = idx
 
         lut_name = Path(LOOKUP_FOLDER, 'lut_station_to_qpegrid.p')
-        pickle.dump(all_idx_sta, open(str(lut_name)),'wb')
+        pickle.dump(all_idx_sta, open(str(lut_name),'wb'))
     
     elif lookup_type == 'cartcoords_rad':
         converter = GPSConverter()
@@ -521,3 +524,15 @@ def _WGS_to_COSMO(coords_WGS, SP_coords = (-43,10)):
  
  
      return coords_COSMO.astype('float32') 
+ 
+if __name__ == '__main__':
+    """
+    If a new list with stations is available, compile the lookup tables here
+    Copy the new filelist in /data/data_stations.csv
+
+    """
+
+    # for rad in ['A','D','L','P','W']:
+    #     calc_lookup('station_to_rad',radar=rad)
+    
+    calc_lookup('station_to_qpegrid',['A','D','L','P','W'])
