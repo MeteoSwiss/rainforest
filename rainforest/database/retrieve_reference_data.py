@@ -159,11 +159,15 @@ class Updater(object):
         for i, tstep in enumerate(all_timesteps):
             logging.info('Processing timestep '+str(tstep))
             
-            # retrieve radar data
-            tstart = datetime.datetime.utcfromtimestamp(float(tstep))
-            tend = tstart + datetime.timedelta(minutes = 5) 
+            # # retrieve radar data
+            # tstart = datetime.datetime.utcfromtimestamp(float(tstep))
+            # tend = tstart + datetime.timedelta(minutes = 5) 
+            # tstep_end = tstep + 10 * 60 # 10 min
             
-            tstep_end = tstep + 10 * 60 # 10 min
+            # NEW:
+            # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
+            tstart = datetime.datetime.utcfromtimestamp(float(tstep)) - datetime.timedelta(minutes=5)
+            tend= datetime.datetime.utcfromtimestamp(float(tstep))
             
             stations_to_get = self.tasks[tstep]
             
@@ -355,7 +359,7 @@ class Updater(object):
             for sta in stations_to_get:
                 for nx in self.neighb_x:
                     for ny in self.neighb_y:
-                        data_cst.append([tstep_end, sta,nx,ny])
+                        data_cst.append([tend, sta,nx,ny])
                          
              
 if __name__ == '__main__':
