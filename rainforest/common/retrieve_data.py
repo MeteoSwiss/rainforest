@@ -3,10 +3,10 @@
 """
 Functions to retrieve MeteoSwiss products from the archives
 
-Daniel Wolfensberger
+Daniel Wolfensberger, Rebecca Gugerli
 MeteoSwiss/EPFL
-daniel.wolfensberger@epfl.ch
-December 2019
+daniel.wolfensberger@epfl.ch, rebecca.gugerli@epfl.ch
+December 2019, July 2022
 """
 
 
@@ -72,15 +72,18 @@ def retrieve_hzt_prod(folder_out, start_time, end_time,pattern_type='shell'):
         if i == 0:
             start_time = datetime.datetime(year = t0.year, month = t0.month,
                                            day = t0.day, hour=t0.hour)
-            print('*first start time: ', start_time)
+            #print('*first start time: ', start_time)
         else:
             start_time = datetime.datetime(year = d.year, month = d.month,
                                            day = d.day)
-            print('*all other start times', start_time)
+            #print('*all other start times', start_time)
         if (i == len(dates) - 1):
             end_time = datetime.datetime(year = t1.year, month = t1.month,
                                          day = t1.day, hour=t1.hour) + datetime.timedelta(hours=1)
-            print('*end_time: ', end_time)
+        else:
+            end_time = datetime.datetime(year = d.year, month = d.month,
+                                           day = d.day, hour=23)
+            #print('*end_time: ', end_time)
 
         files = _retrieve_hzt_prod_daily(folder_out, start_time, end_time,
                                             pattern_type)
@@ -130,29 +133,25 @@ def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type = 's
         content_filt = np.array([c for c in content_zip if c.endswith('800')])
         times_filt = np.array([datetime.datetime.strptime(c[3:12],
                             '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_filt])
+        content_filt = content_filt[np.where((times_filt >= start_time) & (times_filt <= end_time))]
+        times_filt = times_filt[np.where((times_filt >= start_time) & (times_filt <= end_time))]    
     except:
         logging.error('Zip file with HZT data does not exist for '+start_time.strftime('%d-%b-%y'))
         files = None
         return
         
     # Check that an hourly estimate is available
-    all_hours = pd.date_range(start=times_filt[0], end=times_filt[-1], freq='H')
+    all_hours = pd.date_range(start=start_time, end=end_time, freq='H')
     
     if len(all_hours) != len(times_filt):
+        content_times = np.array([datetime.datetime.strptime(c[3:12],
+                '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_zip])
         # Find time that is missing:
         for hh in all_hours:
             if not hh in times_filt:
-                basename = 'HZT{}0L.80'.format(hh.strftime('%y%j%H%M'))
-                # Check if forecast hour is available:
-                # for fh in [1,2,3,4,5,6]:
-                # Get nearest forecast hour
-                fh = 1
-                while basename+str(fh) in content_zip:
-                    print('adding', basename+str(fh), 'to array')
-                    times_filt = np.sort(np.append(times_filt, datetime.datetime(hh.year,hh.month,hh.day,hh.hour)))
-                    content_filt = np.sort(np.append(content_filt,basename+str(1)))
-                    fh += 1
-                    break
+                hh_last = np.where(hh==content_times)
+                times_filt = np.sort(np.append(times_filt, content_times[hh_last][-1]))
+                content_filt = np.sort(np.append(content_filt, content_zip[hh_last][-1]))
     
     # Get a list of all files to retrieve
     conditions = np.array([np.logical_and(t >= start_time, t <= end_time)
@@ -165,7 +164,16 @@ def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type = 's
         raise ValueError(msg)
         
     files_to_retrieve = ' '.join(content_filt[conditions])
-   
+    
+    # Check if files are already unzipped (saves time if they already exist)
+    for fi in content_filt[conditions]:
+        if os.path.exists(folder_out+fi):
+            files_to_retrieve = files_to_retrieve.replace(fi,'')
+            
+    # Only unzip if at least one file does not exist
+    # (18 is the number of characters within the filename)
+    if len(files_to_retrieve) >= 18:
+        logging.info('Unzippping: '+ files_to_retrieve)   
     cmd = 'unzip -j -o -qq "{:s}" {:s} -d {:s}'.format(folder_in + name_zipfile,
          files_to_retrieve , folder_out)
     subprocess.call(cmd, shell=True)
