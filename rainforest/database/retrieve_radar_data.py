@@ -14,6 +14,7 @@ so you should never have to call it manually
 
 import numpy as np
 import pandas as pd
+import dask.dataframe as dd
 import datetime
 import logging
 import gc
@@ -137,7 +138,23 @@ class Updater(object):
                 files_v = retrieve_prod(self.config['TMP_FOLDER'], 
                                             start_time, end_time, 
                                             product_name = 'ZZ' + radar_vpr)
-                files_rad['vpr'] = files_v[::2]
+
+                # Take only the start- and end time since they are 5min apart:
+                if len(files_v) > 2:
+                    files_v = [ff for ff in files_v 
+                            if (str(ff[-10:-6])==start_time.strftime('%H%M')) 
+                            or (str(ff[-10:-6])==end_time.strftime('%H%M')) ]
+                    # Should there be several files per timestep
+                    if len(files_v) > 2:
+                        i=1
+                        files_temp = []
+                        for ff in files_v[1::]:
+                            if (ff.split('/')[-1][-10:-6]) == (files_v[i].split('/')[-1][-10:-6]):
+                                files_temp.append(ff)
+                            i+=1
+                        files_v = files_temp
+
+                files_rad['vpr'] = files_v
                 
             if include_status:
                files_s = retrieve_prod(self.config['TMP_FOLDER'], 
@@ -391,15 +408,14 @@ class Updater(object):
             tend= datetime.datetime.utcfromtimestamp(float(tstep))
             
             stations_to_get = self.tasks[tstep]
-
-            hour_of_year = datetime.datetime.strftime(tstart,'%Y%m%d%H')
+            # Change to the timestep where the data is logged
+            hour_of_year = datetime.datetime.strftime(tend,'%Y%m%d%H')
             day_of_year = hour_of_year[0:-2]
             
-            if i == 0:
-                current_day = day_of_year
+            # set current_day
+            current_day = day_of_year
   
             logging.info('---')
-
                 
             if len(self.cosmo_variables):
                 if hour_of_year != current_hour:
@@ -507,10 +523,13 @@ class Updater(object):
                 # cleanup
                 try:
                     all_files = nested_dict_values(rad_files)
+                    all_files.extend(nested_dict_values(hzt_files))
+                    
                     for files in all_files:
                         if os.path.exists(files):
                             os.remove(files)
-                except:
+                except Exception as e:
+                    logging.error(e)
                     logging.error('Cleanup of radar data failed')
                     raise
     
@@ -529,13 +548,27 @@ class Updater(object):
                 else:
                     raise
 
-            if day_of_year != current_day or i == len(all_timesteps) - 1:
+            # Save data to file if end of loop or new day
+            if (i == len(all_timesteps)-1):
+                save_output = True
+            else: 
+                next_tstep = datetime.datetime.utcfromtimestamp(all_timesteps[i+1])
+                next_tstep_day = datetime.datetime.strftime(next_tstep,'%Y%m%d%H')[0:-2]
+                if current_day != next_tstep_day:
+                    save_output = True
+                else:
+                    save_output = False
+                
+            if save_output:
                 logging.info('Saving new table for day {:s}'.format(str(current_day)))
                 name = self.output_folder + current_day + '.parquet'
-                try:
-          
-                    # Save data to file if end of loop or new day
-                    
+
+                # Check if a file already exists
+                file_exists = False
+                if os.path.exists(name):
+                    file_exists = True          
+
+                try:                    
                     # Store data in new file
                     data = np.array(all_data_daily)
 
@@ -568,8 +601,21 @@ class Updater(object):
                             df['TCOUNT'] = df['TCOUNT_' + m] 
                         del df['TCOUNT_' + m]
                         
-                    logging.info('Saving file ' + name)
-                    df.to_parquet(name, compression = 'gzip', index = False)
+                    if file_exists == False:
+                        logging.info('Saving file ' + name)
+                        df.to_parquet(name, compression = 'gzip', index = False)
+                    else:
+                        logging.info('Saving file: '+name+' as it already exists, I will append to it')
+                        # Rename old file to be able to delete it afterwards
+                        name_old = name[0:-8] + '_old'+ name[-8::]
+                        os.rename(name, name_old)
+                        # Read dask DataFrame and convert it to Pandas DataFrame
+                        df_old = dd.read_parquet(name_old).compute()
+                        # Merge the old and new one and drop duplicate rows
+                        df_join = df_old.append(df).drop_duplicates()
+                        # Save the new file and delete the old one
+                        df_join.to_parquet(name, compression = 'gzip', index = False)
+                        os.remove(name_old)
                     
                 except Exception as e:
                     logging.info('Could not save file ' + name)
@@ -582,7 +628,7 @@ class Updater(object):
                 # Reset list
                 all_data_daily = []
                 # Reset day counter
-                current_day = day_of_year
+                #current_day = day_of_year
 
             del data_one_tstep
             gc.collect()
@@ -598,7 +644,7 @@ class Updater(object):
         Output format
         a shape with one sweep, one neighbour per row
         TSTEP, STATION, SWEEP1, NX, NY, OTHER_VARIABLES_SWEEP1, COSMO_VARIABLES_SWEEP1, RADAR_VARIABLES_SWEEP1
-        TSTEP, SSTATION, WEEP2, NX, NY, OTHER_VARIABLES_SWEEP2, COSMO_VARIABLES_SWEEP2, RADAR_VARIABLES_SWEEP2
+        TSTEP, STATION, SWEEP2, NX, NY, OTHER_VARIABLES_SWEEP2, COSMO_VARIABLES_SWEEP2, RADAR_VARIABLES_SWEEP2
         ...
         TSTEP, STATION, SWEEP20, NX, NY, OTHER_VARIABLES_SWEEP20, COSMO_VARIABLES_SWEEP20, RADAR_VARIABLES_SWEEP20
         
