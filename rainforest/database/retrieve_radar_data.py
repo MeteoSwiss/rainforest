@@ -146,12 +146,11 @@ class Updater(object):
                             or (str(ff[-10:-6])==end_time.strftime('%H%M')) ]
                     # Should there be several files per timestep
                     if len(files_v) > 2:
-                        i=1
                         files_temp = []
-                        for ff in files_v[1::]:
-                            if (ff.split('/')[-1][-10:-6]) == (files_v[i].split('/')[-1][-10:-6]):
-                                files_temp.append(ff)
-                            i+=1
+                        files_hours = np.array([ff.split('/')[-1][-10:-6] for ff in files_v])
+                        for hhmm in np.unique(files_hours):
+                            # Take the latest one with the highest quality flag
+                            files_temp.append(files_v[np.where(files_hours == hhmm)[-1][0]])
                         files_v = files_temp
 
                 files_rad['vpr'] = files_v
@@ -683,7 +682,9 @@ class Updater(object):
                             dslice.extend(row[cur_idx: cur_idx + self.dims['nrv'] * 
                                                               self.dims['nm']])
                             dslice = np.array(dslice).astype(float)
-                            if not np.any(np.isnan(dslice)) :
+                            # Check that only the polar radar variables are missing:
+                            IDradVars = self.dims['nc'] + self.dims['no']
+                            if not np.any(np.isnan(dslice[IDradVars::])):
                                 # Add constant info (timestamp, radars, sweep,
                                 # nx, ny)
                                 toAdd = [tstep,stations[ii]]
