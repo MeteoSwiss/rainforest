@@ -536,8 +536,12 @@ class Updater(object):
                 data_remapped, colnames = self._remap(data_one_tstep, tstep, 
                                                  stations_to_get,
                                                  compute_hydro)
-                all_data_daily.extend(data_remapped)
-                logging.info('***SHAPE of all_data_daily at tstep: '+str(tstep)+' '+str(np.shape(all_data_daily)[0])+'/'+str(np.shape(all_data_daily)[1]))
+                # Check that data is contained in data_remapped (otherwise it throws an exception)
+                if data_remapped.size > 0:
+                    all_data_daily.extend(data_remapped)
+                logging.info('***SHAPE of all_data_daily at tstep: '+str(tstep)+\
+                    ' '+str(np.shape(all_data_daily)[0])+'/'+str(np.shape(all_data_daily)[1]))
+                # Remove to free memory space
                 del data_remapped
             except Exception as e:
                 logging.error(e)
