@@ -537,15 +537,18 @@ class Updater(object):
                                                  stations_to_get,
                                                  compute_hydro)
                 all_data_daily.extend(data_remapped)
+                logging.info('***SHAPE of all_data_daily at tstep: '+str(tstep)+' '+str(np.shape(all_data_daily)[0])+'/'+str(np.shape(all_data_daily)[1]))
                 del data_remapped
             except Exception as e:
                 logging.error(e)
-                
                 logging.info('Ignoring exception on data remapping...')
                 if IGNORE_ERRORS:
                     pass # can fail if only missing data 
                 else:
                     raise
+
+            del data_one_tstep
+            gc.collect()
 
             # Save data to file if end of loop or new day
             if (i == len(all_timesteps)-1):
@@ -569,12 +572,11 @@ class Updater(object):
 
                 try:                    
                     # Store data in new file
-                    data = np.array(all_data_daily)
+                    data = np.asarray(all_data_daily)
 
                     dic = OrderedDict()
       
-                    for c, col in enumerate(colnames):
-    
+                    for c, col in enumerate(colnames):    
                         data_col = data[:,c]
                         # Check required column type
                         isin_listcols = [c == col.split('_')[0] for 
@@ -628,9 +630,6 @@ class Updater(object):
                 all_data_daily = []
                 # Reset day counter
                 #current_day = day_of_year
-
-            del data_one_tstep
-            gc.collect()
                     
     
     def _remap(self, data, tstep, stations, compute_hydro = True):
