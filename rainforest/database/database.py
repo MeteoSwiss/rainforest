@@ -795,22 +795,33 @@ class Database(object):
 
         # Get current folder
         cwd = os.path.dirname(os.path.realpath(__file__))
+        
         # Create slurm files
-        for i, tf in enumerate(task_files):
-            fname = tmp_folder + '/getdata_radar_{:d}.job'.format(i)
+        job_files = []
+        nfperjob = config_r['SLURM_JOBS_PER_FILE']
+        tf = tmp_folder + task_files[0].split('/')[-1][0:15]+'_${SLURM_ARRAY_TASK_ID}'
+        i=0
+        while i < (len(task_files)-1):
+            if (i+nfperjob) > (len(task_files)-1):
+                iend = (len(task_files)-1)
+            else:
+                iend = i+nfperjob
+            fname = tmp_folder + '/getdata_radar_{:d}_{:d}.job'.format(i,iend)
             file = open(fname,'w')
             file.write(constants.SLURM_HEADER_PY)
+            file.write('#SBATCH --job-name=db_radar_%a\n#SBATCH --array={:d}-{:d}\n\n'.format(i,iend))
             file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} '.format(
                        cwd,
                        self.config_file,
                        tf,
                        output_folder))
             file.close()
-          
-        # delayed job launch
-        for i in range(len(task_files)):
-            fname = tmp_folder + '/getdata_radar_{:d}.job'.format(i)
-            logging.info('Submitting job {:d}'.format(i))
+            # Set counter to next file that is not included (+1)
+            i = i+1+nfperjob
+            job_files.append(fname)
+
+        for fn in job_files:
+            logging.info('Submitting job {}'.format(fn))
             subprocess.call('sbatch {:s}'.format(fname), shell = True)
             time.sleep(10)
             if _n_running_jobs() >= config_r['MAX_SIMULTANEOUS_JOBS']:
