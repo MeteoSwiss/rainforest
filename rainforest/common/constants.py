@@ -306,8 +306,8 @@ SLURM_HEADER_R = '''#!/bin/sh
 #SBATCH --partition=postproc
 #SBATCH --account=msrad
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_gauges-%A_%a.out"
-#SBATCH --error="db_gauges-%A_%a.err"
+#SBATCH --output="db_gauges%A_%a.out"
+#SBATCH --error="db_gauges%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 
@@ -319,6 +319,7 @@ conda activate rainforest_RandPython
 
 
 SLURM_HEADER_PY = '''#!/bin/sh
+#SBATCH --job-name=dbRad_%a
 #SBATCH -N 1     # nodes requested
 #SBATCH -c 1      # cores requested
 #SBATCH --mem-per-cpu 64g # memory in mbytes  
@@ -326,8 +327,8 @@ SLURM_HEADER_PY = '''#!/bin/sh
 #SBATCH --partition=postproc
 #SBATCH --account=msrad
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_radar-%A_%a.out"
-#SBATCH --error="db_radar-%A_%a.err"
+#SBATCH --output="db_radar%A_%a.out"
+#SBATCH --error="db_radar%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 '''
