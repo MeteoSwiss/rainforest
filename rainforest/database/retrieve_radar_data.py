@@ -53,6 +53,7 @@ class Updater(object):
             The full path where the generated files will be stored
         """
         self.config = envyaml(config_file)
+        self.taskfile = task_file
         self.tasks = read_task_file(task_file)
         self.output_folder = output_folder
     
@@ -641,7 +642,18 @@ class Updater(object):
                     if IGNORE_ERRORS:
                         pass # can fail if only missing data 
                     else:
-                        raise   
+                        raise
+
+                # Add a protocol file to check the comilation
+                try:
+                    fstat = self.output_folder+'summary.txt'
+                    f = open(fstat, 'a')
+                    f.write('{};{};{};{};{};{}\n'.format(current_day,all_timesteps[0],
+                                all_timesteps[-1],len(all_timesteps),
+                                len(all_data_daily),self.taskfile))
+                    f.close()
+                except:
+                    pass   
                     
                 # Reset list
                 all_data_daily = []
@@ -649,7 +661,17 @@ class Updater(object):
                 #current_day = day_of_year¨
 
             elif (save_output == True) & (len(all_data_daily) == 0):
-                logging.info('Saving new table for day {:s} - no data'.format(str(current_day)))      
+                logging.info('Saving new table for day {:s} - no data'.format(str(current_day)))
+                # Add a protocol file to check the comilation
+                try:
+                    fstat = self.output_folder+'summary.txt'
+                    f = open(fstat, 'a')
+                    f.write('{};{};{};{};{};{}\n'.format(current_day,all_timesteps[0],
+                                all_timesteps[-1],len(all_timesteps),
+                                len(all_data_daily),self.taskfile))
+                    f.close()
+                except:
+                    pass      
     
     def _remap(self, data, tstep, stations, compute_hydro = True):
         '''
