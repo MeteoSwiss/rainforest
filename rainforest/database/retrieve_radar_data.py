@@ -141,6 +141,7 @@ class Updater(object):
 
                 # Take only the start- and end time since they are 5min apart:
                 if len(files_v) > 2:
+                    files_v_org = files_v.copy()
                     files_v = [ff for ff in files_v 
                             if (str(ff[-10:-6])==start_time.strftime('%H%M')) 
                             or (str(ff[-10:-6])==end_time.strftime('%H%M')) ]
@@ -152,6 +153,14 @@ class Updater(object):
                             # Take the latest one with the highest quality flag
                             files_temp.append(files_v[np.where(files_hours == hhmm)[-1][0]])
                         files_v = files_temp
+                    # Already delete unused files here
+                    try:
+                        for ff in files_v_org:
+                            if ff not in files_v:
+                                if os.path.exists(ff):
+                                    os.remove(ff)
+                    except:
+                        pass 
 
                 files_rad['vpr'] = files_v
                 
@@ -522,25 +531,29 @@ class Updater(object):
                 # cleanup
                 try:
                     all_files = nested_dict_values(rad_files)
-                    all_files.extend(nested_dict_values(hzt_files))
-                    
+                    all_files.extend(nested_dict_values(hzt_files))                 
                     for files in all_files:
                         if os.path.exists(files):
                             os.remove(files)
                 except Exception as e:
                     logging.error(e)
                     logging.error('Cleanup of radar data failed')
-                    raise
+                    if IGNORE_ERRORS:
+                        pass # can fail if cannot delete radar files
+                    else:
+                        raise
     
             try:
                 data_remapped, colnames = self._remap(data_one_tstep, tstep, 
                                                  stations_to_get,
                                                  compute_hydro)
-                # Check that data is contained in data_remapped (otherwise it throws an exception)
-                if data_remapped.size > 0:
+                # Check that data is contained in data_remapped:
+                if (data_remapped.size > 0) & \
+                 (data_remapped.shape[1] == len(colnames)):
                     all_data_daily.extend(data_remapped)
-                logging.info('***SHAPE of all_data_daily at tstep: '+str(tstep)+\
-                    ' '+str(np.shape(all_data_daily)[0])+'/'+str(np.shape(all_data_daily)[1]))
+                if len(all_data_daily) != 0:
+                    logging.info('***SHAPE of all_data_daily at tstep: '+str(tstep)+\
+                        ' '+str(np.shape(all_data_daily)[0])+'/'+str(np.shape(all_data_daily)[1]))
                 # Remove to free memory space
                 del data_remapped
             except Exception as e:
@@ -565,7 +578,7 @@ class Updater(object):
                 else:
                     save_output = False
                 
-            if save_output:
+            if (save_output == True) & (len(all_data_daily) != 0):
                 logging.info('Saving new table for day {:s}'.format(str(current_day)))
                 name = self.output_folder + current_day + '.parquet'
 
@@ -633,8 +646,10 @@ class Updater(object):
                 # Reset list
                 all_data_daily = []
                 # Reset day counter
-                #current_day = day_of_year
-                    
+                #current_day = day_of_year¨
+
+            elif (save_output == True) & (len(all_data_daily) == 0):
+                logging.info('Saving new table for day {:s} - no data'.format(str(current_day)))      
     
     def _remap(self, data, tstep, stations, compute_hydro = True):
         '''
