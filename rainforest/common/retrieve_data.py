@@ -502,12 +502,20 @@ def _retrieve_prod_daily(folder_out, start_time, end_time, product_name,
         '''
         raise ValueError(msg)
         
+    # Create string to retrieve files over unzip
     files_to_retrieve = ' '.join(content_zip[conditions])
-   
-    cmd = 'unzip -j -o -qq "{:s}" {:s} -d {:s}'.format(folder_in + name_zipfile,
-         files_to_retrieve , folder_out)
-    subprocess.call(cmd, shell=True)
-        
+
+    # Check if files are already unzipped (saves time if they already exist)
+    for fi in content_zip[conditions]:
+        if os.path.exists(folder_out+fi):
+            files_to_retrieve = files_to_retrieve.replace(fi,'')
+
+    # Only unzip if at least one file does not exist
+    # (18 is the number of characters within the filename)
+    if len(files_to_retrieve) >= 18:
+        cmd = 'unzip -j -o -qq "{:s}" {:s} -d {:s}'.format(folder_in + name_zipfile,
+            files_to_retrieve , folder_out)
+        subprocess.call(cmd, shell=True)
     
     files = sorted(np.array([folder_out + c for c in
                                   content_zip[conditions]]))    
