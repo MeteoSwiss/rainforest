@@ -799,6 +799,7 @@ class Database(object):
         # Create slurm files
         job_files = []
         nfperjob = config_r['SLURM_JOBS_PER_FILE']
+        jobmax = config_r['MAX_SIMULTANEOUS_JOBS']
         tf = tmp_folder + task_files[0].split('/')[-1][0:15]+'_${SLURM_ARRAY_TASK_ID}'
         i=0
         while i < (len(task_files)-1):
@@ -809,8 +810,10 @@ class Database(object):
             fname = tmp_folder + '/getdata_radar_{:d}_{:d}.job'.format(i,iend)
             file = open(fname,'w')
             file.write(constants.SLURM_HEADER_PY)
-            file.write('#SBATCH --job-name=db_radar_%a\n#SBATCH --array={:d}-{:d}\n\n'.format(i,iend))
-            file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} '.format(
+            file.write('#SBATCH --job-name=db_radar_%a\n#SBATCH --array={:d}-{:d}%{:d}\n\n'.format(i,iend,jobmax))
+            file.write('source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh\n')
+            file.write('conda activate {}\n\n'.format(config_r['CONDA_ENV_NAME']))
+            file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} \n'.format(
                        cwd,
                        self.config_file,
                        tf,
@@ -823,13 +826,14 @@ class Database(object):
         for fn in job_files:
             logging.info('Submitting job {}'.format(fn))
             subprocess.call('sbatch {:s}'.format(fname), shell = True)
-            time.sleep(10)
-            if _n_running_jobs() >= config_r['MAX_SIMULTANEOUS_JOBS']:
-                logging.info('Too many jobs have been launched, waiting until some complete...')
-                while True: # Loop until less jobs are running
-                    time.sleep(60)
-                    if _n_running_jobs() < config_r['MAX_SIMULTANEOUS_JOBS']:
-                        break
+            # Probably not needed anymore, as the array function is included now
+            # time.sleep(10)
+            # if _n_running_jobs() >= config_r['MAX_SIMULTANEOUS_JOBS']:
+            #     logging.info('Too many jobs have been launched, waiting until some complete...')
+            #     while True: # Loop until less jobs are running
+            #         time.sleep(60)
+            #         if _n_running_jobs() < config_r['MAX_SIMULTANEOUS_JOBS']:
+            #             break
 
 
         
