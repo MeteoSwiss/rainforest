@@ -359,6 +359,11 @@ class QPEProcessor(object):
             radobjects = {}
 
             for rad in self.config['RADARS']:
+                # if radar does not exist, add to missing file list
+                if self.radar_files.get(rad) == None:
+                    missing_files[rad] = t
+                    continue
+
                 # if file does not exist, add to missing file list
                 if self.radar_files[rad].get(t) == None:
                     missing_files[rad] = t
@@ -377,7 +382,14 @@ class QPEProcessor(object):
                 # Process the radar data
                 radobjects[rad].visib_mask(self.config['VISIB_CORR']['MIN_VISIB'],
                                 self.config['VISIB_CORR']['MAX_CORR'])
-                radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
+                # If it cannot compute noise from the status file, remove timestep
+                try:
+                    radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
+                except Exception as e:
+                    missing_files[rad] = t
+                    logging.info(e)
+                    logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    continue
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
                 radobjects[rad].add_cosmo_data(T_cosmo[rad])
 
