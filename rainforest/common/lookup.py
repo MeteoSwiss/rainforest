@@ -66,8 +66,8 @@ from pyart.aux_io import read_metranet
 from . import constants
 from .wgs84_ch1903 import GPSConverter
 
-current_folder = os.path.dirname(os.path.abspath(__file__))
-DATA_FOLDER = Path(current_folder, 'data')
+common_folder = constants.common_folder
+DATA_FOLDER = Path(common_folder, 'data')
 LOOKUP_FOLDER = Path(DATA_FOLDER, 'lookup_data')
 
 
@@ -239,7 +239,7 @@ def calc_lookup(lookup_type, radar = None):
         converter = GPSConverter()
         
         cosmo_version = int(lookup_type[5])
-        fname_cosmo_coords =  Path(DATA_FOLDER, 'coords_COSMO{:d}.nc'.
+        fname_cosmo_coords =  Path(DATA_FOLDER,'coords_cosmo', 'coords_COSMO{:d}.nc'.
                                    format(cosmo_version))
         coords_COSMO = netCDF4.Dataset(fname_cosmo_coords)
         
@@ -298,7 +298,7 @@ def calc_lookup(lookup_type, radar = None):
     
     elif lookup_type in ['cosmo1T_to_rad', 'cosmo2T_to_rad']:
         cosmo_version = int(lookup_type[5])
-        fname_cosmo_coords =  Path(DATA_FOLDER, 'coords_COSMO{:d}_T.nc'.
+        fname_cosmo_coords =  Path(DATA_FOLDER,'coords_cosmo', 'coords_COSMO{:d}_T.nc'.
                                    format(cosmo_version))
         coords_COSMO = netCDF4.Dataset(fname_cosmo_coords)
             
@@ -403,7 +403,11 @@ def calc_lookup(lookup_type, radar = None):
         lut_name = Path(LOOKUP_FOLDER, 'lut_station_to_qpegrid.p')
         pickle.dump(all_idx_sta, open(str(lut_name)),'wb')
     
-    elif lookup_type == 'cartcoords_rad':
+    elif 'cartcoords_rad' in lookup_type :
+        if lookup_type == 'cardcoords_radL':
+            res = 'L'
+        elif lookup_type == 'cartcoords_radH':
+            res = 'H'
         converter = GPSConverter()
         folder_radar_samples = Path(DATA_FOLDER, 'radar_samples/')
         
@@ -412,7 +416,7 @@ def calc_lookup(lookup_type, radar = None):
             lut_name =  Path(LOOKUP_FOLDER, 'lut_' + lookup_type+'{:s}.p'.format(r))
             logging.info('Creating lookup table {:s}'.format(str(lut_name)))
             files = sorted(glob.glob(str(Path(folder_radar_samples, 
-                                              'ML{:s}*'.format(r)))))
+                                              'M{:s}{:s}*'.format(res, r)))))
             rad_pos = constants.RADARS[constants.RADARS.Abbrev == r]
             x_rad = float(rad_pos.X)
             y_rad = float(rad_pos.Y)

@@ -14,8 +14,17 @@ import glob
 import datetime
 from scipy.stats import mode
 
-current_folder = os.path.dirname(os.path.abspath(__file__))
-data_folder = Path(current_folder, 'data')
+###############
+# DATA
+###############
+
+#current_folder = os.path.dirname(os.path.abspath(__file__))
+common_folder = '/store/msrad/radar/rainforest/rainforest/common'
+data_folder = Path(common_folder, 'data', 'metadata')
+linode_obj_config = {
+        "aws_access_key_id": "QZFDJ99CFZ5ZS2OJ7KL9",
+        "aws_secret_access_key": "CoRWsPDPRhIkN1UihF4M4ASCV2WJpYb6dWZeIVwk",
+        "endpoint_url": f'https://eu-central-1.linodeobjects.com'}
 
 
 ###############
@@ -226,7 +235,7 @@ SCALE_CPC_OLD = np.array([0,0.000000e+00,3.526497e-02,7.177341e-02,1.095694e-01,
 # Graphics
 ###############
 
-path_shp = Path(current_folder, 'data','swiss_border_shp', 'Border_CH.shp')
+path_shp = Path(data_folder,'swiss_border_shp', 'Border_CH.shp')
 BORDER_SHP = shapefile.Reader(str(path_shp))
 
 
