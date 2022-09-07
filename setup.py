@@ -10,6 +10,7 @@ from setuptools import setup
 import boto3
 import glob
 import os
+from os import path
 import sys
 from pathlib import Path
 
@@ -44,6 +45,13 @@ def download_additional_data(installation_path, linode_obj_config):
             Key=object['Key'],
             Filename = str(Path(bpath, object['Key'])))
 
+here = path.abspath(path.dirname(__file__))
+with open(path.join(here, 'requirements.txt')) as requirements_file:
+    # Parse requirements.txt, ignoring any commented-out lines.
+    requirements = [
+        line for line in requirements_file.read().splitlines() if not line.startswith('#')
+    ]
+
 s = setup(name        = "rainforest",
     description = "RandomForest QPE python library",
     version     = "1.0",
@@ -56,7 +64,7 @@ s = setup(name        = "rainforest",
                 'rainforest/ml',
                 'rainforest/database'],
     include_package_data = True,
-    install_requires=['numpy'],
+    install_requires=requirements,
     zip_safe=False,
     entry_points = {
         'console_scripts':['rainforest_interface =  rainforest.interface:main',
@@ -66,11 +74,11 @@ s = setup(name        = "rainforest",
                            'db_populate = rainforest.database.db_populate:main',
                            'rf_train = rainforest.ml.rf_train:main']}
         )
- 
 # Get setup.py installation dir (this is a mess...)
-bdir_install = s.command_obj['install'].install_lib
-install_dir = sorted(glob.glob(str(Path(bdir_install, 'rainforest*'))), 
-    key=os.path.getmtime)[-1]
+#bdir_install = s.command_obj['install'].install_lib
+#install_dir = sorted(glob.glob(str(Path(bdir_install, 'rainforest*'))), 
+#    key=os.path.getmtime)[-1]
+from rainforest import __path__ as install_dir
 rainforest_path = Path(install_dir, 'rainforest')
 sys.path.append('./rainforest/')
 from common.constants import linode_obj_config
