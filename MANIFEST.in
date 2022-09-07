@@ -1,5 +1,5 @@
-recursive-exclude rainforest/ml/rf_models/
-recursive-exclude rainforest/common/data/
+recursive-exclude rainforest/ml/rf_models/ *
+recursive-exclude rainforest/common/data/ *
 include rainforest/database/retrieve_dwh_data.r
 include rainforest/database/default_config.yml
 include rainforest/qpe/default_config.yml

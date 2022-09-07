@@ -44,37 +44,34 @@ def download_additional_data(installation_path, linode_obj_config):
             Key=object['Key'],
             Filename = str(Path(bpath, object['Key'])))
 
-
-if __name__ == '__main__':
-
-    s = setup(name        = "rainforest",
-        description = "RandomForest QPE python library",
-        version     = "1.0",
-        author = 'Rebecca Gugerli, Daniel Wolfensberger',
-        author_email = ' rebecca.gugerli@epfl.ch, daniel.wolfensberger@meteoswiss.ch',
-        license = 'GPL-3.0',
-        packages = ['rainforest',
-                  'rainforest/common',
-                  'rainforest/qpe',
-                  'rainforest/ml',
-                  'rainforest/database'],
-        include_package_data = True,
-        install_requires=['numpy'],
-        zip_safe=False,
-        entry_points = {
-            'console_scripts':['rainforest_interface =  rainforest.interface:main',
-                               'qpe_compute = rainforest.qpe.qpe_compute:main',
-                               'qpe_plot = rainforest.qpe.qpe_plot:main',
-                               'qpe_evaluation = rainforest.qpe.qpe_evaluation:main',
-                               'db_populate = rainforest.database.db_populate:main',
-                               'rf_train = rainforest.ml.rf_train:main']}
+s = setup(name        = "rainforest",
+    description = "RandomForest QPE python library",
+    version     = "1.0",
+    author = 'Rebecca Gugerli, Daniel Wolfensberger',
+    author_email = ' rebecca.gugerli@epfl.ch, daniel.wolfensberger@meteoswiss.ch',
+    license = 'GPL-3.0',
+    packages = ['rainforest',
+                'rainforest/common',
+                'rainforest/qpe',
+                'rainforest/ml',
+                'rainforest/database'],
+    include_package_data = True,
+    install_requires=['numpy'],
+    zip_safe=False,
+    entry_points = {
+        'console_scripts':['rainforest_interface =  rainforest.interface:main',
+                           'qpe_compute = rainforest.qpe.qpe_compute:main',
+                           'qpe_plot = rainforest.qpe.qpe_plot:main',
+                           'qpe_evaluation = rainforest.qpe.qpe_evaluation:main',
+                           'db_populate = rainforest.database.db_populate:main',
+                           'rf_train = rainforest.ml.rf_train:main']}
         )
  
-    # Get setup.py installation dir (this is a mess...)
-    bdir_install = s.command_obj['install'].install_lib
-    install_dir = sorted(glob.glob(str(Path(bdir_install, 'rainforest*'))), 
-         key=os.path.getmtime)[-1]
-    rainforest_path = Path(install_dir, 'rainforest')
-    sys.path.append('./rainforest/')
-    from common.constants import linode_obj_config
-    download_additional_data(rainforest_path, linode_obj_config)
+# Get setup.py installation dir (this is a mess...)
+bdir_install = s.command_obj['install'].install_lib
+install_dir = sorted(glob.glob(str(Path(bdir_install, 'rainforest*'))), 
+    key=os.path.getmtime)[-1]
+rainforest_path = Path(install_dir, 'rainforest')
+sys.path.append('./rainforest/')
+from common.constants import linode_obj_config
+download_additional_data(rainforest_path, linode_obj_config)
