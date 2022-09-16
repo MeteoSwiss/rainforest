@@ -1,1 +1,9 @@
 numpy
+netCDF4
+prompt_toolkit
+sklearn
+scipy
+dask
+pandas
+pyspark
+xmltodict

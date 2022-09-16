@@ -14,8 +14,21 @@ import glob
 import datetime
 from scipy.stats import mode
 
-current_folder = os.path.dirname(os.path.abspath(__file__))
-data_folder = Path(current_folder, 'data')
+from .object_storage import ObjectStorage
+ObjStorage = ObjectStorage()
+
+
+###############
+# DATA
+###############S
+
+data_folder = os.environ['RAINFOREST_DATAPATH']
+metadata_folder = str(Path(data_folder, 'references', 'metadata'))
+lut_folder = str(Path(data_folder, 'references', 'lookup_data'))
+lut_boscacci_folder = str(Path(data_folder, 'references', 'lut_boscacci'))
+cosmo_coords_folder = str(Path(data_folder, 'references', 'coords_cosmo'))
+radar_samples_folder = str(Path(data_folder, 'references', 'radar_samples')) 
+rfmodels_folder = str(Path(data_folder, 'rf_models'))
 
 
 ###############
@@ -30,7 +43,7 @@ THRESHOLD_SOLID = 2 # Below 2 °C is considerd to be solid precipitation
 # STATIONS
 ###############
 
-METSTATIONS = pd.read_csv(str(Path(data_folder, 'data_stations.csv')), 
+METSTATIONS = pd.read_csv(ObjStorage.check_file(str(Path(metadata_folder, 'data_stations.csv'))), 
                            sep=';', encoding='latin-1')
 
 ###############HE
@@ -38,7 +51,7 @@ METSTATIONS = pd.read_csv(str(Path(data_folder, 'data_stations.csv')),
 ###############
 
 
-RADARS = pd.read_csv(str(Path(data_folder, 'data_radars.csv')),
+RADARS = pd.read_csv(ObjStorage.check_file(str(Path(metadata_folder, 'data_radars.csv'))),
                            sep=';', encoding='latin-1')
 
 ELEVATIONS = [-0.2, 0.4, 1.0, 1.6, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 
@@ -93,12 +106,13 @@ MAX_VPR_CORRECTION_DB = 4.77
 NBINS_Y = 710
 NBINS_X = 640
 
-LOCAL_BIAS =  np.fromfile(str(Path(data_folder, 'lbias_qpegrid.dat')),
+LOCAL_BIAS =  np.fromfile(ObjStorage.check_file(str(Path(metadata_folder, 'lbias_qpegrid.dat'))),
                          dtype = np.float32).reshape(NBINS_Y,NBINS_X)
+
 GLOBAL_BIAS = {'A':3.5, 'D': 2., 'L':4., 'P':2., 'W':1.5}
 Y_QPE = np.linspace(255, 965, NBINS_Y + 1)
 X_QPE = np.linspace(480, -160,  NBINS_X + 1)
-Z_QPE = np.load(str(Path(data_folder ,'z_qpegrid.npy')))
+Z_QPE = np.load(ObjStorage.check_file(str(Path(metadata_folder, 'z_qpegrid.npy'))))
 
 try: # when sphinx imports this module it crashes here because it considers numpy as mock module
     Y_QPE_CENTERS = 0.5 * (Y_QPE[0:-1] + Y_QPE[1:])
@@ -110,10 +124,10 @@ try: # when sphinx imports this module it crashes here because it considers nump
 except:
     X_QPE_CENTERS = [1]
 
-MASK_NAN = np.load(str(Path(data_folder, 'mask_nan.npy')))
+MASK_NAN = np.load(ObjStorage.check_file(str(Path(metadata_folder, 'mask_nan.npy'))))
 
         
-dic = np.load(str(Path(data_folder, 'scale_RGB.npz')))
+dic = np.load(ObjStorage.check_file(str(Path(metadata_folder, 'scale_RGB.npz'))))
 SCALE_RGB = {'colors':dic['arr_0'],'values':dic['arr_1']}
 
 
@@ -226,7 +240,7 @@ SCALE_CPC_OLD = np.array([0,0.000000e+00,3.526497e-02,7.177341e-02,1.095694e-01,
 # Graphics
 ###############
 
-path_shp = Path(current_folder, 'data','swiss_border_shp', 'Border_CH.shp')
+path_shp = ObjStorage.check_file(str(Path(metadata_folder,'swiss_border_shp', 'Border_CH.shp')))
 BORDER_SHP = shapefile.Reader(str(path_shp))
 
 
@@ -306,8 +320,8 @@ SLURM_HEADER_R = '''#!/bin/sh
 #SBATCH --partition=postproc
 #SBATCH --account=msrad
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_gauges%A_%a.out"
-#SBATCH --error="db_gauges%A_%a.err"
+#SBATCH --output="db_gauges-%A_%a.out"
+#SBATCH --error="db_gauges-%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 
@@ -319,7 +333,6 @@ conda activate rainforest_RandPython
 
 
 SLURM_HEADER_PY = '''#!/bin/sh
-#SBATCH --job-name=dbRad_%a
 #SBATCH -N 1     # nodes requested
 #SBATCH -c 1      # cores requested
 #SBATCH --mem-per-cpu 64g # memory in mbytes  
@@ -327,8 +340,8 @@ SLURM_HEADER_PY = '''#!/bin/sh
 #SBATCH --partition=postproc
 #SBATCH --account=msrad
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_radar%A_%a.out"
-#SBATCH --error="db_radar%A_%a.err"
+#SBATCH --output="db_radar-%A_%a.out"
+#SBATCH --error="db_radar-%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 '''

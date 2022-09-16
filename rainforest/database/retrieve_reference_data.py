@@ -37,9 +37,10 @@ try:
 except ImportError:
     _PYSTEPS_AVAILABLE = False
 
+IGNORE_ERRORS = True
 
 class Updater(object):
-    def __init__(self, task_file, config_file, output_folder):
+    def __init__(self, task_file, config_file, output_folder, debug = False):
         """
         Creates an Updater  class instance that allows to add new reference
         data to the database
@@ -56,8 +57,14 @@ class Updater(object):
             that indicates how the radar retrieval must be done
         output_folder: str
             The full path where the generated files will be stored
+        debug: bool
+            If set to true will not except any error in the code
         """
-        
+
+        if debug:
+            global IGNORE_ERRORS
+            IGNORE_ERRORS = False
+
         self.config = envyaml(config_file)
         self.tasks = read_task_file(task_file)
         self.output_folder = output_folder
@@ -115,6 +122,8 @@ class Updater(object):
                           failed""".format(prod, str(start_time), 
                                                  str(end_time)))
                 files_allproducts[prod] = []
+                if not IGNORE_ERRORS:
+                    raise
                 
         return files_allproducts
 
@@ -196,6 +205,8 @@ class Updater(object):
                             data_col = data_col.astype(coltype)
                         except:# for int
                             data_col = data_col.astype(np.float).astype(coltype)
+                            if not IGNORE_ERRORS:
+                                raise
                     else:
                         data_col = data_col.astype(np.float32)
                     dic[col] = data_col
@@ -219,6 +230,8 @@ class Updater(object):
                                 data_col = data_col.astype(coltype)
                             except:# for int
                                 data_col = data_col.astype(np.float).astype(coltype)
+                                if not IGNORE_ERRORS:
+                                    raise
                         else:
                             data_col = data_col.astype(np.float32)
                         dic[col] = data_col
@@ -293,6 +306,8 @@ class Updater(object):
                         except:
                             # fill with missing values, we don't care about the exact dimension
                             mv = np.zeros((2,1000,1000)) + fill_value 
+                            if not IGNORE_ERRORS:
+                                raise
 
                     elif '_y' in prod: # mv already computed
                         idx_slice_mv = 1 

@@ -34,7 +34,7 @@ from rainforest.common.retrieve_data import retrieve_hzt_prod, retrieve_prod, ge
 IGNORE_ERRORS = True
                    
 class Updater(object):
-    def __init__(self, task_file, config_file, output_folder):
+    def __init__(self, task_file, config_file, output_folder, debug = False):
         """
         Creates an Updater  class instance that allows to add new radar data
         to the database
@@ -51,7 +51,13 @@ class Updater(object):
             that indicates how the radar retrieval must be done
         output_folder: str
             The full path where the generated files will be stored
+        debug: bool
+            If set to true will not except any error in the code
         """
+        if debug:
+            global IGNORE_ERRORS
+            IGNORE_ERRORS = False
+
         self.config = envyaml(config_file)
         self.taskfile = task_file
         self.tasks = read_task_file(task_file)
@@ -89,10 +95,10 @@ class Updater(object):
             self.dims['nrv'] -= 1
 
         # Check that the temperature reference is also within the variable list that will be extracted:
-        if (self.temp_ref == 'ISO0_HEIGHT') & ('ISO0_HEIGHT' not in self.other_variables):
+        if (self.temp_ref == 'ISO0_HEIGHT') and ('ISO0_HEIGHT' not in self.other_variables):
             logging.error('Temperature reference "temp_ref" is ISO0_HEIGHT,'\
                         ' but HZT fields are missing in radar_variables')
-        if (self.temp_ref == 'TAIR') & ('T' not in self.cosmo_variables):
+        if (self.temp_ref == 'TAIR') and ('T' not in self.cosmo_variables):
             logging.error('Temperature reference "temp_ref" is TAIR,'\
                         ' but T fields are missing in cosmo_variables')
 
@@ -269,7 +275,7 @@ class Updater(object):
         if 'ZH_VISIB' in self.radar_variables  or 'ZV_VISIB' in self.radar_variables :
             radar_object.visib_mask(self.radar_cfg['VISIB_CORR']['MIN_VISIB'],
                           self.radar_cfg['VISIB_CORR']['MAX_CORR'])
-            
+        
         radar_object.snr_mask(self.radar_cfg['SNR_THRESHOLD'])
      
         # Compute KDP if needed
@@ -320,6 +326,8 @@ class Updater(object):
                                 radprecip = float(wetradome['wetradome_mmh']['@value'])
                         except:
                             radprecip = np.nan
+                            if not IGNORE_ERRORS:
+                                raise
                             
                         all_data[j,idx0_col] = radprecip
                         idx0_col += 1
@@ -331,7 +339,7 @@ class Updater(object):
                                               self.other_variables[-2::],
                                               idx)
                         all_data[j, idx0_col : idx0_col + len(self.other_variables[-2::])] = tmp
-                    idx0_col += len(self.other_variables[-2::])
+                        idx0_col += len(self.other_variables[-2::])
 
                     # COSMO data
                     idx = lut_coords[sta][sweep]['00']
@@ -363,12 +371,11 @@ class Updater(object):
 
                 except Exception as e:
                     logging.error(e)
-                    logging.info('Ignoring exception in process_single_timestep...')
-                    if IGNORE_ERRORS:
-                        pass # can fail if only missing data 
-                    else:
+                    if not IGNORE_ERRORS:
                         raise
+                    logging.info('Ignoring exception in process_single_timestep...')
         return all_data
+
 
     def process_all_timesteps(self):
         """
@@ -387,12 +394,8 @@ class Updater(object):
         else: 
             include_vpr = False
         
-        if ('PRECIPRAD' in self.other_variables or 
-            'NH' in self.radar_variables or
-            'NV' in self.radar_variables):
-            include_status = True
-        else:
-            include_status = False
+        # Since status is required for SNR masking we always retrieve status files
+        include_status = True
 
         # COSMO retrieval for T only is much faster...
         if self.cosmo_variables == ['T']:
@@ -482,10 +485,16 @@ class Updater(object):
 
                     for tidx, tstamp in enumerate(rad_files['radar'].keys()): # 2 timesteps to make 10 min
                         # Create radar object
-                        radar = Radar(r, rad_files['radar'][tstamp],
-                                      rad_files['status'][tstamp],
-                                      rad_files['vpr'][tstamp],
-                                      temp_ref=self.temp_ref)
+
+                        # Handle case of non available status and vpr files
+                        if include_vpr:
+                            vpr_file = rad_files['vpr'][tstamp]
+                        else:
+                            vpr_file = None
+                        
+                        status_file = rad_files['status'][tstamp]
+
+                        radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file)
 
                         # Add ISO0_HEIGHT and height_over_iso0 to radar object
                         if self.temp_ref == "ISO0_HEIGHT":
@@ -523,10 +532,8 @@ class Updater(object):
                     
                     data_one_tstep = np.append(data_one_tstep, empty, axis = 1)
             
-                    if IGNORE_ERRORS:
-                        pass # can fail if only missing data 
-                    else:
-                        raise       
+                    if not IGNORE_ERRORS:
+                        raise   
 
             
                 # cleanup
@@ -539,9 +546,7 @@ class Updater(object):
                 except Exception as e:
                     logging.error(e)
                     logging.error('Cleanup of radar data failed')
-                    if IGNORE_ERRORS:
-                        pass # can fail if cannot delete radar files
-                    else:
+                    if not IGNORE_ERRORS:
                         raise
     
             try:
@@ -559,17 +564,15 @@ class Updater(object):
                 del data_remapped
             except Exception as e:
                 logging.error(e)
-                logging.info('Ignoring exception on data remapping...')
-                if IGNORE_ERRORS:
-                    pass # can fail if only missing data 
-                else:
+                if not IGNORE_ERRORS:
                     raise
+                logging.info('Ignoring exception on data remapping...')
 
             del data_one_tstep
             gc.collect()
 
             # Save data to file if end of loop or new day
-            if (i == len(all_timesteps)-1):
+            if (i == len(all_timesteps) - 1):
                 save_output = True
             else: 
                 next_tstep = datetime.datetime.utcfromtimestamp(all_timesteps[i+1])
@@ -578,8 +581,8 @@ class Updater(object):
                     save_output = True
                 else:
                     save_output = False
-                
-            if (save_output == True) & (len(all_data_daily) != 0):
+     
+            if save_output and len(all_data_daily):
                 logging.info('Saving new table for day {:s}'.format(str(current_day)))
                 name = self.output_folder + current_day + '.parquet'
 
@@ -639,39 +642,23 @@ class Updater(object):
                 except Exception as e:
                     logging.info('Could not save file ' + name)
                     logging.error(e)
-                    if IGNORE_ERRORS:
-                        pass # can fail if only missing data 
-                    else:
+                    if not IGNORE_ERRORS:
                         raise
 
-                # Add a protocol file to check the comilation
-                try:
-                    fstat = self.output_folder+'summary.txt'
-                    f = open(fstat, 'a')
-                    f.write('{};{};{};{};{};{}\n'.format(current_day,all_timesteps[0],
-                                all_timesteps[-1],len(all_timesteps),
-                                len(all_data_daily),self.taskfile))
-                    f.close()
-                except:
-                    pass   
-                    
                 # Reset list
                 all_data_daily = []
                 # Reset day counter
                 #current_day = day_of_year¨
 
-            elif (save_output == True) & (len(all_data_daily) == 0):
-                logging.info('Saving new table for day {:s} - no data'.format(str(current_day)))
-                # Add a protocol file to check the comilation
-                try:
-                    fstat = self.output_folder+'summary.txt'
-                    f = open(fstat, 'a')
-                    f.write('{};{};{};{};{};{}\n'.format(current_day,all_timesteps[0],
-                                all_timesteps[-1],len(all_timesteps),
-                                len(all_data_daily),self.taskfile))
-                    f.close()
-                except:
-                    pass      
+            if save_output:
+                # Add a protocol file to check the compilation
+                fstat = self.output_folder+'summary.txt'
+                f = open(fstat, 'a')
+                f.write('{};{};{};{};{};{}\n'.format(current_day,all_timesteps[0],
+                            all_timesteps[-1],len(all_timesteps),
+                            len(all_data_daily),self.taskfile))
+                f.close()
+
     
     def _remap(self, data, tstep, stations, compute_hydro = True):
         '''
@@ -844,7 +831,12 @@ def _data_at_station(radar_object, variables, idx, methods = ['mean'], tidx = No
     
     out = []
 
-    if 'max' in methods or 'min' in methods or 'tcount' in variables:
+    if 'TCOUNT' in variables:
+        # Get first variable to compute TCOUNT (number of valid obs used in aggregation)
+        firstvar = list(radar_object.fields.values())[0]['data']
+        firstvar =  firstvar[idx[:,0],idx[:,1]]
+    
+    if 'max' in methods or 'min' in methods:
          kdp = radar_object.get_field(0, 'KDP')[idx[:,0],idx[:,1]]
          zh =  radar_object.get_field(0, 'ZH')[idx[:,0],idx[:,1]]
          locmaxzh = np.ma.argmax(zh)
@@ -858,7 +850,7 @@ def _data_at_station(radar_object, variables, idx, methods = ['mean'], tidx = No
         
         if v == 'TCOUNT':
             for m in methods:
-                out.append(int(tidx * (zh.count() > 0)))
+                out.append(int(tidx * (firstvar.count() > 0)))
         else:
             data = np.ma.filled(radar_object.get_field(0,v)[idx[:,0],idx[:,1]],     
                                 fill_value  = np.nan)
