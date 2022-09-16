@@ -554,8 +554,8 @@ class Updater(object):
                                                  stations_to_get,
                                                  compute_hydro)
                 # Check that data is contained in data_remapped:
-                if (data_remapped.size > 0) & \
-                 (data_remapped.shape[1] == len(colnames)):
+                if ((data_remapped.size > 0) and 
+                 (data_remapped.shape[1] == len(colnames))):
                     all_data_daily.extend(data_remapped)
                 if len(all_data_daily) != 0:
                     logging.info('***SHAPE of all_data_daily at tstep: '+str(tstep)+\
