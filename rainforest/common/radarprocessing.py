@@ -36,7 +36,7 @@ class Radar(object):
     single pyart radar instance as this was found to be faster in practice
     '''
     def __init__(self, radname, polfiles, statusfile=None, vprfile=None,
-                temp_ref='TAIR'):
+                temp_ref='TAIR', metranet_reader = 'python'):
         """
         Creates an Radar class instance
         
@@ -54,6 +54,8 @@ class Radar(object):
         vprfile : str(optional)
              Full path of the vpr xml file that corresponds to this particular
             radar and timestep, used to compute VPR correction
+        metranet_reader : str(optional)
+             Which reader to use to read the polar radar data, can be either 'C' or 'python'
         """
         
         self.sweeps = []
@@ -64,7 +66,7 @@ class Radar(object):
         for f in polfiles:
             try:
                 sweep = sweepnumber_fromfile(f)
-                radinstance = read_metranet(f, reader = 'python')
+                radinstance = read_metranet(f, reader = metranet_reader)
                 rename_fields(radinstance)
                 visib_sweep = np.ma.array(visib[sweep].astype(np.float32), 
                                           mask = np.isnan(visib[sweep]))

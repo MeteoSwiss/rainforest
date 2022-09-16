@@ -158,13 +158,18 @@ def calc_lookup(lookup_type, radar = None):
     sweeps = range(1,21)
     neighb_x = 5
     neighb_y = 5
-                
+    
+    # List that contains the computed lookup tables
+    lut_objets = []
+    # List that contains the lookup table filenames
+    lut_names = []
+
     if lookup_type == 'station_to_rad':
         offset_x = int((neighb_x-1)/2)
         offset_y = int((neighb_y-1)/2)
             
         for r in radar:
-            lut_name =  Path(lut_folder, 'lut_station_to_rad{:s}.p'.format(r))
+            lut_name =  Path(LOOKUP_FOLDER, 'lut_station_to_rad{:s}.p'.format(r))
             logging.info('Creating lookup table {:s}'.format(str(lut_name)))
             try:
                 lut_cart = get_lookup('qpegrid_to_rad', radar)
@@ -192,10 +197,16 @@ def calc_lookup(lookup_type, radar = None):
                     
                     # For x the columns in the Cartesian lookup tables are lower bounds
                     # e.g. x = 563, means that radar pixels are between 563 and 564
-                    x_llc_sta = np.int(x_sta/constants.CART_GRID_SIZE)
+                    #x_llc_sta = np.int(x_sta/constants.CART_GRID_SIZE)
                     # For y the columns in the Cartesian lookup tables are upper bounds
                     # e.g. x = 182, means that radar pixels are between 181 and 182            
-                    y_llc_sta = np.int(np.ceil(y_sta/constants.CART_GRID_SIZE))
+                    #y_llc_sta = np.int(np.ceil(y_sta/constants.CART_GRID_SIZE))
+                    
+                    # x and y are reversed (following the Swiss convention),
+                    # therefore, the station cell number needs to be 
+                    # defined as follows:
+                    x_llc_sta = np.int(np.ceil(x_sta/constants.CART_GRID_SIZE))
+                    y_llc_sta = np.int(y_sta/constants.CART_GRID_SIZE)
                     
                     # Distance from all gates to gauge
                     idx = lut_cart[np.logical_and(lut_cart[:,0] == sweep_idx,
@@ -224,16 +235,17 @@ def calc_lookup(lookup_type, radar = None):
                             y_llc = y_llc_sta + j 
                             
                             idx = lut_cart[np.logical_and(lut_cart[:,0] == sweep_idx,
-                                          np.logical_and(lut_cart[:,3] == x_llc, 
-                                          lut_cart[:,4] == y_llc)), 0:3]
+                                          np.logical_and(lut_cart[:,3] == y_llc, 
+                                          lut_cart[:,4] == x_llc)), 0:3]
                
                             key = str(i)+str(j)
                             if len( idx[:,1:3]):
                                 all_idx_sta[station][sweep][key] = idx[:,1:3]
-    
-            
-            pickle.dump([all_idx_sta, all_distances_sta, all_heights_sta],
-                        open(str(lut_name), 'wb'))
+
+            lut_names.append(str(lut_name))
+            lut_objects.append([all_idx_sta, all_distances_sta, all_heights_sta])
+
+
     elif lookup_type in ['cosmo1_to_rad', 'cosmo2_to_rad']:
         
         converter = GPSConverter()
@@ -296,7 +308,9 @@ def calc_lookup(lookup_type, radar = None):
                 lut[sweep]['idx2'] = idxx.astype(np.uint16)
                 lut[sweep]['mask'] = mask.astype(np.bool_)
             
-            pickle.dump(lut, open(str(lut_name), 'wb'))
+            lut_names.append(str(lut_name))
+            lut_objects.append(lut)
+
     
     elif lookup_type in ['cosmo1T_to_rad', 'cosmo2T_to_rad']:
         cosmo_version = int(lookup_type[5])
@@ -316,6 +330,7 @@ def calc_lookup(lookup_type, radar = None):
         max_x = np.max(x_c)
         min_y = np.min(y_c)
         max_y = np.max(y_c)
+
         for r in radar:
             lut = {}
             lut_name =  Path(LOOKUP_FOLDER, 'lut_' + lookup_type+'{:s}.p'.format(r))
@@ -350,9 +365,11 @@ def calc_lookup(lookup_type, radar = None):
                 lut[sweep]['idx1'] = idxy.astype(np.uint16)
                 lut[sweep]['idx2'] = idxx.astype(np.uint16)
                 lut[sweep]['mask'] = mask.astype(np.bool_)
-             
-            pickle.dump(lut, open(str(lut_name), 'wb'))
-        
+
+            lut_names.append(str(lut_name))
+            lut_objects.append([all_idx_sta, all_distances_sta, all_heights_sta])
+
+
     elif lookup_type == 'qpebias_station':
         biasfile = Path(metadata_folder, 'lbias_af_map15.dat')
         biasfile = ObjStorage.check_file(str(biasfile))
@@ -371,13 +388,13 @@ def calc_lookup(lookup_type, radar = None):
         df_stations = df_stations.append(constants.RADARS)
             
     
-        all_idx_sta = {}
+        lut = {}
         x_qpe = constants.X_QPE
         y_qpe = constants.Y_QPE
         y,x = np.meshgrid(y_qpe,x_qpe)
         # Get x and y of all radar pixels                 
         for station in stations:
-            all_idx_sta[station] = {}
+            lut[station] = {}
             station_data = df_stations[df_stations.Abbrev == station]
             y_sta =  float(station_data.Y)
             x_sta = float(station_data.X)
@@ -403,11 +420,12 @@ def calc_lookup(lookup_type, radar = None):
                     idx = [int(idx[0]),int(idx[1])]
                     key = str(i)+str(j)
                     if len( idx):
-                        all_idx_sta[station][key] = idx
-
+                        lut[station][key] = idx
+        
         lut_name = Path(LOOKUP_FOLDER, 'lut_station_to_qpegrid.p')
-        pickle.dump(all_idx_sta, open(str(lut_name)),'wb')
-    
+        lut_names.append(str(lut_name))
+        lut_objects.append(lut)
+
     elif 'cartcoords_rad' in lookup_type :
         if lookup_type == 'cardcoords_radL':
             res = 'L'
@@ -463,9 +481,10 @@ def calc_lookup(lookup_type, radar = None):
                 lut[sweep].append(coord_x)
                 lut[sweep].append(coord_z)
                 lut[sweep] = np.array(lut[sweep])
-                
-        
-            pickle.dump(lut, open(str(lut_name), 'wb'))
+            
+            lut_names.append(str(lut_name))
+            lut_objects.append(lut)
+          
             
     elif lookup_type == 'qpegrid_to_rad':
         ''' Currently it just uses the csv files of Marco Boscacci and 
@@ -475,9 +494,18 @@ def calc_lookup(lookup_type, radar = None):
             lut_boscacci = Path(lut_boscacci, 'lut_PL{:s}.csv'.format(r))
             lut_boscacci = ObjStorage.check_file(lut_boscacci)
             lut = np.array(pd.read_csv(str(lut_boscacci)))
-            
-            pickle.dump(lut, open(str(lut_name), 'wb'))
-            
+
+            lut_names.append(str(lut_name))
+            lut_objects.append(lut)
+    
+    # Dump luts to disk and upload to cloud
+    for i in range(len(lut_objects)):
+        pickle.dump(lut_objects[i],
+                            open(lut_names[i]),'wb')
+        try:
+            ObjStorage.upload_file(lut_names[i])
+        except AttributeError as e:
+	        print('Could not upload lut {:s} to cloud, please verify AWS_KEY env variable...'.format(lut_names[i]))
 
 def _WGS_to_COSMO(coords_WGS, SP_coords = (-43,10)): 
      if isinstance(coords_WGS, tuple): 
