@@ -6,4 +6,5 @@ scipy
 dask
 pandas
 pyspark
+pyart_mch
 xmltodict
