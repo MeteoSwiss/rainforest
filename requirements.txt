@@ -1,9 +1,10 @@
 numpy
 netCDF4
 prompt_toolkit
-sklearn
+scikit-learn
 scipy
 dask
 pandas
 pyspark
+pyart_mch
 xmltodict
