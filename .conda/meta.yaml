@@ -18,7 +18,6 @@ requirements:
     - dask
     - pandas
     - xmltodict
-    - pyart_mch
     - scipy
  
 test:
