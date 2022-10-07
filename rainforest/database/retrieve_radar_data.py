@@ -645,19 +645,24 @@ class Updater(object):
                     if not IGNORE_ERRORS:
                         raise
 
+                n_rows = len(all_data_daily)
                 # Reset list
                 all_data_daily = []
                 # Reset day counter
                 #current_day = day_of_year¨
 
             if save_output:
+                # If not rows were extracted
+                if not n_rows:
+                    n_rows = 0
                 # Add a protocol file to check the compilation
                 fstat = self.output_folder+'summary.txt'
                 f = open(fstat, 'a')
                 f.write('{};{};{};{};{};{}\n'.format(current_day,all_timesteps[0],
                             all_timesteps[-1],len(all_timesteps),
-                            len(all_data_daily),self.taskfile))
+                            nrows,self.taskfile))
                 f.close()
+                del n_rows
 
     
     def _remap(self, data, tstep, stations, compute_hydro = True):
