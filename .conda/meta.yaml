@@ -1,11 +1,11 @@
 package:
   name: rainforest
-  version: 1.0
+  version: 1.1
 
 source:
-  git_rev: 1.0
-  git_url: https://github.com/MeteoSwiss/rainforest
-
+  # Relative path to the parent directory.
+  path: ..
+     
 requirements:
   build:
     - git
@@ -15,15 +15,11 @@ requirements:
     - prompt_toolkit
     - scikit-learn
     - numpy
+    - pyart_mch
     - dask
     - pandas
     - xmltodict
-    - pyart_mch
     - scipy
  
-test:
-  imports:
-    -
-
 about:
   home:
