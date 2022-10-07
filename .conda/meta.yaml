@@ -20,6 +20,8 @@ requirements:
     - pandas
     - xmltodict
     - scipy
+    - pyshp
+    - imageio
  
 about:
   home:
