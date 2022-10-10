@@ -1,0 +1,13 @@
+numpy
+netCDF4
+prompt_toolkit
+scikit-learn
+scipy
+dask
+pandas
+pyspark
+pyart_mch
+xmltodict
+boto3
+pyshp
+imageio
