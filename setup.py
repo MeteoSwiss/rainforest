@@ -23,7 +23,7 @@ with open(path.join(here, 'requirements.txt')) as requirements_file:
 
 s = setup(name        = "rainforest",
     description = "RandomForest QPE python library",
-    version     = "1.0",
+    version     = "1.1",
     author = 'Rebecca Gugerli, Daniel Wolfensberger',
     author_email = ' rebecca.gugerli@epfl.ch, daniel.wolfensberger@meteoswiss.ch',
     license = 'GPL-3.0',
@@ -41,5 +41,5 @@ s = setup(name        = "rainforest",
                            'qpe_plot = rainforest.qpe.qpe_plot:main',
                            'qpe_evaluation = rainforest.qpe.qpe_evaluation:main',
                            'db_populate = rainforest.database.db_populate:main',
-                           'rf_train = rainforest.ml.rf_train:main']}
+                           'rf_train = rainforest.ml.rf_train:main']},
         )
