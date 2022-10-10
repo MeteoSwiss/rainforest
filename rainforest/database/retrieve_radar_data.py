@@ -652,15 +652,15 @@ class Updater(object):
                 #current_day = day_of_year¨
 
             if save_output:
-                # If not rows were extracted
-                if not n_rows:
+                # Check if data was extracted
+                if 'n_rows' not in locals():
                     n_rows = 0
                 # Add a protocol file to check the compilation
                 fstat = self.output_folder+'summary.txt'
                 f = open(fstat, 'a')
                 f.write('{};{};{};{};{};{}\n'.format(current_day,all_timesteps[0],
                             all_timesteps[-1],len(all_timesteps),
-                            nrows,self.taskfile))
+                            n_rows,self.taskfile))
                 f.close()
                 del n_rows
 
