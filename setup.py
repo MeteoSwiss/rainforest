@@ -23,6 +23,7 @@ with open(path.join(here, 'requirements.txt')) as requirements_file:
 
 s = setup(name        = "rainforest",
     description = "RandomForest QPE python library",
+    long_description = "A library to compute a gauge/radar database, train a RF QPE predictor and apply it to generate QPE fields",
     version     = "1.1",
     author = 'Rebecca Gugerli, Daniel Wolfensberger',
     author_email = ' rebecca.gugerli@epfl.ch, daniel.wolfensberger@meteoswiss.ch',
