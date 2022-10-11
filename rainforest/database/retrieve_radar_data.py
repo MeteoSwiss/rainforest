@@ -608,7 +608,7 @@ class Updater(object):
                             try:
                                 data_col = data_col.astype(coltype)
                             except:# for int
-                                data_col = data_col.astype(np.float).astype(coltype)
+                                data_col = data_col.astype(float).astype(coltype)
                         else:
                             data_col = data_col.astype(np.float32)
                                 
@@ -645,19 +645,24 @@ class Updater(object):
                     if not IGNORE_ERRORS:
                         raise
 
+                n_rows = len(all_data_daily)
                 # Reset list
                 all_data_daily = []
                 # Reset day counter
                 #current_day = day_of_year¨
 
             if save_output:
+                # Check if data was extracted
+                if 'n_rows' not in locals():
+                    n_rows = 0
                 # Add a protocol file to check the compilation
                 fstat = self.output_folder+'summary.txt'
                 f = open(fstat, 'a')
                 f.write('{};{};{};{};{};{}\n'.format(current_day,all_timesteps[0],
                             all_timesteps[-1],len(all_timesteps),
-                            len(all_data_daily),self.taskfile))
+                            n_rows,self.taskfile))
                 f.close()
+                del n_rows
 
     
     def _remap(self, data, tstep, stations, compute_hydro = True):
