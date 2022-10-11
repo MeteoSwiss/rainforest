@@ -608,7 +608,7 @@ class Updater(object):
                             try:
                                 data_col = data_col.astype(coltype)
                             except:# for int
-                                data_col = data_col.astype(np.float).astype(coltype)
+                                data_col = data_col.astype(float).astype(coltype)
                         else:
                             data_col = data_col.astype(np.float32)
                                 
