@@ -24,7 +24,9 @@ class ObjectStorage(object):
         if AWS_DEFINED:
             self.linode_obj_config = linode_obj_config
             self.client = boto3.client("s3", **self.linode_obj_config)
-
+        else:
+            print('AWS_KEY is not defined! You will not be able to download/upload additional data from the cloud!')
+            
     def check_file(self, filename):
         """
         Checks if a file exists and if not tries to download it from the cloud
@@ -53,17 +55,16 @@ class ObjectStorage(object):
         bucket : str
             Name of the bucket to clean
         """
-
-        s3 = boto3.resource('s3',
-                        region_name = 'eu-central-1',
-                        endpoint_url = self.linode_obj_config["endpoint_url"],
-                        aws_access_key_id = self.linode_obj_config["aws_access_key_id"],
-                        aws_secret_access_key = self.linode_obj_config["aws_secret_access_key"])
-        bucket = s3.Bucket(bucket)
+        objects = self.client.list_objects_v2(Bucket = bucket)
+        print('Bucket contains {:d} objects'.format(len(objects)))
         userinput = input("Are you sure wou want to delete all content from the bucket y/n? ")
         if userinput == 'y':
-            bucket.objects.all().delete()
-
+            for object in response['Contents']:
+                self.client.delete_object(Bucket = bucket, key = object['Key'])
+    
+    def delete_file(self, key, bucket = 'rainforest'):
+        self.client.delete_object(Bucket = bucket, Key = key)
+ 
     def download_file(self, key, bpath, bucket = 'rainforest'):
         """
         Downloads a given file from the cloud S3

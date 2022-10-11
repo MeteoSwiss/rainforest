@@ -8,6 +8,3 @@ pandas
 pyspark
 pyart_mch
 xmltodict
-boto3
-pyshp
-imageio

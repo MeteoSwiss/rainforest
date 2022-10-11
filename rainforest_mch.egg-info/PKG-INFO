@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: rainforest-mch
-Version: 1.1.2
+Version: 1.1.3
 Summary: RandomForest QPE python library
 Author: Rebecca Gugerli, Daniel Wolfensberger
 Author-email:  rebecca.gugerli@epfl.ch, daniel.wolfensberger@meteoswiss.ch
@@ -8,5 +8,5 @@ License: GPL-3.0
 Platform: UNKNOWN
 License-File: LICENSE
 
-UNKNOWN
+A library to compute a gauge/radar database, train a RF QPE predictor and apply it to generate QPE fields
 
