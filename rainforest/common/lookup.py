@@ -77,6 +77,8 @@ from .constants import cosmo_coords_folder
 from .constants import radar_samples_folder
 from .constants import rfmodels_folder
 
+LOOKUP_FOLDER = Path(os.environ['RAINFOREST_DATAPATH'], 'references', 'lookup_data')
+
 def get_lookup(lookup_type, radar = None):
     """Read a lookup table from the /data/lookup_data folder
 
@@ -160,7 +162,7 @@ def calc_lookup(lookup_type, radar = None):
     neighb_y = 5
     
     # List that contains the computed lookup tables
-    lut_objets = []
+    lut_objects = []
     # List that contains the lookup table filenames
     lut_names = []
 
@@ -386,7 +388,7 @@ def calc_lookup(lookup_type, radar = None):
         offset_y = int((neighb_y-1)/2)
         
         df_stations = df_stations.append(constants.RADARS)
-            
+        stations = df_stations['Abbrev']
     
         lut = {}
         x_qpe = constants.X_QPE
@@ -408,9 +410,7 @@ def calc_lookup(lookup_type, radar = None):
             
           
             for i in range(-offset_y, offset_y + 1):
-                print(i)
                 for j in range(-offset_x, offset_x + 1):
-                    print(j)
                     x_llc = x_llc_sta + j
                     y_llc = y_llc_sta + i 
                     # Find index of station in cart grid
@@ -497,11 +497,13 @@ def calc_lookup(lookup_type, radar = None):
 
             lut_names.append(str(lut_name))
             lut_objects.append(lut)
-    
+    else:
+        raise ValueError('Invalid lookup type!')
+ 
     # Dump luts to disk and upload to cloud
     for i in range(len(lut_objects)):
         pickle.dump(lut_objects[i],
-                            open(lut_names[i]),'wb')
+                            open(lut_names[i],'wb'))
         try:
             ObjStorage.upload_file(lut_names[i])
         except AttributeError as e:
@@ -556,6 +558,5 @@ def _WGS_to_COSMO(coords_WGS, SP_coords = (-43,10)):
          coords_COSMO = np.vstack((lat_new, lon_new)).T 
      else: 
          coords_COSMO=np.asarray([lat_new, lon_new]) 
- 
- 
+  
      return coords_COSMO.astype('float32') 

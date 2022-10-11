@@ -1,3 +1,4 @@
+*.pyc
 build/*
 dist/*
 rainforest/ml/rf_models/*.p
