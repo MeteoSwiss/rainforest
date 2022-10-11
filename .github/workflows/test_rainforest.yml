@@ -42,4 +42,4 @@ jobs:
            AWS_KEY: ${{ secrets.AWS_KEY }}
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
         working-directory: ${{github.workspace}}/
-        run: pytest tests_cscs
+        run: pytest tests_ci
