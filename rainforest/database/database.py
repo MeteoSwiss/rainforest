@@ -849,7 +849,7 @@ class Database(object):
 
         for fn in job_files:
             logging.info('Submitting job {}'.format(fn))
-            subprocess.call('sbatch {:s}'.format(fname), shell = True)
+            subprocess.call('sbatch {:s}'.format(fn), shell = True)
 
         
 def _compare_config(config1, config2, keys = None):
