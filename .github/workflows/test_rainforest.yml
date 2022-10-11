@@ -28,8 +28,8 @@ jobs:
         if: matrix.os != 'macos-latest'
         working-directory: ${{github.workspace}}
         run: |
-          python -c "pip install -r requirements.txt"
-          python -c "pip install ."
+          pip install -r requirements.txt
+          pip install .
       - name: Create rainforest_data folder
         run: |
           mkdir -p ${{github.workspace}}/rainforest_data
