@@ -318,7 +318,6 @@ SLURM_HEADER_R = '''#!/bin/sh
 #SBATCH -c 1      # cores requested
 #SBATCH -t 12:0:00  # time requested in hour:minute:second
 #SBATCH --partition=postproc
-#SBATCH --account=msrad
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
 #SBATCH --output="db_gauges-%A_%a.out"
 #SBATCH --error="db_gauges-%A_%a.err"
@@ -338,10 +337,9 @@ SLURM_HEADER_PY = '''#!/bin/sh
 #SBATCH --mem-per-cpu 64g # memory in mbytes  
 #SBATCH -t 23:59:59  # time requested in hour:minute:second
 #SBATCH --partition=postproc
-#SBATCH --account=msrad
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_radar-%A_%a.out"
-#SBATCH --error="db_radar-%A_%a.err"
+#SBATCH --output="DBrad_%A_%a.out"
+#SBATCH --error="DBrad_%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 '''
