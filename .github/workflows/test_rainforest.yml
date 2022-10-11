@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: Install rainforest
         if: matrix.os != 'macos-latest'
-        working-directory: ${{github.workspace}}/
+        working-directory: ${{github.workspace}}
         run: pip install .
       - name: Create rainforest_data folder
         run: |
@@ -41,5 +41,5 @@ jobs:
         env:
            AWS_KEY: ${{ secrets.AWS_KEY }}
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
-        working-directory: ${{github.workspace}}/
+        working-directory: ${{github.workspace}}
         run: pytest tests_ci
