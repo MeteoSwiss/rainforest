@@ -32,7 +32,7 @@ jobs:
         if: matrix.os != 'macos-latest'
         working-directory: ${{github.workspace}}
         run: |
-         pip install --upgrade pip
+          pip install --upgrade pip
           pip install -r requirements.txt
           pip install .
       - name: Create rainforest_data folder
@@ -43,7 +43,7 @@ jobs:
            AWS_KEY: ${{ secrets.AWS_KEY }}
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
         run: |
-          python -c "import rainforest; print(pyrad.__file__)" 
+          python -c "import rainforest; print(rainforest.__file__)" 
       - name: Run tests
         env:
            AWS_KEY: ${{ secrets.AWS_KEY }}
