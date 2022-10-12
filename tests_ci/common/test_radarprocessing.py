@@ -18,9 +18,9 @@ def test_radarprocessing():
         radfiles.append(objsto.check_file(fname))
     statfile = objsto.check_file(str(Path(RADAR_SAMPLES_FOLDER, 'STL2005500000U.xml')))
     hztfile = objsto.check_file(str(Path(RADAR_SAMPLES_FOLDER, 'HZT2005500000L.800')))
-    hztgrid = pyart.aux_io.read_cartesian_metranet(hztfile)
+    hztgrid = pyart.aux_io.read_cartesian_metranet(hztfile, reader = 'python')
 
-    radar = Radar('L', radfiles, statusfile = statfile)
+    radar = Radar('L', radfiles, statusfile = statfile,  metranet_reader = 'python')
     radar.snr_mask(3)
     radar.visib_mask(50, 2)
     radar.add_hzt_data(hztgrid.fields['iso0_height']['data'][0])
