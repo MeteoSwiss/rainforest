@@ -33,8 +33,8 @@ jobs:
         working-directory: ${{github.workspace}}
         run: |
           pip install --upgrade pip
-          pip install flake8 pytest
           pip install -r requirements.txt
+          pip install -r test_requirements.txt
           pip install .
       - name: Create rainforest_data folder
         run: |
