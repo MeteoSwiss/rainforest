@@ -1,5 +1,6 @@
 [console_scripts]
 db_populate = rainforest.database.db_populate:main
+interact_cloud = rainforest.common.interact_cloud:main
 qpe_compute = rainforest.qpe.qpe_compute:main
 qpe_evaluation = rainforest.qpe.qpe_evaluation:main
 qpe_plot = rainforest.qpe.qpe_plot:main

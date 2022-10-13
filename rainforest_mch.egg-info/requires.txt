@@ -8,3 +8,7 @@ pandas
 pyspark
 pyart_mch
 xmltodict
+pyshp
+imageio
+boto3
+pyarrow

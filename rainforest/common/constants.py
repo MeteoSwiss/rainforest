@@ -17,10 +17,9 @@ from scipy.stats import mode
 from .object_storage import ObjectStorage
 ObjStorage = ObjectStorage()
 
-
 ###############
 # DATA
-###############S
+###############
 
 data_folder = os.environ['RAINFOREST_DATAPATH']
 metadata_folder = str(Path(data_folder, 'references', 'metadata'))

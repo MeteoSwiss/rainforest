@@ -17,8 +17,8 @@ def test_radarprocessing():
         fname = str(Path(RADAR_SAMPLES_FOLDER, bname + str(sweep)))
         radfiles.append(objsto.check_file(fname))
     statfile = objsto.check_file(str(Path(RADAR_SAMPLES_FOLDER, 'STL2005500000U.xml')))
-    hztfile = objsto.check_file(str(Path(RADAR_SAMPLES_FOLDER, 'HZT2005500000L.h5')))
-    hztgrid = pyart.aux_io.odim_h5.read_odim_grid_h5(hztfile)
+    hztfile = objsto.check_file(str(Path(RADAR_SAMPLES_FOLDER, 'HZT2005500000L.nc')))
+    hztgrid = pyart.io.read_grid(hztfile)
 
     radar = Radar('L', radfiles, statusfile = statfile,  metranet_reader = 'python')
     radar.snr_mask(3)

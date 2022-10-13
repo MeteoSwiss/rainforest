@@ -8,6 +8,7 @@ rainforest/interface.py
 rainforest/common/__init__.py
 rainforest/common/constants.py
 rainforest/common/graphics.py
+rainforest/common/interact_cloud.py
 rainforest/common/io_data.py
 rainforest/common/lookup.py
 rainforest/common/object_storage.py

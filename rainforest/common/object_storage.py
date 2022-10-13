@@ -5,28 +5,33 @@ import glob
 from pathlib import Path
 import os
 
-AWS_DEFINED = False
-try:
-    linode_obj_config = {
-        "aws_access_key_id": "78FXN2YBOXTRQS8938Z7",
-         "endpoint_url": f'https://eu-central-1.linodeobjects.com',
-         'aws_secret_access_key': os.environ['AWS_KEY']}
-    AWS_DEFINED = True
-except KeyError as e:
-    print('No AWS_KEY environment variable was found, you will not be able to download/upload additional data from the cloud!"')
+###############
+# S3 ACCESS
+###############
+AWS_ACCESS_KEY_ID = "78FXN2YBOXTRQS8938Z7"
+ENDPOINT_URL = f'https://eu-central-1.linodeobjects.com'
 
 class ObjectStorage(object):
-    def __init__(self):
+    def __init__(self, aws_key = None):
         """
         Creates an ObjectStorage instance
         """
+        self.aws_defined = True
+        if aws_key == None:
+            if 'AWS_KEY' in os.environ:
+                aws_key == os.environ['AWS_KEY']
+            else:
+                print('No AWS_KEY environment variable was found, you will not be able to download/upload additional data from the cloud!"')
+                self.aws_defined = False
+        
+        if self.aws_defined:
+            self.linode_obj_config = {
+            "aws_access_key_id": AWS_ACCESS_KEY_ID,
+            "endpoint_url": ENDPOINT_URL,
+            'aws_secret_access_key': aws_key}
 
-        if AWS_DEFINED:
-            self.linode_obj_config = linode_obj_config
             self.client = boto3.client("s3", **self.linode_obj_config)
-        else:
-            print('AWS_KEY is not defined! You will not be able to download/upload additional data from the cloud!')
-            
+        
     def check_file(self, filename):
         """
         Checks if a file exists and if not tries to download it from the cloud
@@ -38,13 +43,27 @@ class ObjectStorage(object):
         """
 
         if not os.path.exists(filename):
-            if not AWS_DEFINED:
+            if not self.aws_defined:
                 raise FileNotFoundError('File {:s} not found and AWS_KEY env variable not defined: retrieval from cloud IMPOSSIBLE.'.format(filename))
             print("File was not found, retrieving it from Object Storage")
             key = os.path.basename(filename)
             bpath = os.path.dirname(filename)
             self.download_file(key, bpath)
         return filename
+
+    def list_files(self, bucket = 'rainforest'):
+        """
+        Lists all files in a given bucket
+
+        Parameters
+        ----------
+        bucket : str
+            Name of the bucket to clean
+        """
+        objects = self.client.list_objects_v2(Bucket = bucket)
+
+        for object in objects['Contents']:
+            print(object['Key'])
 
     def clean_bucket(self, bucket = 'rainforest'):
         """
@@ -59,10 +78,20 @@ class ObjectStorage(object):
         print('Bucket contains {:d} objects'.format(len(objects)))
         userinput = input("Are you sure wou want to delete all content from the bucket y/n? ")
         if userinput == 'y':
-            for object in response['Contents']:
+            for object in objects['Contents']:
                 self.client.delete_object(Bucket = bucket, key = object['Key'])
     
     def delete_file(self, key, bucket = 'rainforest'):
+        """
+        Deletes a file from a bucket
+
+        Parameters
+        ----------
+        key : str
+            Name of the object in the S3 storage
+        bucket: str
+            Name of the bucket where the file is stored
+        """
         self.client.delete_object(Bucket = bucket, Key = key)
  
     def download_file(self, key, bpath, bucket = 'rainforest'):
