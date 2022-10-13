@@ -19,7 +19,7 @@ class ObjectStorage(object):
         self.aws_defined = True
         if aws_key == None:
             if 'AWS_KEY' in os.environ:
-                aws_key == os.environ['AWS_KEY']
+                aws_key = os.environ['AWS_KEY']
             else:
                 print('No AWS_KEY environment variable was found, you will not be able to download/upload additional data from the cloud!"')
                 self.aws_defined = False
