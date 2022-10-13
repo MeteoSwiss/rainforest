@@ -1,6 +1,7 @@
 *.pyc
 build/*
 dist/*
+*egg*
 rainforest/ml/rf_models/*.p
 rainforest/common/data/coords_COSMO1.nc
 rainforest/common/data/coords_COSMO1_T.nc
