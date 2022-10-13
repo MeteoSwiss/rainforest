@@ -12,3 +12,4 @@ pyshp
 imageio
 boto3
 pyarrow
+h5py
