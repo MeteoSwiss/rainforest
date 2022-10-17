@@ -529,7 +529,7 @@ class QPEProcessor(object):
                         # get cart index of all polar gates for this sweep
                         lut_elev = self.lut_cart[rad][self.lut_cart[rad][:,0]
                                                         == sweep-1] # 0-indexed
-
+                        print(lut_elev.shape)
                         # Convert from Swiss-coordinates to array index
                         idx_ch = np.vstack((len(X_QPE_CENTERS)  -
                                         (lut_elev[:,4] - np.min(X_QPE_CENTERS)),
