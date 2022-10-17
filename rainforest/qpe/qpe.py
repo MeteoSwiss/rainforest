@@ -554,6 +554,7 @@ class QPEProcessor(object):
                             # Add weights to cart grid
                             nanadd_at(weights_cart[weight], idx_ch, W[idx_polar])
                     except:
+                        raise
                         logging.error('Could not compute sweep {:d}'.format(sweep))
                         pass
 
