@@ -18,10 +18,10 @@ import os
 from scipy.interpolate import UnivariateSpline
 from pathlib import Path
 
-current_file = os.path.abspath(__file__)
-current_folder = os.path.dirname(current_file)
-
-FOLDER_RF = str(Path(current_folder,  'rf_models'))
+# Local imports
+from ..common.object_storage import ObjectStorage
+ObjStorage = ObjectStorage()
+FOLDER_RF = Path(os.environ['RAINFOREST_DATAPATH'], 'rf_models')
 
   
 ##################
@@ -216,7 +216,7 @@ def read_rf(rf_name, filepath=''):
     else:
         rf_name = str(Path(filepath, rf_name))
         
-    unpickler = MyCustomUnpickler(open(rf_name, 'rb'))
+    unpickler = MyCustomUnpickler(open(ObjStorage.check_file(rf_name), 'rb'))
     if not os.path.exists(rf_name):
         raise IOError('RF model {:s} does not exist!'.format(rf_name))
     else:

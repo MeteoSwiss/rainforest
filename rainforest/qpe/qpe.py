@@ -16,8 +16,11 @@ March 2022
 import warnings
 warnings.filterwarnings('ignore')
 
+import pickle
 import numpy as np
 import datetime
+import glob
+from pathlib import Path
 import os
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -286,8 +289,83 @@ class QPEProcessor(object):
             except:
                 logging.error('Failed to retrieve data for radar {:s}'.format(rad))
 
+    def fetch_data(self, t0, t1):
+        """
+        Retrieves and add new polar radar and status data to the QPEProcessor
+        for a given time range
+
+        Parameters
+        ----------
+        t0 : datetime
+            Start time of the timerange in datetime format
+        t1 : datetime
+            End time of the timerange in datetime format
+        """
+
+        self.radar_files = {}
+        self.status_files = {}
+
+        # Retrieve polar files and lookup tables for all radars
+        for rad in self.config['RADARS']:
+            logging.info('Retrieving data for radar '+rad)
+            try:
+                radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
+                                   product_name = 'ML' + rad,
+                                   sweeps = self.config['SWEEPS'])
+                self.radar_files[rad] = split_by_time(radfiles)
+                statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
+                                   product_name = 'ST' + rad, pattern = 'ST*.xml')
+                self.status_files[rad] = split_by_time(statfiles)
+            except:
+                logging.error('Failed to retrieve data for radar {:s}'.format(rad))
+
+    def fetch_data_test(self, t0, t1):
+        """
+        Fetch the data for a qpe run on the cloud, to be used for unit tests only
+        """
+        from ..common.object_storage import ObjectStorage
+        objsto = ObjectStorage()
+
+        INPUT_FOLDER = Path(os.environ['RAINFOREST_DATAPATH'], 'references', 'qpe_run')
+        self.radar_files = {}
+        self.status_files = {}
+        self.T_files = {}
+
+        # Retrieve polar files and lookup tables for all radars
+        for rad in self.config['RADARS']:
+            logging.info('Retrieving data for radar '+rad)
+            try:
+                radfiles= []
+                for sweep in self.config['SWEEPS']:
+                    datestr0 = datetime.datetime.strftime(t0, '%y%j%H%M')
+                    datestr1 = datetime.datetime.strftime(t1, '%y%j%H%M')
+
+                    fname0 = str(Path(INPUT_FOLDER, 'ML' + rad + datestr0 +'0U.0' + str(sweep).zfill(2)))
+                    fname1 = str(Path(INPUT_FOLDER, 'ML' + rad + datestr1 +'0U.0' + str(sweep).zfill(2)))
+
+                    radfiles.append(objsto.check_file(fname0))
+                    radfiles.append(objsto.check_file(fname1))
+
+                self.radar_files[rad] = split_by_time(radfiles)
+
+                fname0 = str(Path(INPUT_FOLDER, 'ST' + rad + datestr0 +'0U.xml'))
+                fname1 = str(Path(INPUT_FOLDER, 'ST' + rad + datestr1 +'0U.xml'))
+                
+                statfiles = [objsto.check_file(fname0), objsto.check_file(fname1)]
+
+                # For COSMO we get use only data at end of timestep for test case
+                fname = objsto.check_file(str(Path(INPUT_FOLDER, 'TL' + rad + datestr1 +'0.p')))
+                T_files = [fname]
+
+                self.status_files[rad] = split_by_time(statfiles)
+                self.T_files[rad] = split_by_time(T_files)
+
+            except:
+                logging.error('Failed to retrieve data for radar {:s}'.format(rad))
+
+
     def compute(self, output_folder, t0, t1, timestep = 5,
-                                                    basename = 'RFQ%y%j%H%M'):
+                            basename = 'RFQ%y%j%H%M', test_mode = False):
         """
         Computes QPE values for a given time range and stores them in a
         folder, in a binary format
@@ -322,7 +400,10 @@ class QPEProcessor(object):
         tL = t0-datetime.timedelta(minutes=timestep)
         
         # Retrieve data for time range
-        self.fetch_data(tL, t1)
+        if test_mode:
+            self.fetch_data_test(tL, t1)
+        else:    
+            self.fetch_data(tL, t1)
 
         # Get all timesteps in time range
         n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
@@ -355,17 +436,18 @@ class QPEProcessor(object):
 
             """Part one - compute radar variables and mask"""
             # Get COSMO temperature for all radars for this timestamp
-            T_cosmo = get_COSMO_T(t, radar = self.config['RADARS'])
+            if not test_mode:
+                T_cosmo = get_COSMO_T(t1, radar = self.config['RADARS'])
             radobjects = {}
 
             for rad in self.config['RADARS']:
                 # if radar does not exist, add to missing file list
-                if self.radar_files.get(rad) == None:
+                if self.radar_files[rad] == None:
                     missing_files[rad] = t
                     continue
 
                 # if file does not exist, add to missing file list
-                if self.radar_files[rad].get(t) == None:
+                if self.radar_files[rad][t] == None:
                     missing_files[rad] = t
                     continue
                 
@@ -391,6 +473,10 @@ class QPEProcessor(object):
                     logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
+
+                if test_mode:
+                    T_cosmo = pickle.load(open(self.T_files[rad][t1], 'rb'))
+
                 radobjects[rad].add_cosmo_data(T_cosmo[rad])
 
                 # Delete files if config files requires

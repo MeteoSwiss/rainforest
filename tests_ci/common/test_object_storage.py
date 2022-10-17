@@ -20,3 +20,4 @@ def test_upload_download():
     assert os.path.exists(fname)
     assert open(fname,'r').readlines() == ['Hello World']
 
+    os.remove(fname)

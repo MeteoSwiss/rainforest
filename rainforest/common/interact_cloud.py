@@ -17,7 +17,7 @@ def main():
                       metavar="BUCKET")
 
     parser.add_option("-a", "--action", dest = "action", type = str,
-                      help="Action to perform: either 'list', upload', 'download' or 'delete'",
+                      help="Action to perform: either 'list', upload', 'download', 'rsync', or 'delete'",
                       metavar="NAME")
 
     parser.add_option("-n", "--name", dest = "name", type = str,
@@ -55,4 +55,8 @@ def main():
         objstorage.delete_file(options.name, options.bucket)
     elif options.action == 'list':
         logging.info('Listing files from bucket {:s}'.format(options.bucket))
-        objstorage.list_files(options.bucket)
+        listfiles = objstorage.list_files(options.bucket)
+        print(listfiles)
+    elif options.action == 'rsync':
+        logging.info('Rsync of local files with bucket {:s}'.format(options.bucket))
+        objstorage.rsync_cloud(bucket = bucket)

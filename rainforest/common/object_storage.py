@@ -62,8 +62,10 @@ class ObjectStorage(object):
         """
         objects = self.client.list_objects_v2(Bucket = bucket)
 
+        all_keys = []
         for object in objects['Contents']:
-            print(object['Key'])
+            all_keys.append(object['Key'])
+        return all_keys
 
     def clean_bucket(self, bucket = 'rainforest'):
         """
@@ -136,7 +138,7 @@ class ObjectStorage(object):
                 Key=key,
                 Filename=filename)
 
-    def upload_all_files(self, data_folder = None, bucket = 'rainforest'):
+    def rsync_cloud(self, rainforest_data_folder = None, bucket = 'rainforest', overwrite = False):
         """
         Uploads all files within a given folder
 
@@ -146,33 +148,32 @@ class ObjectStorage(object):
             Directory from where to upload all content. The names of the files on the cloud will be their basename (no data structure is kept)
         bucket : str
             Name of the bucket where to upload the files
-
+        overwrite: bool
+            If set to true will overwrite files that are already on the cloud
         """
 
         print('This script will upload the data and rf_models directories of rainforest to a cloud storage service')
         print('These directories contain large files that cannot be packaged with Pypi or conda')
 
-        if not data_folder:
+        if not rainforest_data_folder:
             print('Using default data folder:')
             print(os.environ['RAINFOREST_DATAPATH'])
-            data_folder = os.environ['RAINFOREST_DATAPATH']
+            rainforest_data_folder = os.environ['RAINFOREST_DATAPATH']
 
-        datadir = Path(data_folder, 'references')
-        rfdir = Path(data_folder, 'rf_models')
+        all_files = glob.glob(rainforest_data_folder+ '/**/*.*', recursive = True)
+        cloud_files = self.list_files(bucket = bucket)
 
-        self.clean_bucket(bucket = bucket)
+        all_files_to_upload = []
+        for f in all_files:
+            if os.path.basename(f) not in cloud_files:
+                all_files_to_upload.append(f)
+        
+        if not len(all_files_to_upload):
+            print('No files need to be sync with cloud, terminating...')
+        else:
+            for i, f in enumerate(all_files_to_upload):
+                print('Uploading file {:s}'.format(f))
+                print('Progress: {:d}/{:d}'.format(i, len(all_files_to_upload)))
+                self.upload_file(f)            
 
-        print('Uploading reference storage...')
-        data_storage_files = glob.glob(str(Path(datadir, '**', '*.*')), recursive=True)
-        rfmodels_files = glob.glob(str(Path(rfdir, '**', '*.*')), recursive=True)
-
-        for i, f in enumerate(data_storage_files):
-            print("{:d}/{:d} files".format(i, len(data_storage_files)))
-            self.upload_file(filename)            
-
-        print('Uploading rf_models storage...')
-        rfmodels_files = glob.glob(str(Path(rfdir, '**', '*.*')), recursive=True)
-        for i, f in enumerate(rfmodels_files):
-            print("{:d}/{:d} files".format(i, len(rfmodels_files)))
-            self.upload_file(filename)
         print('Done')
