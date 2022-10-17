@@ -546,17 +546,14 @@ class QPEProcessor(object):
                             # Compute visib weighting
                             if weight[1]:
                                 W *= datasweep['VISIB'] / 100
-                            print(W.shape)
-                            print(np.max(idx_polar[0]), np.max(idx_polar[1]))
-                            
+
                             for var in rf_features_cart[weight].keys():
                                 if var in datasweep.keys():
                                     # Add variable to cart grid
-                                    print(datasweep[var].shape )
                                     nanadd_at(rf_features_cart[weight][var],
-                                        idx_ch, (W * datasweep[var])[idx_polar])
+                                        idx_ch, (W * datasweep[var])[idx_polar[0], idx_polar[1]])
                             # Add weights to cart grid
-                            nanadd_at(weights_cart[weight], idx_ch, W[idx_polar])
+                            nanadd_at(weights_cart[weight], idx_ch, W[idx_polar[0], idx_polar[1]])
                     except:
                         raise
                         logging.error('Could not compute sweep {:d}'.format(sweep))
