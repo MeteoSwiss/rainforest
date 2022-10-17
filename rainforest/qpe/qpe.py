@@ -542,9 +542,12 @@ class QPEProcessor(object):
                             # Compute altitude weighting
                             W = 10 ** (weight[0] * (datasweep['HEIGHT']/1000.))
                             W[invalid] = 0
+                            
                             # Compute visib weighting
                             if weight[1]:
                                 W *= datasweep['VISIB'] / 100
+                            print(W.shape)
+                            print(np.max(idx_polar[0]), np.max(idx_polar[1]))
                             
                             for var in rf_features_cart[weight].keys():
                                 if var in datasweep.keys():
