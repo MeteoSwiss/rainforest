@@ -22,7 +22,7 @@ def test_qpe():
     t0 = datetime.datetime(2022,9,28,5,10 )
     t1 = datetime.datetime(2022,9,28,5,10 )
 
-    qpeproc.compute('/users/wolfensb/rainforest/tests_ci/qpe/', t0,t1, test_mode = True)
+    qpeproc.compute(cwd, t0,t1, test_mode = True)
     qpe = read_cart(str(Path(cwd, 'RF_dualpol', 'RFQ222710510.h5')))
     qpe_field = qpe.data
 
