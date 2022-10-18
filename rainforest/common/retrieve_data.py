@@ -171,12 +171,11 @@ def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type = 's
             files_to_retrieve = files_to_retrieve.replace(fi,'')
             
     # Only unzip if at least one file does not exist
-    # (18 is the number of characters within the filename)
-    if len(files_to_retrieve) >= 18:
+    if len(files_to_retrieve.strip()) > 0:
         logging.info('Unzippping: '+ files_to_retrieve)   
-    cmd = 'unzip -j -o -qq "{:s}" {:s} -d {:s}'.format(folder_in + name_zipfile,
-         files_to_retrieve , folder_out)
-    subprocess.call(cmd, shell=True)
+        cmd = 'unzip -j -o -qq "{:s}" {:s} -d {:s}'.format(folder_in + name_zipfile,
+            files_to_retrieve , folder_out)
+        subprocess.call(cmd, shell=True)
         
     files = sorted(np.array([folder_out + c for c in
                             content_filt[conditions]]))    
@@ -511,8 +510,7 @@ def _retrieve_prod_daily(folder_out, start_time, end_time, product_name,
             files_to_retrieve = files_to_retrieve.replace(fi,'')
 
     # Only unzip if at least one file does not exist
-    # (18 is the number of characters within the filename)
-    if len(files_to_retrieve) >= 18:
+    if len(files_to_retrieve.strip()) > 0:
         cmd = 'unzip -j -o -qq "{:s}" {:s} -d {:s}'.format(folder_in + name_zipfile,
             files_to_retrieve , folder_out)
         subprocess.call(cmd, shell=True)
