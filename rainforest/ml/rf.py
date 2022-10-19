@@ -180,10 +180,10 @@ class RFTraining(object):
                 full_hours = np.array(gauge.groupby(stahour)['STATION']
                                         .transform('count') == 6)
                
-                refer = refer.reindex[full_hours]
-                gauge = gauge.reindex[full_hours]    
-                radar = radar.reindex[radar['s-tstamp'].
-                                           isin(np.array(gauge['s-tstamp']))]
+                refer = refer[full_hours]
+                gauge = gauge[full_hours]    
+                radar = radar[radar['s-tstamp'].
+                                isin(np.array(gauge['s-tstamp']))]
                 
                 stahour = stahour[full_hours]
                 
@@ -193,7 +193,7 @@ class RFTraining(object):
                                                  return_inverse = True,
                                                  return_index = True)
                 # Get original order
-                sta_tstamp_unique = radar['s-tstamp'][np.sort(idx)]
+                sta_tstamp_unique = radar['s-tstamp'].index[np.sort(idx)]
                 # Preserves order and avoids sorting radar_statstamp
                 grp_vertical = idx[grp_vertical]
                 # However one issue is that the indexes are not starting from zero with increment
@@ -216,14 +216,17 @@ class RFTraining(object):
                 radar = pd.merge(radar,stations, how = 'left', on = 'STATION',
                                  sort = False)
                 
-                radar['HISO'] = -radar['T'] / constants.LAPSE_RATE * 100
-                radar['HAG'] = radar['HEIGHT'] - radar['Z']
-                radar['HAG'][radar['HAG'] < 0] = 0
+                if 'T' in radar.columns:
+                    radar['HISO'] = -radar['T'] / constants.LAPSE_RATE * 100
+                    radar['HAG'] = radar['HEIGHT'] - radar['Z']
+                    radar['HAG'][radar['HAG'] < 0] = 0
         
                 # Gauge
                 gauge['minutes'] = (gauge['TIMESTAMP'] % 3600)/60
                 
                 # Save all to file
+                # Save all to file
+                logging.info('Saving files to {}'.format(self.input_location))
                 refer.to_parquet(str(Path(self.input_location, 
                                           'reference_x{:d}y{:d}.parquet'.format(x,y))),
                                  compression = 'gzip', index = False)
