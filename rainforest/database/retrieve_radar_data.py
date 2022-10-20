@@ -62,7 +62,8 @@ class Updater(object):
         self.taskfile = task_file
         self.tasks = read_task_file(task_file)
         self.output_folder = output_folder
-    
+        self.downloaded_files = [] # Keeps track of all downloaded files
+
         # These are parameters that are used in many subfunctions
         self.radar_cfg = self.config['RADAR_RETRIEVAL']
         self.radars = self.radar_cfg['RADARS']
@@ -179,6 +180,9 @@ class Updater(object):
                files_rad['status'] = files_s
 
             files_rad = split_by_time(files_rad)
+
+            # Update list of downloaded files
+            self.downloaded_files.extend(nested_dict_values(files_rad))
         except:
             raise
             logging.error("""Retrieval for radar {:s} at timesteps {:s}-{:s} 
@@ -201,10 +205,13 @@ class Updater(object):
             files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],
                                             start_time, end_time)
             files_hzt = split_by_time(files_hzt)
+            self.downloaded_files.extend(nested_dict_values(files_hzt))
+
         except:
             raise
             logging.error("""Retrieval of hzt files at timesteps {:s}-{:s} 
                       failed""".format(str(start_time), str(end_time)))
+
         return files_hzt
 
 
@@ -812,7 +819,20 @@ class Updater(object):
         
         return operators
     
+    def final_cleanup(self):
+        """
+        Performs a final cleanup by checking if all files in downloaded_files 
+        deleted       
+        """       
+        for f in self.downloaded_files:
+            if os.path.exists(f):
+                try:
+                    os.remove(f)
+                except PermissionError as e:
+                    logging.error(e)
+                    logging.error('Could not delete file {:s}'.format(f))
 
+                
 def _data_at_station(radar_object, variables, idx, methods = ['mean'], tidx = None):
     '''
         Gets polar data at the location of a station, using the indexes of the
@@ -901,5 +921,5 @@ if __name__ == '__main__':
     
     u = Updater(options.task_file, options.config_file, options.output_folder)
     u.process_all_timesteps()
-    
+    u.final_cleanup()   
     

@@ -12,7 +12,8 @@ def test_retrieve_radar_data():
     u = Updater(tf, cf, cwd)
 
     u.process_all_timesteps()
-
+    u.final_cleanup()
+  
     ref_table = str(Path(cwd, 'reference_test_output.parquet'))
     new_table = str(Path(cwd, '20191019.parquet'))
 

@@ -68,7 +68,8 @@ class Updater(object):
         self.config = envyaml(config_file)
         self.tasks = read_task_file(task_file)
         self.output_folder = output_folder
-        
+        self.downloaded_files = [] # Keeps track of all downloaded files
+
         self.ref_config = self.config['REFERENCE_RETRIEVAL']
         self.neighb_x = self.ref_config['NEIGHBOURS_X']
         self.neighb_y = self.ref_config['NEIGHBOURS_Y']
@@ -117,6 +118,7 @@ class Updater(object):
                                                  start_time, end_time, prod)
               
                 files_allproducts[prod] = files
+                self.downloaded_files.extend(nested_dict_values(files_allproducts))
             except:
                 logging.error("""Retrieval for product {:s} at timesteps {:s}-{:s} 
                           failed""".format(prod, str(start_time), 
@@ -124,7 +126,6 @@ class Updater(object):
                 files_allproducts[prod] = []
                 if not IGNORE_ERRORS:
                     raise
-                
         return files_allproducts
 
     def process_all_timesteps(self):
@@ -375,7 +376,19 @@ class Updater(object):
                 for nx in self.neighb_x:
                     for ny in self.neighb_y:
                         data_cst.append([tend, sta,nx,ny])
-                         
+
+    def final_cleanup(self):
+        """
+        Performs a final cleanup by checking if all files in downloaded_files 
+        deleted       
+        """  
+        for f in self.downloaded_files:
+            if os.path.exists(f):
+                try:
+                    os.remove(f)
+                except PermissionError as e:
+                    logging.error(e)
+                    logging.error('Could not delete file {:s}'.format(f))                         
              
 if __name__ == '__main__':
     parser = OptionParser()
@@ -396,3 +409,4 @@ if __name__ == '__main__':
     
     u = Updater(options.task_file, options.config_file, options.output_folder)
     u.process_all_timesteps()
+    u.final_cleanup()
