@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import datetime
 import logging
-
+import dask.dataframe as dd
 
 logging.basicConfig(level=logging.INFO)
 import os
@@ -69,7 +69,7 @@ class Updater(object):
         self.tasks = read_task_file(task_file)
         self.output_folder = output_folder
         self.downloaded_files = [] # Keeps track of all downloaded files
-
+        
         self.ref_config = self.config['REFERENCE_RETRIEVAL']
         self.neighb_x = self.ref_config['NEIGHBOURS_X']
         self.neighb_y = self.ref_config['NEIGHBOURS_Y']
@@ -126,6 +126,7 @@ class Updater(object):
                 files_allproducts[prod] = []
                 if not IGNORE_ERRORS:
                     raise
+                
         return files_allproducts
 
     def process_all_timesteps(self):
@@ -158,7 +159,11 @@ class Updater(object):
             self.products.remove('CPC.CV')
             colnames_cpccv = ['TIMESTAMP','STATION','NX','NY']
             colnames_cpccv.append('CPC.CV')
+        else:
+            include_cpccv = False
         
+        # Initiate
+        current_hour = None
          
         # For motion vectors
         oflow_method = pysteps.motion.get_method(self.ref_config['MV_METHOD'])
@@ -169,93 +174,18 @@ class Updater(object):
         for i, tstep in enumerate(all_timesteps):
             logging.info('Processing timestep '+str(tstep))
             
-            # # retrieve radar data
-            # tstart = datetime.datetime.utcfromtimestamp(float(tstep))
-            # tend = tstart + datetime.timedelta(minutes = 5) 
-            # tstep_end = tstep + 10 * 60 # 10 min
-            
-            # NEW:
             # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
-            tstart = datetime.datetime.utcfromtimestamp(float(tstep)) - datetime.timedelta(minutes=5)
+            tstart = datetime.datetime.utcfromtimestamp(float(tstep)) - datetime.timedelta(minutes=8)
             tend= datetime.datetime.utcfromtimestamp(float(tstep))
             
             stations_to_get = self.tasks[tstep]
             
-            hour_of_year = datetime.datetime.strftime(tstart,'%Y%m%d%H')
+            hour_of_year = datetime.datetime.strftime(tend,'%Y%m%d%H')
             day_of_year = hour_of_year[0:-2]
             
-            if i == 0:
-                current_day = day_of_year
-                current_hour = hour_of_year
+            current_day = day_of_year
                 
-            if day_of_year != current_day or i == len(all_timesteps) - 1:
-                logging.info('Saving new table for day {:s}'.format(str(current_day)))
-                data_10minagg = np.array(data_10minagg)
-                data_cst = np.array(data_cst)
-                # Concatenate metadata and product data
-                all_data = np.hstack((data_cst, data_10minagg))
-                dic = OrderedDict()
-                
-                for c, col in enumerate(colnames):
-                    data_col = all_data[:,c]
-                    isin_listcols = [col in c for c in constants.COL_TYPES.keys()]
-                    if any(isin_listcols):
-                        idx = np.where(isin_listcols)[0][0]
-                        coltype = list(constants.COL_TYPES.values())[idx]
-                        try:
-                            data_col = data_col.astype(coltype)
-                        except:# for int
-                            data_col = data_col.astype(np.float).astype(coltype)
-                            if not IGNORE_ERRORS:
-                                raise
-                    else:
-                        data_col = data_col.astype(np.float32)
-                    dic[col] = data_col
-             
-                df = pd.DataFrame(dic)
-       
-                if include_cpccv:
-                    data_cst_cpccv = np.array(data_cst_cpccv)
-                    data_cpccv = np.array([data_cpccv]).T
-                    all_data_cpccv = np.hstack((data_cst_cpccv, data_cpccv))
-                    
-                    dic = OrderedDict()
-                    for c, col in enumerate(colnames_cpccv):
-                        data_col = all_data_cpccv[:,c]
-                        isin_listcols = [col in c for c 
-                                             in constants.COL_TYPES.keys()]
-                        if any(isin_listcols):
-                            idx = np.where(isin_listcols)[0][0]
-                            coltype = list(constants.COL_TYPES.values())[idx]
-                            try:
-                                data_col = data_col.astype(coltype)
-                            except:# for int
-                                data_col = data_col.astype(np.float).astype(coltype)
-                                if not IGNORE_ERRORS:
-                                    raise
-                        else:
-                            data_col = data_col.astype(np.float32)
-                        dic[col] = data_col
-                    
-                               
-                    dfcpc = pd.DataFrame(dic)
-                    df = pd.merge(df, dfcpc, 
-                                  on = ['STATION','TIMESTAMP','NX','NY'],
-                                  how = 'left')
-                    
-                name = self.output_folder + current_day + '.parquet'
-                logging.info('Saving file ' + name)
-                df.to_parquet(name, compression = 'gzip', index = False)
-                
-                current_day = day_of_year
-                # Reset lists
-                  
-                data_10minagg = [] # separate list for cpccv
-                data_cst = [] # for time, sta, nx,ny
-                if include_cpccv:
-                    data_cpccv = [] # separate list for cpccv
-                    data_cst_cpccv = [] # for time, sta, nx,ny
-                    
+            # Get CPC.CV data
             if include_cpccv:
                 if hour_of_year != current_hour:
                     current_hour = hour_of_year
@@ -266,9 +196,8 @@ class Updater(object):
                     data_cpccv.extend(data_at_stations)
                   
                     for sta in stations_to_get:
-                        data_cst_cpccv.append([tstep, sta, 0,0]) # nx = ny = 0
+                        data_cst_cpccv.append([tstep,sta,0,0]) # nx = ny = 0
                             
-          
             # Initialize output
             N,M = len(stations_to_get) * nneighb, self.dims['np']
             data_allprod = np.zeros((N,M), dtype = np.float32) + np.nan
@@ -320,8 +249,7 @@ class Updater(object):
                                 strnb = '{:d}{:d}'.format(nx,ny)
                                 # Get idx of Cart pixel in 2D map
                                 idx = lut_cart[sta][strnb]
-                                data_prod[idx_row] = mv[idx_slice_mv, idx[0],
-                                                                idx[1]]
+                                data_prod[idx_row] = mv[idx_slice_mv, idx[0],idx[1]]
                                 idx_row += 1
 
                 else:
@@ -329,7 +257,7 @@ class Updater(object):
                     ###################
                     files = allfiles[prod]
                     
-                    # Initialize output
+                    # # Initialize output
                     N,M = len(stations_to_get) * nneighb, len(files)
                     data_prod = np.zeros((N,M), dtype = np.float32) + np.nan
                     
@@ -352,9 +280,8 @@ class Updater(object):
                                     strnb = '{:d}{:d}'.format(nx,ny)
                                     # Get idx of Cart pixel in 2D map
                                     idx = lut_cart[sta][strnb]
-                                    data_prod[idx_row,k] = proddata[idx[0],
-                                                                    idx[1]]
-                           
+                                    data_prod[idx_row,k] = proddata[idx[0],idx[1]]
+                                    # Add next row
                                     idx_row += 1
                                                 
                     data_prod = np.nanmean(data_prod,axis = 1)
@@ -375,7 +302,109 @@ class Updater(object):
             for sta in stations_to_get:
                 for nx in self.neighb_x:
                     for ny in self.neighb_y:
-                        data_cst.append([tend, sta,nx,ny])
+                        data_cst.append([tstep,sta,nx,ny])
+
+            # Save data to file if end of loop or new day
+            if (i == len(all_timesteps) - 1):
+                save_output = True
+            else: 
+                next_tstep = datetime.datetime.utcfromtimestamp(all_timesteps[i+1])
+                next_tstep_day = datetime.datetime.strftime(next_tstep,'%Y%m%d%H')[0:-2]
+                if current_day != next_tstep_day:
+                    save_output = True
+                else:
+                    save_output = False
+     
+            if save_output and len(data_cst):
+                logging.info('Saving new table for day {:s}'.format(str(current_day)))
+                name = self.output_folder + current_day + '.parquet'
+
+                # Check if a file already exists
+                file_exists = False
+                if os.path.exists(name):
+                    file_exists = True   
+
+                data_10minagg = np.array(data_10minagg)
+                data_cst = np.array(data_cst)
+                # Concatenate metadata and product data
+                all_data = np.hstack((data_cst, data_10minagg))
+                dic = OrderedDict()
+                
+                for c, col in enumerate(colnames):
+                    data_col = all_data[:,c]
+                    isin_listcols = [col in c for c in constants.COL_TYPES.keys()]
+                    if any(isin_listcols):
+                        idx = np.where(isin_listcols)[0][0]
+                        coltype = list(constants.COL_TYPES.values())[idx]
+                        try:
+                            data_col = data_col.astype(coltype)
+                        except:# for int
+                            data_col = data_col.astype(float).astype(coltype)
+                            if not IGNORE_ERRORS:
+                                raise
+                    else:
+                        data_col = data_col.astype(np.float32)
+                    dic[col] = data_col
+             
+                df = pd.DataFrame(dic)
+       
+                if include_cpccv:
+                    data_cst_cpccv = np.array(data_cst_cpccv)
+                    data_cpccv = np.array([data_cpccv]).T
+                    all_data_cpccv = np.hstack((data_cst_cpccv, data_cpccv))
+                    
+                    dic = OrderedDict()
+                    for c, col in enumerate(colnames_cpccv):
+                        data_col = all_data_cpccv[:,c]
+                        isin_listcols = [col in c for c 
+                                             in constants.COL_TYPES.keys()]
+                        if any(isin_listcols):
+                            idx = np.where(isin_listcols)[0][0]
+                            coltype = list(constants.COL_TYPES.values())[idx]
+                            try:
+                                data_col = data_col.astype(coltype)
+                            except:# for int
+                                data_col = data_col.astype(np.float).astype(coltype)
+                                if not IGNORE_ERRORS:
+                                    raise
+                        else:
+                            data_col = data_col.astype(np.float32)
+                        dic[col] = data_col
+                    
+                               
+                    dfcpc = pd.DataFrame(dic)
+                    df = pd.merge(df, dfcpc, 
+                                  on = ['STATION','TIMESTAMP','NX','NY'],
+                                  how = 'left')
+                    
+                if file_exists == False:
+                    logging.info('Saving file ' + name)
+                    df.to_parquet(name, compression = 'gzip', index = False)
+                else:
+                    logging.info('Saving file: '+name+' as it already exists, I will append to it')
+                    # Rename old file to be able to delete it afterwards
+                    name_old = name[0:-8] + '_old'+ name[-8::]
+                    os.rename(name, name_old)
+                    # Read dask DataFrame and convert it to Pandas DataFrame
+                    df_old = dd.read_parquet(name_old).compute()
+                    # Merge the old and new one and drop duplicate rows
+                    df_join = df_old.append(df).drop_duplicates()
+                    # Save the new file and delete the old one
+                    df_join.to_parquet(name, compression = 'gzip', index = False)
+                    os.remove(name_old)
+
+
+                logging.info('Saving file ' + name)
+                df.to_parquet(name, compression = 'gzip', index = False)
+                
+                current_day = day_of_year
+                
+                # Reset lists                  
+                data_10minagg = [] # separate list for cpccv
+                data_cst = [] # for time, sta, nx,ny
+                if include_cpccv:
+                    data_cpccv = [] # separate list for cpccv
+                    data_cst_cpccv = [] # for time, sta, nx,ny                         
 
     def final_cleanup(self):
         """
@@ -388,8 +417,8 @@ class Updater(object):
                     os.remove(f)
                 except PermissionError as e:
                     logging.error(e)
-                    logging.error('Could not delete file {:s}'.format(f))                         
-             
+                    logging.error('Could not delete file {:s}'.format(f))
+
 if __name__ == '__main__':
     parser = OptionParser()
     
