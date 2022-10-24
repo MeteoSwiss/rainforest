@@ -711,12 +711,12 @@ class RFTraining(object):
                                 for d in data:
                                     if type(d[bound]) != dict:
                                         d[bound] = {'ME':np.nan,
-                               'CORR':np.nan,
-                               'STDE':np.nan,
-                               'MAE':np.nan,
-                               'scatter':np.nan,
-                               'bias':np.nan,
-                               'ED':np.nan}
+                                                    'CORR':np.nan,
+                                                    'STDE':np.nan,
+                                                    'MAE':np.nan,
+                                                    'scatter':np.nan,
+                                                    'bias':np.nan,
+                                                    'ED':np.nan}
                                 datasc = [d[bound][score] for d in data]
                                 all_stats[agg][model][veriftype][preciptype][bound][score] = {}
                                 
