@@ -83,10 +83,22 @@ class RandomForestRegressorBC(RandomForestRegressor):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super().__init__(n_estimators, criterion, max_depth, min_samples_split,
-                 min_samples_leaf, min_weight_fraction_leaf, max_features,
-                 max_leaf_nodes, min_impurity_decrease, min_impurity_split,
-                 bootstrap, oob_score, n_jobs, random_state, verbose, warm_start)
+        super().__init__(n_estimators = n_estimators,
+                         criterion = criterion,
+                         max_depth = max_depth,
+                         min_samples_split = min_samples_split,
+                         min_samples_leaf = min_samples_leaf,
+                         min_weight_fraction_leaf = min_weight_fraction_leaf,
+                         max_features = max_features,
+                         max_leaf_nodes = max_leaf_nodes,
+                         min_impurity_decrease = min_impurity_decrease,
+                         min_impurity_split = min_impurity_split,
+                         bootstrap = bootstrap,
+                         oob_score = oob_score,
+                         n_jobs = n_jobs,
+                         random_state = random_state,
+                         verbose = verbose,
+                         warm_start = warm_start)
         
         self.degree = degree
         self.bctype = bctype
