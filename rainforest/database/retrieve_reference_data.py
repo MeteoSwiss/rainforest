@@ -27,7 +27,7 @@ from optparse import OptionParser
 
 from rainforest.common import constants
 from rainforest.common.lookup import get_lookup
-from rainforest.common.utils import read_task_file, envyaml
+from rainforest.common.utils import read_task_file, envyaml, nested_dict_values
 from rainforest.common.retrieve_data import retrieve_prod, retrieve_CPCCV
 from rainforest.common.io_data import read_cart
 
