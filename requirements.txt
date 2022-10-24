@@ -1,3 +1,4 @@
+Cython
 numpy
 netCDF4
 prompt_toolkit

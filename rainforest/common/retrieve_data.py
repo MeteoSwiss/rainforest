@@ -322,12 +322,15 @@ def get_COSMO_variables(time, variables, sweeps = None, radar = None,
     # Round time to nearest hour
     t_near = round_to_hour(time)
     
+    cosmo_version = None
     if t_near < constants.COSMO1E_START:
         folder_cosmo = constants.FOLDER_COSMO1
         subfolder = ''
+        cosmo_version = '1'
     else:
         folder_cosmo = constants.FOLDER_COSMO1E
         subfolder = 'det/'
+        cosmo_version = '1e'
 
     # Get the closest COSMO-1 or 2 file in time
     grb = folder_cosmo + 'ANA{:s}/{:s}laf{:s}'.format(str(t_near.year)[2:],
@@ -354,7 +357,7 @@ def get_COSMO_variables(time, variables, sweeps = None, radar = None,
     # Interpolate for all radars and sweeps
     var_at_radar = {}
     for r in radar:
-        lut_rad = get_lookup('cosmo1_to_rad', r)
+        lut_rad = get_lookup('cosmo{:s}_to_rad'.format(cosmo_version), r)
         var_at_radar[r] = {}
         for v in variables:
             data = np.squeeze(file_COSMO.variables[v][:])

@@ -2,6 +2,7 @@
 import boto3
 import logging
 import os
+import glob
 from optparse import OptionParser
 
 # Local imports
@@ -21,7 +22,7 @@ def main():
                       metavar="NAME")
 
     parser.add_option("-n", "--name", dest = "name", type = str,
-                      help="Name of the file to download, upload or delete",
+                      help="Name of the file to download, upload or delete, wildcards are accepted only if action == 'upload'",
                       metavar="NAME")
 
     parser.add_option("-o", "--outputfolder", dest = "outputfolder", type = str,
@@ -48,8 +49,10 @@ def main():
         logging.info('Downloading file {:s} to directory {:s}'.format(options.name, options.outputfolder))
         objstorage.download_file(options.name, options.outputfolder, options.bucket)
     elif options.action == 'upload':
-        logging.info('Uploading file {:s}'.format(options.name))
-        objstorage.upload_file(options.name, options.bucket)
+        files = glob.glob(options.name)
+        for f in files:
+            logging.info('Uploading file {:s}'.format(f))
+            objstorage.upload_file(f, options.bucket)
     elif options.action == 'delete':
         logging.info('Deleting file {:s}'.format(options.name))
         objstorage.delete_file(options.name, options.bucket)

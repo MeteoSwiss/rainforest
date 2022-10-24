@@ -14,6 +14,8 @@ first index of COSMO grids, 'idx_1': second, 'idx_3': third,
 mask' is 1 for points that fall outside of COSMO domain. This lookup table
 is valid only for COSMO data stored in /store/s83/owm/COSMO-1/
 
+**cosmo2_to_rad** : same thing but for COSMO 1E data
+
 **cosmo2_to_rad** : same thing but for COSMO 2 data
 
 **cosmo1T_to_rad** : same thing but for netCDF files of COSMO1 temperature
@@ -89,6 +91,7 @@ def get_lookup(lookup_type, radar = None):
         
         -   qpebias_station
         -   cosmo1_to_rad
+        -   cosmo1e_to_rad
         -   cosmo2_to_rad
         -   cosmo1T_to_rad
         -   cosmo2T_to_rad
@@ -141,6 +144,7 @@ def calc_lookup(lookup_type, radar = None):
     
         -   qpebias_station
         -   cosmo1_to_rad
+        -   cosmo1e_to_rad
         -   cosmo2_to_rad
         -   cosmo1T_to_rad
         -   cosmo2T_to_rad
@@ -248,12 +252,12 @@ def calc_lookup(lookup_type, radar = None):
             lut_objects.append([all_idx_sta, all_distances_sta, all_heights_sta])
 
 
-    elif lookup_type in ['cosmo1_to_rad', 'cosmo2_to_rad']:
+    elif lookup_type in ['cosmo1_to_rad', 'cosmo1e_to_rad', 'cosmo2_to_rad']:
         
         converter = GPSConverter()
         
-        cosmo_version = int(lookup_type[5])
-        fname_cosmo_coords =  Path(cosmo_coords_folder, 'coords_COSMO{:d}.nc'.
+        cosmo_version = lookup_type.split('cosmo')[1].split('_')[0]
+        fname_cosmo_coords =  Path(cosmo_coords_folder, 'coords_COSMO{:s}.nc'.
                                    format(cosmo_version))
         fname_cosmo_coords = ObjStorage.check_file(fname_cosmo_coords)
 
