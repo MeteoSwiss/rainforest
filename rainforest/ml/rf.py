@@ -521,7 +521,8 @@ class RFTraining(object):
                           bctype = config[model]['BIAS_CORR'],
                           variables = features_dic[model],
                           beta = config[model]['VERT_AGG']['BETA'],
-                          **config[model]['RANDOMFORESTREGRESSOR'])
+                          visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                          **config[model]['RANDOMFOREST_REGRESSOR'])
         
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
@@ -701,8 +702,7 @@ class RFTraining(object):
             for model in all_scores[agg].keys():
                 for veriftype in all_scores[agg][model].keys():
                     for preciptype in all_scores[agg][model][veriftype].keys():
-                        bounds = list(all_scores[agg][model][veriftype][preciptype]
-                                        [0].keys())
+                        bounds = list(all_scores[agg][model][veriftype][preciptype][0].keys())
                         scores =  all_scores[agg][model][veriftype][preciptype][0][bounds[0]].keys()
                         for bound in bounds:
                             all_stats[agg][model][veriftype][preciptype][bound] = {}
