@@ -188,15 +188,23 @@ class Updater(object):
             # Get CPC.CV data
             if include_cpccv:
                 if hour_of_year != current_hour:
+                    logging.info('Retrieving product CPC.CV for hour {}'.format(current_hour))
                     current_hour = hour_of_year
-                    
-                    data_at_stations = retrieve_CPCCV(tstart, stations_to_get)
+
+                    # CPC.CV only contains a measurement every full hour
+                    tstep_cpccv = datetime.datetime.strptime(current_hour,'%Y%m%d%H')
+
+                    data_at_stations = retrieve_CPCCV(tstep_cpccv, stations_to_get)
                     data_at_stations[np.isnan(data_at_stations)] = fill_value
                     # Assign CPC.CV values to rows corresponding to nx = ny = 0
                     data_cpccv.extend(data_at_stations)
-                  
+
+                    # CPC.CV only contains a measurement every full hour
+                    tstep_cpccv = tstep_cpccv.replace(tzinfo=
+                                datetime.timezone.utc).timestamp()
+
                     for sta in stations_to_get:
-                        data_cst_cpccv.append([tstep,sta,0,0]) # nx = ny = 0
+                        data_cst_cpccv.append([tstep_cpccv,sta,0,0]) # nx = ny = 0
                             
             # Initialize output
             N,M = len(stations_to_get) * nneighb, self.dims['np']
@@ -353,7 +361,7 @@ class Updater(object):
                     data_cpccv = np.array([data_cpccv]).T
                     all_data_cpccv = np.hstack((data_cst_cpccv, data_cpccv))
                     
-                    dic = OrderedDict()
+                    dic_cpccv = OrderedDict()
                     for c, col in enumerate(colnames_cpccv):
                         data_col = all_data_cpccv[:,c]
                         isin_listcols = [col in c for c 
@@ -369,10 +377,9 @@ class Updater(object):
                                     raise
                         else:
                             data_col = data_col.astype(np.float32)
-                        dic[col] = data_col
-                    
-                               
-                    dfcpc = pd.DataFrame(dic)
+                        dic_cpccv[col] = data_col
+                                                   
+                    dfcpc = pd.DataFrame(dic_cpccv)
                     df = pd.merge(df, dfcpc, 
                                   on = ['STATION','TIMESTAMP','NX','NY'],
                                   how = 'left')
@@ -392,12 +399,6 @@ class Updater(object):
                     # Save the new file and delete the old one
                     df_join.to_parquet(name, compression = 'gzip', index = False)
                     os.remove(name_old)
-
-
-                logging.info('Saving file ' + name)
-                df.to_parquet(name, compression = 'gzip', index = False)
-                
-                current_day = day_of_year
                 
                 # Reset lists                  
                 data_10minagg = [] # separate list for cpccv

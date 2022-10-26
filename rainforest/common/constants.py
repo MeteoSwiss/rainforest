@@ -249,7 +249,7 @@ BORDER_SHP = shapefile.Reader(str(path_shp))
 FOLDER_DATABASE = '/store/msrad/radar/radar_database/'
 FOLDER_RADAR = '/store/msrad/radar/swiss/data/'
 FOLDER_RADARH = '/store/msrad/radar/polarHR/data/'
-FOLDER_CPCCV = '/store/msrad/radar/cpc_validation/'
+FOLDER_CPCCV = '/store/msrad/radar/cpc_validation/daily/'
 COSMO1_START = datetime.datetime(2015,10,1)
 COSMO1E_START = datetime.datetime(2019,7,2)
 FOLDER_RADAR = '/store/msrad/radar/swiss/data/'
@@ -318,8 +318,8 @@ SLURM_HEADER_R = '''#!/bin/sh
 #SBATCH -t 12:0:00  # time requested in hour:minute:second
 #SBATCH --partition=postproc
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_gauges-%A_%a.out"
-#SBATCH --error="db_gauges-%A_%a.err"
+#SBATCH --output="db_gauges_%A_%a.out"
+#SBATCH --error="db_gauges_%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 
@@ -337,8 +337,8 @@ SLURM_HEADER_PY = '''#!/bin/sh
 #SBATCH -t 23:59:59  # time requested in hour:minute:second
 #SBATCH --partition=postproc
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="DBrad_%A_%a.out"
-#SBATCH --error="DBrad_%A_%a.err"
+#SBATCH --output="db_radar_%A_%a.out"
+#SBATCH --error="db_radar_%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 '''

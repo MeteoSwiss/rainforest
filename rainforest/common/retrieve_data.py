@@ -414,7 +414,15 @@ def retrieve_prod(folder_out, start_time, end_time, product_name,
     
     if product_name == 'ZZW' or product_name == 'ZZP': # no vpr for PPM and WEI
         product_name = 'ZZA'
-    
+
+    if product_name == 'CPC':
+        folder_out = folder_out + '/CPC'
+    if product_name == 'CPCH':
+        folder_out = folder_out + '/CPCH'
+
+    if not os.path.exists(folder_out):
+        os.makedirs(folder_out)
+     
     dt = datetime.timedelta(minutes = 5)
     delta = end_time - start_time
     if delta.total_seconds()== 0:
@@ -553,7 +561,7 @@ def retrieve_CPCCV(time, stations):
         bname = os.path.basename(fname)
         times = bname.split('.')[1]
         tend = times.split('_')[1]
-        return datetime.datetime.strptime(tend,'%Y%m%d%H%M')
+        return datetime.datetime.strptime(tend,'%Y%m%d%H00')
 
     tend = np.array([_start_time(f) for f in files])
     
@@ -565,7 +573,7 @@ def retrieve_CPCCV(time, stations):
     
     data = io.read_xls(files[match[0]])
     
-    hour = int(datetime.datetime.strftime(time, '%Y%m%d%H%M'))
+    hour = int(datetime.datetime.strftime(time, '%Y%m%d%H00'))
     idx = np.where(np.array(data['time.stamp']) == hour)[0]
     data_hour = data.iloc[idx]
     data_hour_stations = data_hour.iloc[np.isin(np.array(data_hour['nat.abbr']), 
