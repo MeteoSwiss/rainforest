@@ -11,6 +11,7 @@ IMPORTANT: this function is called by the main routine in database.py
 so you should never have to call it manually
 --------------
 Daniel Wolfensberger, LTE-MeteoSwiss, 2020
+Rebecca Gugerli, LTE-MeteoSwiss, 2022
 """
 
 import numpy as np
@@ -28,7 +29,7 @@ from optparse import OptionParser
 from rainforest.common import constants
 from rainforest.common.lookup import get_lookup
 from rainforest.common.utils import read_task_file, envyaml, nested_dict_values
-from rainforest.common.retrieve_data import retrieve_prod, retrieve_CPCCV
+from rainforest.common.retrieve_data import retrieve_prod, retrieve_CPCCV, retrieve_AQC_XLS
 from rainforest.common.io_data import read_cart
 
 try:
@@ -159,9 +160,22 @@ class Updater(object):
             self.products.remove('CPC.CV')
             colnames_cpccv = ['TIMESTAMP','STATION','NX','NY']
             colnames_cpccv.append('CPC.CV')
+            # If getting CPC.CV, also get CPC from excel files
+            data_cpcxls = []
+            colnames_cpccv.append('CPC_XLS')
         else:
             include_cpccv = False
-        
+
+        if 'AQC_XLS' in self.products:
+            data_aqcxls = []
+            data_cst_aqcxls = []
+            include_aqcxls = True
+            self.products.remove('AQC_XLS')
+            colnames_aqcxls = ['TIMESTAMP','STATION','NX','NY']
+            colnames_aqcxls.append('AQC_XLS')
+        else:
+            include_aqcxls = False
+
         # Initiate
         current_hour = None
          
@@ -186,26 +200,51 @@ class Updater(object):
             current_day = day_of_year
                 
             # Get CPC.CV data
-            if include_cpccv:
-                if hour_of_year != current_hour:
+            if hour_of_year != current_hour:
+                current_hour = hour_of_year
+                if include_cpccv:
                     logging.info('Retrieving product CPC.CV for hour {}'.format(current_hour))
-                    current_hour = hour_of_year
 
                     # CPC.CV only contains a measurement every full hour
-                    tstep_cpccv = datetime.datetime.strptime(current_hour,'%Y%m%d%H')
+                    tstep_xls = datetime.datetime.strptime(current_hour,'%Y%m%d%H')
 
-                    data_at_stations = retrieve_CPCCV(tstep_cpccv, stations_to_get)
+                    data_at_stations, data_at_stations_cpc = retrieve_CPCCV(tstep_xls, stations_to_get)
+                    
+                    # Replace NAN
                     data_at_stations[np.isnan(data_at_stations)] = fill_value
+                    data_at_stations_cpc[np.isnan(data_at_stations_cpc)] = fill_value
+
                     # Assign CPC.CV values to rows corresponding to nx = ny = 0
                     data_cpccv.extend(data_at_stations)
+                    data_cpcxls.extend(data_at_stations_cpc)
 
                     # CPC.CV only contains a measurement every full hour
-                    tstep_cpccv = tstep_cpccv.replace(tzinfo=
+                    tstep_xls = tstep_xls.replace(tzinfo=
                                 datetime.timezone.utc).timestamp()
-
                     for sta in stations_to_get:
-                        data_cst_cpccv.append([tstep_cpccv,sta,0,0]) # nx = ny = 0
-                            
+                        data_cst_cpccv.append([tstep_xls,sta,0,0]) # nx = ny = 0
+
+                if include_aqcxls:
+                    logging.info('Retrieving product AQC from Excel file for hour {}'.format(current_hour))
+
+                    # AQC_XLS only contains a measurement every full hour
+                    tstep_xls = datetime.datetime.strptime(current_hour,'%Y%m%d%H')
+
+                    # Get value
+                    data_at_stations = retrieve_AQC_XLS(tstep_xls, stations_to_get)
+                    
+                    # Replace NAN
+                    data_at_stations[np.isnan(data_at_stations)] = fill_value
+
+                    # Assign CPC.CV values to rows corresponding to nx = ny = 0
+                    data_aqcxls.extend(data_at_stations)
+
+                    # CPC.CV only contains a measurement every full hour
+                    tstep_xls = tstep_xls.replace(tzinfo=
+                                datetime.timezone.utc).timestamp()
+                    for sta in stations_to_get:
+                        data_cst_aqcxls.append([tstep_xls,sta,0,0]) # nx = ny = 0
+
             # Initialize output
             N,M = len(stations_to_get) * nneighb, self.dims['np']
             data_allprod = np.zeros((N,M), dtype = np.float32) + np.nan
@@ -359,7 +398,8 @@ class Updater(object):
                 if include_cpccv:
                     data_cst_cpccv = np.array(data_cst_cpccv)
                     data_cpccv = np.array([data_cpccv]).T
-                    all_data_cpccv = np.hstack((data_cst_cpccv, data_cpccv))
+                    data_cpcxls = np.array([data_cpcxls]).T
+                    all_data_cpccv = np.hstack((data_cst_cpccv, data_cpccv, data_cpcxls))
                     
                     dic_cpccv = OrderedDict()
                     for c, col in enumerate(colnames_cpccv):
@@ -372,18 +412,49 @@ class Updater(object):
                             try:
                                 data_col = data_col.astype(coltype)
                             except:# for int
-                                data_col = data_col.astype(np.float).astype(coltype)
+                                data_col = data_col.astype(float).astype(coltype)
                                 if not IGNORE_ERRORS:
                                     raise
                         else:
                             data_col = data_col.astype(np.float32)
                         dic_cpccv[col] = data_col
-                                                   
+                    
                     dfcpc = pd.DataFrame(dic_cpccv)
                     df = pd.merge(df, dfcpc, 
                                   on = ['STATION','TIMESTAMP','NX','NY'],
                                   how = 'left')
+                    df.replace(np.nan,fill_value)
+
+                # Add AQC Values
+                if include_aqcxls:
+                    data_cst_aqcxls = np.array(data_cst_aqcxls)
+                    data_aqcxls = np.array([data_aqcxls]).T
+                    all_data_aqcxls = np.hstack((data_cst_aqcxls, data_aqcxls))
                     
+                    dic_aqcxls = OrderedDict()
+                    for c, col in enumerate(colnames_aqcxls):
+                        data_col = all_data_aqcxls[:,c]
+                        isin_listcols = [col in c for c 
+                                             in constants.COL_TYPES.keys()]
+                        if any(isin_listcols):
+                            idx = np.where(isin_listcols)[0][0]
+                            coltype = list(constants.COL_TYPES.values())[idx]
+                            try:
+                                data_col = data_col.astype(coltype)
+                            except:# for int
+                                data_col = data_col.astype(float).astype(coltype)
+                                if not IGNORE_ERRORS:
+                                    raise
+                        else:
+                            data_col = data_col.astype(np.float32)
+                        dic_aqcxls[col] = data_col
+                    
+                    dfcpc = pd.DataFrame(dic_aqcxls)
+                    df = pd.merge(df, dfcpc, 
+                                  on = ['STATION','TIMESTAMP','NX','NY'],
+                                  how = 'left')
+                    df.replace(np.nan,fill_value)
+
                 if file_exists == False:
                     logging.info('Saving file ' + name)
                     df.to_parquet(name, compression = 'gzip', index = False)
@@ -404,8 +475,13 @@ class Updater(object):
                 data_10minagg = [] # separate list for cpccv
                 data_cst = [] # for time, sta, nx,ny
                 if include_cpccv:
+                    data_cst_cpccv = [] # for time, sta, nx,ny 
                     data_cpccv = [] # separate list for cpccv
-                    data_cst_cpccv = [] # for time, sta, nx,ny                         
+                    data_cpcxls = [] # separate list for cpc from xls files
+                if include_aqcxls:
+                    data_cst_aqcxls = []
+                    data_aqcxls = []
+                    
 
     def final_cleanup(self):
         """

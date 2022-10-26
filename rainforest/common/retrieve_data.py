@@ -422,7 +422,7 @@ def retrieve_prod(folder_out, start_time, end_time, product_name,
 
     if not os.path.exists(folder_out):
         os.makedirs(folder_out)
-     
+    
     dt = datetime.timedelta(minutes = 5)
     delta = end_time - start_time
     if delta.total_seconds()== 0:
@@ -550,7 +550,7 @@ def retrieve_CPCCV(time, stations):
     A numpy array corresponding at the CPC.CV estimations at every specified 
     station
     """
-    
+
     year = time.year
 
     folder = constants.FOLDER_CPCCV + str(year) + '/'
@@ -579,11 +579,72 @@ def retrieve_CPCCV(time, stations):
     data_hour_stations = data_hour.iloc[np.isin(np.array(data_hour['nat.abbr']), 
                                                 stations)]
     cpc_cv = []
+    cpc_xls = []
     for sta in stations:
         if sta in np.array(data_hour_stations['nat.abbr']):
             cpc_cv.append(float(data_hour_stations.loc[data_hour_stations['nat.abbr'] 
-                == sta]['CPC.CV']))
+                    == sta]['CPC.CV']))
+            cpc_xls.append(float(data_hour_stations.loc[data_hour_stations['nat.abbr']
+                    == sta]['CPC']))
         else:
             cpc_cv.append(np.nan)
-            
-    return np.array(cpc_cv)
+            cpc_xls.append(np.nan)
+
+    return np.array(cpc_cv), np.array(cpc_xls)
+
+#-----------------------------------------------------------------------------------------
+def retrieve_AQC_XLS(time, stations):
+    
+    """ Retrieves cross-validation CPC data for a set of stations from
+    the xls files prepared by Yanni
+
+    Parameters
+    ----------
+
+    time : datetime.datetime instance
+        starting time of the time range
+    stations : list of str
+        list of weather stations at which to retrieve the CPC.CV data
+    
+    Returns
+    -------
+    A numpy array corresponding at the CPC.CV estimations at every specified 
+    station
+    """
+
+    year = time.year
+
+    folder = constants.FOLDER_CPCCV + str(year) + '/'
+    
+    files = sorted([f for f in glob.glob(folder + '*.xls') if '.s' not in f])
+    
+    def _start_time(fname):
+        bname = os.path.basename(fname)
+        times = bname.split('.')[1]
+        tend = times.split('_')[1]
+        return datetime.datetime.strptime(tend,'%Y%m%d%H00')
+
+    tend = np.array([_start_time(f) for f in files])
+    
+    match = np.where(time < tend)[0]
+    
+    if not len(match):
+        logging.warn('Could not find CPC CV file for time {:s}'.format(time))
+        return np.zeros((len(stations))) + np.nan
+    
+    data = io.read_xls(files[match[0]])
+    
+    hour = int(datetime.datetime.strftime(time, '%Y%m%d%H00'))
+    idx = np.where(np.array(data['time.stamp']) == hour)[0]
+    data_hour = data.iloc[idx]
+    data_hour_stations = data_hour.iloc[np.isin(np.array(data_hour['nat.abbr']), 
+                                                stations)]
+    aqc_xls = []
+    for sta in stations:
+        if sta in np.array(data_hour_stations['nat.abbr']):
+            aqc_xls.append(float(data_hour_stations.loc[data_hour_stations['nat.abbr']
+                    == sta]['AQC']))
+        else:
+            aqc_xls.append(np.nan)
+
+    return np.array(aqc_xls)
