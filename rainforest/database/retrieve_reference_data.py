@@ -161,6 +161,10 @@ class Updater(object):
             colnames_cpccv = ['TIMESTAMP','STATION','NX','NY']
             colnames_cpccv.append('CPC.CV')
             # If getting CPC.CV, also get CPC from excel files
+            try:
+                self.products.remove('CPC_XLS')
+            except:
+                pass
             data_cpcxls = []
             colnames_cpccv.append('CPC_XLS')
         else:
@@ -203,7 +207,7 @@ class Updater(object):
             if hour_of_year != current_hour:
                 current_hour = hour_of_year
                 if include_cpccv:
-                    logging.info('Retrieving product CPC.CV for hour {}'.format(current_hour))
+                    logging.info('Retrieving product CPC.CV and CPC_XLS for hour {}'.format(current_hour))
 
                     # CPC.CV only contains a measurement every full hour
                     tstep_xls = datetime.datetime.strptime(current_hour,'%Y%m%d%H')
@@ -219,8 +223,8 @@ class Updater(object):
                     data_cpcxls.extend(data_at_stations_cpc)
 
                     # CPC.CV only contains a measurement every full hour
-                    tstep_xls = tstep_xls.replace(tzinfo=
-                                datetime.timezone.utc).timestamp()
+                    tstep_xls = int(tstep_xls.replace(tzinfo=
+                                datetime.timezone.utc).timestamp())
                     for sta in stations_to_get:
                         data_cst_cpccv.append([tstep_xls,sta,0,0]) # nx = ny = 0
 
@@ -239,9 +243,9 @@ class Updater(object):
                     # Assign CPC.CV values to rows corresponding to nx = ny = 0
                     data_aqcxls.extend(data_at_stations)
 
-                    # CPC.CV only contains a measurement every full hour
-                    tstep_xls = tstep_xls.replace(tzinfo=
-                                datetime.timezone.utc).timestamp()
+                    # AQC_XLS only contains a measurement every full hour
+                    tstep_xls = int(tstep_xls.replace(tzinfo=
+                                datetime.timezone.utc).timestamp())
                     for sta in stations_to_get:
                         data_cst_aqcxls.append([tstep_xls,sta,0,0]) # nx = ny = 0
 
