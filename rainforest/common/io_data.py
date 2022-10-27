@@ -17,7 +17,7 @@ March 2022
 
 
 import os
-from imageio import imread, imwrite
+from imageio.v2 import imread, imwrite
 import glob
 import pandas as pd
 import numpy as np
