@@ -32,7 +32,7 @@ import os
 import textwrap
 import numpy as np
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 import copy
 import time
 import fnmatch
@@ -446,8 +446,8 @@ class Database(object):
                 tstamp_start = int(timestamp_from_datestr(t0))
                 tstamp_end = int(timestamp_from_datestr(t1))
             else:
-                t0 = t0.replace(tzinfo=datetime.timezone.utc)
-                t1 = t1.replace(tzinfo=datetime.timezone.utc)
+                t0 = t0.replace(tzinfo=timezone.utc)
+                t1 = t1.replace(tzinfo=timezone.utc)
                 tstamp_start = int(t0.timestamp())
                 tstamp_end = int(t1.timestamp())
                 
@@ -697,8 +697,8 @@ class Database(object):
                 tstamp_start = int(timestamp_from_datestr(t0))
                 tstamp_end = int(timestamp_from_datestr(t1))
             else:
-                t0 = t0.replace(tzinfo=datetime.timezone.utc)
-                t1 = t1.replace(tzinfo=datetime.timezone.utc)
+                t0 = t0.replace(tzinfo=timezone.utc)
+                t1 = t1.replace(tzinfo=timezone.utc)
                 tstamp_start = int(t0.timestamp())
                 tstamp_end = int(t1.timestamp())
                 
