@@ -442,8 +442,14 @@ class Database(object):
         if t0 != None and t1 != None and t1 > t0:
             logging.info('Limiting myself to time period {:s} - {:s}'.format(
                     str(t0), str(t1)))
-            tstamp_start = int(timestamp_from_datestr(t0))
-            tstamp_end = int(timestamp_from_datestr(t1))
+            if not isinstance(t0, datetime):
+                tstamp_start = int(timestamp_from_datestr(t0))
+                tstamp_end = int(timestamp_from_datestr(t1))
+            else:
+                t0 = t0.replace(tzinfo=datetime.timezone.utc)
+                t1 = t1.replace(tzinfo=datetime.timezone.utc)
+                tstamp_start = int(t0.timestamp())
+                tstamp_end = int(t1.timestamp())
                 
             tab = tab.loc[(tab['TIMESTAMP'] > tstamp_start) 
                             & (tab['TIMESTAMP'] <= tstamp_end)]
@@ -581,18 +587,62 @@ class Database(object):
         # Get current folder
         cwd = os.path.dirname(os.path.realpath(__file__))
         # Create slurm files
-        for i, tf in enumerate(task_files):
-            fname = tmp_folder + '/getdata_reference_{:d}.job'.format(i)
+        job_files = []
+        nfperjob = config_r['SLURM_JOBS_PER_FILE']
+        jobmax = config_r['MAX_SIMULTANEOUS_JOBS']
+        tf = tmp_folder + 'task_file_reference_${SLURM_ARRAY_TASK_ID}'
+        
+        slurm_header = '#SBATCH --output="db_ref_%A_%a.out"\n'+ \
+                       '#SBATCH --error="db_ref_%A_%a.err"\n' + \
+                       '#SBATCH --job-name=DB_REF\n'
+
+        slurm_python_setup = "source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh\n" + \
+                            "conda activate {}\n\n".format(self.config['CONDA_ENV_NAME']) + \
+                            "export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/\n\n"
+
+        # If only one task file is created:
+        if len(task_files) == 1:
+            fname = tmp_folder + '/getdata_reference_0.job'
             file = open(fname,'w')
             file.write(constants.SLURM_HEADER_PY)
-            file.write('python {:s}/retrieve_reference_data.py -c {:s} -t {:s} -o {:s} '.format(
+            file.write(slurm_header)
+            file.write('#SBATCH --array=0\n\n')
+            # The following two lines are necessary to use the right environment
+            file.write(slurm_python_setup)
+            file.write('python {:s}/retrieve_reference_data.py -c {:s} -t {:s} -o {:s} \n'.format(
                        cwd,
                        self.config_file,
                        tf,
                        output_folder))
             file.close()
-            logging.info('Submitting job {:d}'.format(i))
-            subprocess.call('sbatch {:s}'.format(fname), shell = True)
+            job_files= [fname]
+        # If more than one task file is created loop through them and created grouped batch files          
+        else:
+            i=0
+            while i < (len(task_files)-1):
+                if (i+nfperjob) > (len(task_files)-1):
+                    iend = (len(task_files)-1)
+                else:
+                    iend = i+nfperjob
+                fname = tmp_folder + '/getdata_reference_{:d}_{:d}.job'.format(i,iend)
+                file = open(fname,'w')
+                file.write(constants.SLURM_HEADER_PY)
+                file.write(slurm_header)
+                file.write('#SBATCH --array={:d}-{:d}%{:d}\n\n'.format(i,iend,jobmax))
+                file.write(slurm_python_setup)
+                file.write('python {:s}/retrieve_reference_data.py -c {:s} -t {:s} -o {:s} \n'.format(
+                        cwd,
+                        self.config_file,
+                        tf,
+                        output_folder))
+                file.close()
+                # Set counter to next file that is not included (+1)
+                i = i+1+nfperjob
+                job_files.append(fname)
+
+        for fn in job_files:
+            logging.info('Submitting job {}'.format(fn))
+            #subprocess.call('sbatch {:s}'.format(fn), shell = True)
               
         
     def update_radar_data(self, gauge_table_name,  output_folder,
@@ -647,6 +697,8 @@ class Database(object):
                 tstamp_start = int(timestamp_from_datestr(t0))
                 tstamp_end = int(timestamp_from_datestr(t1))
             else:
+                t0 = t0.replace(tzinfo=datetime.timezone.utc)
+                t1 = t1.replace(tzinfo=datetime.timezone.utc)
                 tstamp_start = int(t0.timestamp())
                 tstamp_end = int(t1.timestamp())
                 
@@ -802,17 +854,22 @@ class Database(object):
         jobmax = config_r['MAX_SIMULTANEOUS_JOBS']
         tf = tmp_folder + task_files[0].split('/')[-1][0:15]+'_${SLURM_ARRAY_TASK_ID}'
         
+        slurm_header = '#SBATCH --output="db_radar_%A_%a.out"\n'+ \
+                       '#SBATCH --error="db_radar_%A_%a.err"\n' + \
+                       '#SBATCH --job-name=DB_RADAR\n'
+
+        slurm_python_setup = "source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh\n" + \
+                            "conda activate {}\n\n".format(self.config['CONDA_ENV_NAME']) + \
+                            "export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/\n\n"
+
         # If only one task file is created:
         if len(task_files) == 1:
             fname = tmp_folder + '/getdata_radar_0.job'
             file = open(fname,'w')
             file.write(constants.SLURM_HEADER_PY)
-            file.write('#SBATCH --job-name=db_radar_%a\n#SBATCH --array=0\n\n')
-            # The following two lines are necessary to use the right environment
-            file.write('source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh\n')
-            file.write('conda activate {}\n\n'.format(config_r['CONDA_ENV_NAME']))
-            # This line is required to access all lookup tables
-            file.write('export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/\n\n')
+            file.write(slurm_header)
+            file.write('#SBATCH --array=0\n\n')
+            file.write(slurm_python_setup)
             file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} \n'.format(
                        cwd,
                        self.config_file,
@@ -831,12 +888,9 @@ class Database(object):
                 fname = tmp_folder + '/getdata_radar_{:d}_{:d}.job'.format(i,iend)
                 file = open(fname,'w')
                 file.write(constants.SLURM_HEADER_PY)
-                file.write('#SBATCH --job-name=db_radar_%a\n#SBATCH --array={:d}-{:d}%{:d}\n\n'.format(i,iend,jobmax))
-                # The following two lines are necessary to use the right environment
-                file.write('source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh\n')
-                file.write('conda activate {}\n\n'.format(config_r['CONDA_ENV_NAME']))
-                # This line is required to access all lookup tables
-                file.write('export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/\n\n')
+                file.write(slurm_header)
+                file.write('#SBATCH --array={:d}-{:d}%{:d}\n\n'.format(i,iend,jobmax))
+                file.write(slurm_python_setup)
                 file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} \n'.format(
                         cwd,
                         self.config_file,
@@ -849,7 +903,7 @@ class Database(object):
 
         for fn in job_files:
             logging.info('Submitting job {}'.format(fn))
-            subprocess.call('sbatch {:s}'.format(fn), shell = True)
+            #subprocess.call('sbatch {:s}'.format(fn), shell = True)
 
         
 def _compare_config(config1, config2, keys = None):

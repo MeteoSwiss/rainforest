@@ -1,5 +1,6 @@
 NO_DATA_FILL: -9999
 TMP_FOLDER: '/scratch/${USER}/temp/'
+CONDA_ENV_NAME: 'rainforest_database'
 GAUGE_RETRIEVAL:
     VARIABLES : ['tre200s0','prestas0','ure200s0','rre150z0','dkl010z0','fkl010z0','rre150z0_adj']
     STATIONS : 'all'
@@ -7,11 +8,13 @@ GAUGE_RETRIEVAL:
     MAX_NB_SLURM_JOBS: 6
     
 REFERENCE_RETRIEVAL:
-    PRODUCTS : ['RZC','CPCH','CPC.CV','BZC','MZC','MVRZC','MVCPCH']
+    PRODUCTS : ['RZC','CPC','CPCH','CPC.CV','CPC_XLS','AQC_XLS','BZC','MZC','MVRZC','MVCPCH']
     MV_METHOD: 'lucaskanade' # see https://pysteps.readthedocs.io/en/latest/generated/pysteps.motion.interface.get_method.html
-    NEIGHBOURS_X : [-1,0,1] # not applied to CPC.CV
-    NEIGHBOURS_Y : [-1,0,1] # not applied to CPC.CV
-    MAX_NB_SLURM_JOBS: 20
+    NEIGHBOURS_X : [-1,0,1] # not applied to CPC.CV, CPC_XLS and AQC_XLS
+    NEIGHBOURS_Y : [-1,0,1] # not applied to CPC.CV, CPC_XLS and AQC_XLS
+    MAX_SIMULTANEOUS_JOBS: 20
+    MAX_NB_SLURM_JOBS: 100
+    SLURM_JOBS_PER_FILE: 10
     
 RADAR_RETRIEVAL:
     RADARS: ['A','D','L','W','P']
@@ -37,4 +40,3 @@ RADAR_RETRIEVAL:
     MAX_SIMULTANEOUS_JOBS: 20
     MAX_NB_SLURM_JOBS: 100
     SLURM_JOBS_PER_FILE: 10
-    CONDA_ENV_NAME: 'rainforest_debug'
