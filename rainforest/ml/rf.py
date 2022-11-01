@@ -146,9 +146,15 @@ class RFTraining(object):
                 refer = refer.compute().drop_duplicates(subset = ['TIMESTAMP',
                                                                   'STATION'])
                 
+                # Replace missing flags with nan
+                radar = radar.replace(-9999, np.nan)
+                refer = refer.replace(-9999, np.nan)
+
+                # Sort values
                 radar = radar.sort_values(by = ['TIMESTAMP','STATION','SWEEP'])
                 refer = refer.sort_values(by = ['TIMESTAMP','STATION'])
                 gauge = gauge.sort_values(by = ['TIMESTAMP','STATION'])
+
                 # Get only valid precip data
                 gauge = gauge[np.isfinite(gauge['RRE150Z0'])]
                 
@@ -171,7 +177,6 @@ class RFTraining(object):
                 gauge = gauge.loc[gauge['s-tstamp'].isin(ststamp_common)]
                 refer = refer.loc[refer['s-tstamp'].isin(ststamp_common)]
         
-                
                 # Filter incomplete hours
                 stahour = np.array(gauge['STATION'] + 
                        ((gauge['TIMESTAMP'] - 600 ) - 
