@@ -337,8 +337,6 @@ SLURM_HEADER_PY = '''#!/bin/sh
 #SBATCH -t 23:59:59  # time requested in hour:minute:second
 #SBATCH --partition=postproc
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_radar_%A_%a.out"
-#SBATCH --error="db_radar_%A_%a.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 '''

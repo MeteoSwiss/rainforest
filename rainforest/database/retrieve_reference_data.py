@@ -427,7 +427,7 @@ class Updater(object):
                     df = pd.merge(df, dfcpc, 
                                   on = ['STATION','TIMESTAMP','NX','NY'],
                                   how = 'left')
-                    df.replace(np.nan,fill_value)
+                    df.replace(np.nan,fill_value, inplace=True)
 
                 # Add AQC Values
                 if include_aqcxls:
@@ -457,7 +457,7 @@ class Updater(object):
                     df = pd.merge(df, dfcpc, 
                                   on = ['STATION','TIMESTAMP','NX','NY'],
                                   how = 'left')
-                    df.replace(np.nan,fill_value)
+                    df.replace(np.nan,fill_value, inplace=True)
 
                 if file_exists == False:
                     logging.info('Saving file ' + name)
