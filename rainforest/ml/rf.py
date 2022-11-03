@@ -420,9 +420,9 @@ class RFTraining(object):
         
              
     def model_intercomparison(self, features_dic, intercomparison_configfile, 
-                              output_folder, reference_products = ['CPC','RZC'],
+                              output_folder, reference_products = ['CPCH','RZC'],
                               bounds10 = [0,2,10,100], bounds60 = [0,1,10,100],
-                              K = 5):
+                              K = 5, tstart=None, tend=None, station_scores=False):
         """
         Does an intercomparison (cross-validation) of different RF models and
         reference products (RZC, CPC, ...) and plots the performance plots
@@ -457,7 +457,13 @@ class RFTraining(object):
             [0,1,10,100] will give scores in range [0-1], [1-10] and [10-100]
         K : int
             Number of splits in iterations do perform in the K fold cross-val
-                    
+        tstart: str (YYYYMMDDHHMM)
+            A date to define a starting time for the input data
+        tend: str (YYYYMMDDHHMM)
+            A date to define the end of the input data
+        station_scores: True or False (Boolean)
+            If True, performance scores for all stations will be calculated
+            If False, not all performance scores are calculated
         """
         
         # dict of statistics to compute for every score over the K-fold crossval,
@@ -481,7 +487,25 @@ class RFTraining(object):
         grp = pickle.load(open(str(Path(self.input_location, 'grouping_idx_x0y0.p')),'rb'))
         grp_vertical = grp['grp_vertical']
         grp_hourly = grp['grp_hourly']
-        
+
+        #######################################################################
+        # Filter time
+        #######################################################################
+        if tstart != None:
+            try:
+                tstart = datetime.datetime.strptime(tstart,
+                        '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc).timestamp()
+            except:
+                tstart = gaugetab['TIMESTAMP'].min()
+                logging.info('The format of tstart was wrong, taking the earliest date')
+        if tend != None:
+            try:
+                tend = datetime.datetime.strptime(tend,
+                        '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc).timestamp()
+            except:
+                tend = gaugetab['TIMESTAMP'].max()
+                logging.info('The format of tend was wrong, taking the earliest date')
+
         ###############################################################################
         # Compute additional data if needed
         ###############################################################################
@@ -506,7 +530,6 @@ class RFTraining(object):
                            (radartab['Y'] - info_radar['Y'][val])**2) / 1000.
                     radartab['DIST_TO_RAD' + str(val)] = dist
                     
-        
         ###############################################################################
         # Compute vertical aggregation
         ###############################################################################
@@ -532,13 +555,22 @@ class RFTraining(object):
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
                        axis = 1)
-        
+
+        if (tstart != None) and (tend == None):
+            timeperiod = (gaugetab['TIMESTAMP'] >= tstart)
+        elif (tstart == None) and (tend != None):
+            timeperiod = (gaugetab['TIMESTAMP'] <= tend)
+        elif (tstart != None) and (tend != None):
+            timeperiod = (gaugetab['TIMESTAMP'] >= tstart) & (gaugetab['TIMESTAMP'] <= tend)
+        else:
+            timeperiod = valid
+
         for model in modelnames:
-            features_VERT_AGG[model] = features_VERT_AGG[model][valid]
+            features_VERT_AGG[model] = features_VERT_AGG[model][valid & timeperiod]
         
-        gaugetab = gaugetab[valid]
-        refertab = refertab[valid]
-        grp_hourly = grp_hourly[valid]
+        gaugetab = gaugetab[valid & timeperiod]
+        refertab = refertab[valid & timeperiod]
+        grp_hourly = grp_hourly[valid & timeperiod]
         
         # Get R, T and idx test/train
         R = np.array(gaugetab['RRE150Z0'] * 6) # Reference precip in mm/h
@@ -548,10 +580,8 @@ class RFTraining(object):
         # features must have the same size as gauge
         idx_testtrain = split_event(gaugetab['TIMESTAMP'].values, K)
         
-        
         modelnames.extend(reference_products)
 
-             
         all_scores = {'10min':{},'60min':{}}
         all_stats = {'10min':{},'60min':{}}
         
@@ -564,7 +594,6 @@ class RFTraining(object):
             all_scores['60min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
                          'test':  {'solid':[],'liquid':[],'all':[]}}
             
-    
             all_stats['10min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
                          'test':  {'solid':{},'liquid':{},'all':{}}}
             
@@ -728,12 +757,16 @@ class RFTraining(object):
                                 for stat in stats.keys():
                                     sdata = stats[stat](datasc)
                                     all_stats[agg][model][veriftype][preciptype][bound][score][stat] = sdata
-                                 
+        
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
         plot_crossval_stats(all_stats, output_folder)
         name_file = str(Path(output_folder, 'all_scores.p'))
         pickle.dump(all_scores, open(name_file, 'wb'))
         name_file = str(Path(output_folder, 'all_scores_stats.p'))
         pickle.dump(all_stats, open(name_file, 'wb'))        
         
+        logging.info('Finished script')
         return all_scores, all_stats
             
