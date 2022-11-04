@@ -47,8 +47,8 @@ class RFTraining(object):
             Location of the main directory of the database (with subfolders
             'reference', 'gauge' and 'radar' on the filesystem)
         input_location : str
-            Location of the prepared input data, if this data can not be found
-            in this folder, it will computed here, default is a subfolder
+            Location of the prepared input data, if this data cannot be found
+            in this folder, it will be computed here, default is a subfolder
             called rf_input_data within db_location
         force_regenerate_input : bool
             if True the input parquet files will always be regenerated from
@@ -585,6 +585,10 @@ class RFTraining(object):
         all_scores = {'10min':{},'60min':{}}
         all_stats = {'10min':{},'60min':{}}
         
+        if station_scores == True:
+            all_station_scores = {'10min': {}, '60min': {}}
+            all_station_stats = {'10min': {}, '60min': {}}
+
         ###############################################################################
         # Initialize outputs
         ###############################################################################
@@ -600,6 +604,15 @@ class RFTraining(object):
             all_stats['60min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
                          'test':  {'solid':{},'liquid':{},'all':{}}}
             
+            if station_scores == True:
+                # for station scores we will limit the output to test data only
+                all_station_scores['10min'][model] = {'solid':{},'liquid':{},'all':{}}
+                all_station_scores['60min'][model] = {'solid':{},'liquid':{},'all':{}}
+
+                all_station_stats['10min'][model] = {'solid':{},'liquid':{},'all':{}}
+                all_station_stats['60min'][model] = {'solid':{},'liquid':{},'all':{}}
+            
+
         for k in range(K):
             logging.info('Run {:d}/{:d} of cross-validation'.format(k + 1, K))
             test = idx_testtrain == k
@@ -636,6 +649,7 @@ class RFTraining(object):
                 # 10 min
                 logging.info('at 10 min')
 
+                # Performing fit
                 if model not in reference_products:
                     logging.info('Training model on gauge data')
                     regressors[model].fit(features_VERT_AGG[model][train],
@@ -643,7 +657,8 @@ class RFTraining(object):
                     R_pred_10 = regressors[model].predict(features_VERT_AGG[model][test])
                 else:
                     R_pred_10 = refertab[model].values[test]
-                    
+                
+
                 scores_solid = perfscores(R_pred_10[sol_10_test],
                                                  R[test][sol_10_test],
                                                  bounds = bounds10)
@@ -681,7 +696,60 @@ class RFTraining(object):
                                                  bounds = bounds60)
                 all_scores['60min'][model]['test']['all'].append(scores_all)
                 
-                  
+                if station_scores == True:
+                    logging.info('Calculating station performances') 
+                    df = pd.DataFrame(columns=gaugetab['STATION'].unique(),
+                    index = ['RMSE', 'scatter', 'logBias', 'ED', 'N'])
+                    # all_station_scores['10min'][model][k] = \
+                    #         {'solid':df,'liquid':df,'all':df}   
+                    # all_station_scores['60min'][model][k] = \
+                    #         {'solid':df,'liquid':df,'all':df}
+                    stations_60 = np.array(gaugetab['STATION'][test]
+                                    .groupby(grp_hourly[test]).first())
+
+                    all_station_scores['10min'][model]['all'][k] = df
+                    all_station_scores['60min'][model]['all'][k] = df
+                    
+                    all_station_scores['10min'][model]['liquid'][k] = df
+                    all_station_scores['60min'][model]['liquid'][k] = df
+
+                    all_station_scores['10min'][model]['solid'][k] = df
+                    all_station_scores['60min'][model]['solid'][k] = df
+                    
+                    for sta in gaugetab['STATION'].unique():
+                        sta_idx = (gaugetab['STATION'][test] == sta)
+                        sta_idx_60 = (stations_60 == sta)
+
+                        try:                            
+                            scores_all_10 = perfscores(R_pred_10[sta_idx],
+                                                    R[test][sta_idx])['all']
+                            all_station_scores['10min'][model]['all'][k][sta] = scores_all_10
+                            
+                            scores_all_60 = perfscores(R_pred_60[sta_idx_60],R_test_60[sta_idx_60])['all']
+                            all_station_scores['60min'][model]['all'][k][sta] = scores_all_60 
+                        except:
+                            logging.info('No performances score for {}'.format(sta))
+                        try:                            
+                            scores_liquid_10 = perfscores(R_pred_10[liq_10_test & sta_idx],
+                                                    R[test][liq_10_test & sta_idx])['all']
+                            all_station_scores['10min'][model]['liquid'][k][sta] = scores_liquid_10
+                            
+                            scores_liquid_60 = perfscores(R_pred_60[liq_60_test & sta_idx_60],
+                                                    R[test][liq_60_test & sta_idx_60])['all']
+                            all_station_scores['60min'][model]['liquid'][k][sta] = scores_liquid_60  
+                        except:
+                            logging.info('No performances score for liquid precip for {}'.format(sta))
+                        try:                            
+                            scores_solid_10 = perfscores(R_pred_10[sol_10_test & sta_idx],
+                                                    R[test][sol_10_test & sta_idx])['all']  
+                            all_station_scores['10min'][model]['solid'][k][sta] = scores_solid_10 
+                            
+                            scores_solid_60 = perfscores(R_pred_60[sol_60_test & sta_idx_60],
+                                                    R[test][sol_60_test & sta_idx_60])['all']
+                            all_station_scores['60min'][model]['solid'][k][sta] = scores_solid_60
+                        except:
+                            logging.info('No performances score for solid precip for {}'.format(sta))
+
                 # train
                 logging.info('Evaluating train error')
                 # 10 min
@@ -757,7 +825,24 @@ class RFTraining(object):
                                 for stat in stats.keys():
                                     sdata = stats[stat](datasc)
                                     all_stats[agg][model][veriftype][preciptype][bound][score][stat] = sdata
-        
+
+        if station_scores == True:
+            for agg in all_station_scores.keys():
+                for model in all_station_scores[agg].keys():
+                    for preciptype in all_station_scores[agg][model].keys():
+                        df = pd.DataFrame(columns=gaugetab['STATION'].unique())
+                        perfs = {'RMSE': df, 'scatter':df, 'logBias':df, 'ED':df, 'N':df}
+                        all_station_stats[agg][model][preciptype] = {}
+                        for score in perfs.keys():
+                            for kidx in all_station_scores[agg][model][preciptype].keys():
+                                df_dummy = all_station_scores[agg][model][preciptype][kidx]
+                                perfs[score] = perfs[score].append(df_dummy.loc[df_dummy.index == score])
+            
+                            all_station_stats[agg][model][preciptype][score] = pd.concat([perfs[score].mean().rename('mean'),
+                                                                                          perfs[score].std().rename('std')],
+                                                                                         axis=1)
+
+
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
@@ -765,7 +850,14 @@ class RFTraining(object):
         name_file = str(Path(output_folder, 'all_scores.p'))
         pickle.dump(all_scores, open(name_file, 'wb'))
         name_file = str(Path(output_folder, 'all_scores_stats.p'))
-        pickle.dump(all_stats, open(name_file, 'wb'))        
+        pickle.dump(all_stats, open(name_file, 'wb'))     
+        
+        if station_scores == True:
+            name_file = str(Path(output_folder, 'all_station_scores.p'))
+            pickle.dump(all_station_scores, open(name_file, 'wb'))
+            name_file = str(Path(output_folder, 'all_station_stats.p'))
+            pickle.dump(all_station_stats, open(name_file, 'wb'))
+        
         
         logging.info('Finished script')
         return all_scores, all_stats
