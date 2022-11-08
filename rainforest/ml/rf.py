@@ -606,11 +606,9 @@ class RFTraining(object):
             
             if station_scores == True:
                 # for station scores we will limit the output to test data only
-                all_station_scores['10min'][model] = {'solid':{},'liquid':{},'all':{}}
-                all_station_scores['60min'][model] = {'solid':{},'liquid':{},'all':{}}
-
-                all_station_stats['10min'][model] = {'solid':{},'liquid':{},'all':{}}
-                all_station_stats['60min'][model] = {'solid':{},'liquid':{},'all':{}}
+                for timeagg in all_station_scores.keys():
+                    all_station_scores[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
+                    all_station_stats[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
             
 
         for k in range(K):
@@ -660,8 +658,8 @@ class RFTraining(object):
                 
 
                 scores_solid = perfscores(R_pred_10[sol_10_test],
-                                                 R[test][sol_10_test],
-                                                 bounds = bounds10)
+                                          R[test][sol_10_test],
+                                          bounds = bounds10)
                
                 all_scores['10min'][model]['test']['solid'].append(scores_solid)
                 
@@ -697,24 +695,18 @@ class RFTraining(object):
                 all_scores['60min'][model]['test']['all'].append(scores_all)
                 
                 if station_scores == True:
-                    logging.info('Calculating station performances') 
-                    df = pd.DataFrame(columns=gaugetab['STATION'].unique(),
-                    index = ['RMSE', 'scatter', 'logBias', 'ED', 'N'])
-                    # all_station_scores['10min'][model][k] = \
-                    #         {'solid':df,'liquid':df,'all':df}   
-                    # all_station_scores['60min'][model][k] = \
-                    #         {'solid':df,'liquid':df,'all':df}
+                    logging.info('Calculating station performances for model {}'.format(model)) 
+                    
                     stations_60 = np.array(gaugetab['STATION'][test]
                                     .groupby(grp_hourly[test]).first())
 
-                    all_station_scores['10min'][model]['all'][k] = df
-                    all_station_scores['60min'][model]['all'][k] = df
-                    
-                    all_station_scores['10min'][model]['liquid'][k] = df
-                    all_station_scores['60min'][model]['liquid'][k] = df
+                    df = pd.DataFrame(columns=gaugetab['STATION'].unique(),      
+                    index = scores_all['all'].keys())
 
-                    all_station_scores['10min'][model]['solid'][k] = df
-                    all_station_scores['60min'][model]['solid'][k] = df
+                    for timeagg in all_station_scores.keys():
+                        all_station_scores[timeagg][model]['all'][k] = df.copy()
+                        all_station_scores[timeagg][model]['liquid'][k] = df.copy()
+                        all_station_scores[timeagg][model]['solid'][k] = df.copy()
                     
                     for sta in gaugetab['STATION'].unique():
                         sta_idx = (gaugetab['STATION'][test] == sta)
@@ -726,29 +718,31 @@ class RFTraining(object):
                             all_station_scores['10min'][model]['all'][k][sta] = scores_all_10
                             
                             scores_all_60 = perfscores(R_pred_60[sta_idx_60],R_test_60[sta_idx_60])['all']
-                            all_station_scores['60min'][model]['all'][k][sta] = scores_all_60 
+                            all_station_scores['60min'][model]['all'][k][sta] = scores_all_60
+                            
+                            del scores_all_10, scores_all_60
                         except:
-                            logging.info('No performances score for {}'.format(sta))
+                            logging.info('No performance score for {}'.format(sta))
                         try:                            
                             scores_liquid_10 = perfscores(R_pred_10[liq_10_test & sta_idx],
                                                     R[test][liq_10_test & sta_idx])['all']
                             all_station_scores['10min'][model]['liquid'][k][sta] = scores_liquid_10
                             
                             scores_liquid_60 = perfscores(R_pred_60[liq_60_test & sta_idx_60],
-                                                    R[test][liq_60_test & sta_idx_60])['all']
+                                                    R_test_60[liq_60_test & sta_idx_60])['all']
                             all_station_scores['60min'][model]['liquid'][k][sta] = scores_liquid_60  
                         except:
-                            logging.info('No performances score for liquid precip for {}'.format(sta))
+                            logging.info('No performance score for liquid precip for {}'.format(sta))
                         try:                            
                             scores_solid_10 = perfscores(R_pred_10[sol_10_test & sta_idx],
                                                     R[test][sol_10_test & sta_idx])['all']  
                             all_station_scores['10min'][model]['solid'][k][sta] = scores_solid_10 
                             
                             scores_solid_60 = perfscores(R_pred_60[sol_60_test & sta_idx_60],
-                                                    R[test][sol_60_test & sta_idx_60])['all']
+                                                        R_test_60[sol_60_test & sta_idx_60])['all']
                             all_station_scores['60min'][model]['solid'][k][sta] = scores_solid_60
                         except:
-                            logging.info('No performances score for solid precip for {}'.format(sta))
+                            logging.info('No performance score for solid precip for {}'.format(sta))
 
                 # train
                 logging.info('Evaluating train error')
@@ -799,7 +793,7 @@ class RFTraining(object):
                                                  bounds = bounds60)
                 all_scores['60min'][model]['train']['all'].append(scores_all)
                 
-        # Compute statistics
+        # Compute statistics after the 5-fold cross validation
         for agg in all_scores.keys():
             for model in all_scores[agg].keys():
                 for veriftype in all_scores[agg][model].keys():
@@ -831,11 +825,13 @@ class RFTraining(object):
                 for model in all_station_scores[agg].keys():
                     for preciptype in all_station_scores[agg][model].keys():
                         df = pd.DataFrame(columns=gaugetab['STATION'].unique())
-                        perfs = {'RMSE': df, 'scatter':df, 'logBias':df, 'ED':df, 'N':df}
+                        perfs = {'RMSE': df.copy(), 'scatter':df.copy(), 
+                                 'logBias':df.copy(), 'ED':df.copy(), 'N':df.copy(),
+                                 'mest':df.copy(), 'mref':df.copy()}
                         all_station_stats[agg][model][preciptype] = {}
                         for score in perfs.keys():
                             for kidx in all_station_scores[agg][model][preciptype].keys():
-                                df_dummy = all_station_scores[agg][model][preciptype][kidx]
+                                df_dummy = all_station_scores[agg][model][preciptype][kidx].copy()
                                 perfs[score] = perfs[score].append(df_dummy.loc[df_dummy.index == score])
             
                             all_station_stats[agg][model][preciptype][score] = pd.concat([perfs[score].mean().rename('mean'),
