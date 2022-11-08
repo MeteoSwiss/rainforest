@@ -131,10 +131,12 @@ def _perfscores(est_data, ref_data):
     weights = ref_data[doublecond]/np.sum(ref_data[doublecond])
     scatter = 0.5 * (quantile(db_err,weights,0.84) -quantile(db_err,weights,0.16))
     bias_db = 10*np.log10(np.sum(est_data[doublecond]) / np.sum(ref_data[doublecond]))
-
     ed = energy_distance(est_data[np.isfinite(est_data)], ref_data[np.isfinite(est_data)])
+    
+    mest = np.nanmean(est_data[doublecond])
+    mref = np.nanmean(ref_data[doublecond])
     metrics = {'RMSE':rmse,'scatter':scatter,'logBias':bias_db,
-       'ED':ed,'N':len(ref_data)}
+       'ED':ed,'N':len(ref_data), 'mest':mest, 'mref':mref}
     
     return metrics
 
