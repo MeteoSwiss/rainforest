@@ -458,7 +458,8 @@ class Updater(object):
             else:
                 cosmo_data = None
 
-            if self.temp_ref == 'ISO0_HEIGHT':
+            if (self.temp_ref == 'ISO0_HEIGHT') or ("ISO0_HEIGHT" in self.other_variables):
+                logging.info('Getting HZT files')
                 # First timestep (already extracts fields over an hour)
                 if (i == 0):
                     hzt_files = self.retrieve_iso0_files(tstart, tend)
@@ -504,7 +505,7 @@ class Updater(object):
                         radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file)
 
                         # Add ISO0_HEIGHT and height_over_iso0 to radar object
-                        if self.temp_ref == "ISO0_HEIGHT":
+                        if (self.temp_ref == "ISO0_HEIGHT") or ("ISO0_HEIGHT" in self.other_variables):
                             radar.add_hzt_data(hztfields[tstamp])
                             radar.add_height_over_iso0()
   
