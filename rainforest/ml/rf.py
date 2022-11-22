@@ -5,6 +5,7 @@ Main module to
 """
 
 # Global imports
+from audioop import cross
 import logging
 logging.getLogger().setLevel(logging.INFO)
 import os
@@ -19,7 +20,7 @@ from scipy.stats import rankdata
 
 # Local imports
 from ..common import constants
-from .utils import vert_aggregation, split_event
+from .utils import vert_aggregation, split_event, split_years
 from .rfdefinitions import RandomForestRegressorBC
 from ..common.utils import perfscores, envyaml
 from ..common.graphics import plot_crossval_stats
@@ -75,11 +76,11 @@ class RFTraining(object):
         
         if not valid :
             logging.info('Could not find valid input data from the folder {:s}'.format(input_location))
-        if force_regenerate_input or not valid:
-            logging.info('The program will now compute this input data from the database, this takes quite some time')
-            self.prepare_input()
+        # if force_regenerate_input or not valid:
+        #     logging.info('The program will now compute this input data from the database, this takes quite some time')
+        #     self.prepare_input()
     
-    def prepare_input(self, only_center = True):
+    def prepare_input(self, only_center=True, foldername_radar='radar'):
         """
         Reads the data from the database  in db_location and processes it to 
         create easy to use parquet input files for the ML training and stores 
@@ -106,9 +107,14 @@ class RFTraining(object):
             i.e. NX = NY = 0 (the location of the gauge) will be recomputed
             this takes much less time and is the default option since until
             now the neighbour values are not used in the training of the RF
-            QPE            
+            QPE
+        foldername_radar: str
+            Name of the folder to use for the radar data. Default name is 'radar'            
         """
         
+        if not os.path.exists(Path(self.db_location, foldername_radar)):
+            logging.error('Invalid foldername for radar data, please check')
+
         if only_center:
             nx = [0]
             ny = [0]
@@ -125,7 +131,7 @@ class RFTraining(object):
         for x in nx:
             for y in ny:
                 logging.info('Processing neighbour {:d}{:d}'.format(x, y))
-                radar = dd.read_parquet(str(Path(self.db_location, 'radar',
+                radar = dd.read_parquet(str(Path(self.db_location, foldername_radar,
                                                   '*.parquet')))
                 refer = dd.read_parquet(str(Path(self.db_location, 'reference', 
                                                  '*.parquet')))
@@ -417,12 +423,34 @@ class RFTraining(object):
             logging.info('Saving model to {:s}'.format(out_name))
             
             pickle.dump(reg, open(out_name, 'wb'))
-        
+
+    def feature_selection(self, features):
+        """
+        The relative importance of all available input vairables aggregated to 
+        to the ground and to choose the most important ones, an approach 
+        from Han et al. (2016) was adpated to for regression.
+        See Wolfensberger et al. (2021) for further information.
+
+        Parameters
+        -----------
+        features : dic
+            A dictionnary with all eligible features to test
+        output_folder : str
+            Path to where to store the scores
+        tstart: str (YYYYMMDDHHMM)
+            A date to define a starting time for the input data
+        tend: str (YYYYMMDDHHMM)
+            A date to define the end of the input data
+        """
+        logging.info('TODO')
+        pass
              
     def model_intercomparison(self, features_dic, intercomparison_configfile, 
                               output_folder, reference_products = ['CPCH','RZC'],
-                              bounds10 = [0,2,10,100], bounds60 = [0,1,10,100],
-                              K = 5, tstart=None, tend=None, station_scores=False):
+                              bounds10 = [0,2,10,100], bounds60 = [0,2,10,100],
+                              cross_val_type='years', K=5, years=None,
+                              tstart=None, tend=None, station_scores=False,
+                              save_model=False):
         """
         Does an intercomparison (cross-validation) of different RF models and
         reference products (RZC, CPC, ...) and plots the performance plots
@@ -455,19 +483,28 @@ class RFTraining(object):
             list of precipitation bounds for which to compute scores separately
             at hourly time resolution
             [0,1,10,100] will give scores in range [0-1], [1-10] and [10-100]
-        K : int
+        cross_val_type: str
+            Define how the split of events is done. Options are "random events", 
+            "years" and "seasons" (TODO)
+        K : int or None
             Number of splits in iterations do perform in the K fold cross-val
+        years : list or None
+            List with the years that should be used in cross validation
+            Default is [2016,2017,2018,2019,2020,2021]
         tstart: str (YYYYMMDDHHMM)
             A date to define a starting time for the input data
         tend: str (YYYYMMDDHHMM)
             A date to define the end of the input data
         station_scores: True or False (Boolean)
             If True, performance scores for all stations will be calculated
-            If False, not all performance scores are calculated
+            If False, only the scores across Switzerland are calculated
+        save_model: True or False (Boolean)
+            If True, all models of the cross-validation are saved into a pickle file
+            This is useful for reproducibility
         """
         
         # dict of statistics to compute for every score over the K-fold crossval,
-        stats =  {'mean': np.nanmean, 'std': np.nanstd}
+        stats =  {'mean': np.nanmean, 'std': np.nanstd, 'min': np.nanmin, 'max': np.nanmax}
         
         config = envyaml(intercomparison_configfile)
         
@@ -477,6 +514,18 @@ class RFTraining(object):
         if not all([m in keysconfig for m in modelnames]):
             raise ValueError('Keys in features_dic are not all present in intercomparison config file!')
   
+        if (cross_val_type == 'years') and (years == None):
+            logging.info('Cross validation years defined, but not specified, years from 2016-2021 used')
+            K = list(range(2016,2022,1))
+        elif (cross_val_type == 'years') and (years != None):
+            K = years
+
+        if (cross_val_type == 'random events') and (K != None):
+            K = list(range(K))
+        elif (cross_val_type == 'random events') and (K == None):
+            logging.info('Cross validation with random events defined but not specified, applying 5-fold CV')
+            K = list(range(5))
+
         #######################################################################
         # Read data
         #######################################################################
@@ -509,7 +558,6 @@ class RFTraining(object):
         ###############################################################################
         # Compute additional data if needed
         ###############################################################################
-    
         # currently the only supported additional features is zh (refl in linear units)
         # and DIST_TO_RAD{A-D-L-W-P} (dist to individual radars)
         # Get list of unique features names
@@ -555,22 +603,25 @@ class RFTraining(object):
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
                        axis = 1)
-
-        if (tstart != None) and (tend == None):
-            timeperiod = (gaugetab['TIMESTAMP'] >= tstart)
-        elif (tstart == None) and (tend != None):
-            timeperiod = (gaugetab['TIMESTAMP'] <= tend)
-        elif (tstart != None) and (tend != None):
-            timeperiod = (gaugetab['TIMESTAMP'] >= tstart) & (gaugetab['TIMESTAMP'] <= tend)
-        else:
-            timeperiod = valid
+        # if (tstart != None) and (tend == None):
+        #     (gaugetab['TIMESTAMP'] >= tstart)
+        # elif (tstart == None) and (tend != None):
+        #     timeperiod = (gaugetab['TIMESTAMP'] <= tend)
+        # elif (tstart != None) and (tend != None):
+        #     timeperiod = (gaugetab['TIMESTAMP'] >= tstart) & (gaugetab['TIMESTAMP'] <= tend)
+        # else:
+        #     timeperiod = valid
+        if (tstart != None):
+            valid[(gaugetab['TIMESTAMP'] < tstart)] = False
+        if (tend != None):
+            valid[(gaugetab['TIMESTAMP'] > tend)] = False
 
         for model in modelnames:
-            features_VERT_AGG[model] = features_VERT_AGG[model][valid & timeperiod]
+            features_VERT_AGG[model] = features_VERT_AGG[model][valid]
         
-        gaugetab = gaugetab[valid & timeperiod]
-        refertab = refertab[valid & timeperiod]
-        grp_hourly = grp_hourly[valid & timeperiod]
+        gaugetab = gaugetab[valid]
+        refertab = refertab[valid]
+        grp_hourly = grp_hourly[valid]
         
         # Get R, T and idx test/train
         R = np.array(gaugetab['RRE150Z0'] * 6) # Reference precip in mm/h
@@ -578,8 +629,15 @@ class RFTraining(object):
         
         T = np.array(gaugetab['TRE200S0'])  # Reference temp in degrees
         # features must have the same size as gauge
-        idx_testtrain = split_event(gaugetab['TIMESTAMP'].values, K)
-        
+
+        if cross_val_type == 'random_events':
+            idx_testtrain = split_event(gaugetab['TIMESTAMP'].values, len(K))
+        elif cross_val_type == 'years':
+            idx_testtrain = split_years(gaugetab['TIMESTAMP'].values, years=K)
+        else:
+            logging.error('Please define your cross validation separation')
+
+
         modelnames.extend(reference_products)
 
         all_scores = {'10min':{},'60min':{}}
@@ -611,11 +669,18 @@ class RFTraining(object):
                     all_station_stats[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
             
 
-        for k in range(K):
-            logging.info('Run {:d}/{:d} of cross-validation'.format(k + 1, K))
+        for k in K:
+            logging.info('Run {:d}/{:d}-{:d} of cross-validation'.format(k,np.nanmin(K),np.nanmax(K)))
+
             test = idx_testtrain == k
             train = idx_testtrain != k
             
+            if cross_val_type == 'years':
+                logging.info('Time range for testing set: {} - {} with {:3.2f}% of datapoints'.format(
+                                datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].min()),
+                                datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].max()),
+                                gaugetab['TIMESTAMP'][test].count()/ gaugetab['TIMESTAMP'].count()*100))
+
             # Get reference values
             R_test_60 = np.squeeze(np.array(pd.DataFrame(R[test])
                             .groupby(grp_hourly[test]).mean()))
@@ -650,9 +715,17 @@ class RFTraining(object):
                 # Performing fit
                 if model not in reference_products:
                     logging.info('Training model on gauge data')
-                    regressors[model].fit(features_VERT_AGG[model][train],
-                                          R[train])
+
+                    regressors[model].fit(features_VERT_AGG[model][train],R[train])
                     R_pred_10 = regressors[model].predict(features_VERT_AGG[model][test])
+    
+                    if (save_model == True):
+                        out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}_excl_{}.p'.format(model, 
+                                                            config[model]['VERT_AGG']['BETA'],
+                                                            config[model]['BIAS_CORR'],k)))
+                        logging.info('Saving model to {:s}'.format(out_name))
+                        pickle.dump(regressors[model], open(out_name, 'wb'))
+
                 else:
                     R_pred_10 = refertab[model].values[test]
                 
@@ -779,20 +852,20 @@ class RFTraining(object):
                 # Evaluate model 10 min
     
                 scores_solid = perfscores(R_pred_60[sol_60_train],
-                                                 R_train_60[sol_60_train],
-                                                 bounds = bounds60)
+                                        R_train_60[sol_60_train],
+                                        bounds = bounds60)
                 all_scores['60min'][model]['train']['solid'].append(scores_solid)
                 
                 scores_liquid = perfscores(R_pred_60[liq_60_train],
-                                                 R_train_60[liq_60_train],
-                                                 bounds = bounds60)
+                                        R_train_60[liq_60_train],
+                                         bounds = bounds60)
                 all_scores['60min'][model]['train']['liquid'].append(scores_liquid)
                 
-                scores_all = perfscores(R_pred_60,
-                                                 R_train_60,
-                                                 bounds = bounds60)
+                scores_all = perfscores(R_pred_60,R_train_60,
+                                        bounds = bounds60)
                 all_scores['60min'][model]['train']['all'].append(scores_all)
-                
+
+
         # Compute statistics after the 5-fold cross validation
         for agg in all_scores.keys():
             for model in all_scores[agg].keys():
