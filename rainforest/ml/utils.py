@@ -8,6 +8,7 @@ Utility functions for the ML submodule
 import pandas as pd
 import numpy as np
 import logging
+import datetime
 
 # Local imports
 from ..common.utils import chunks
@@ -119,3 +120,31 @@ def split_event(timestamps, n = 5, threshold_hr = 12):
     split_idx = split_idx[revorder]
     
     return split_idx
+
+def split_years(timestamps, years=[2016,2017,2018,2019,2020,2021]):
+    """
+    Splits the dataset into n subsets by separating the observations into
+    separate years
+    
+    Parameters
+    ----------
+    timestamps : int array
+        array containing the UNIX timestamps of the precipitation observations
+    years : int list
+        all years to split into
+
+    Returns
+    ---------
+    split_idx : int array
+        array containing the subset grouping, with values from 0 to years-1
+    """  
+    logging.info('Splitting dataset in {:d} years'.format(len(years)))
+
+    tstamps_years = np.array([datetime.datetime.utcfromtimestamp(ti).year for ti in timestamps])
+    
+    split_idx = np.zeros((len(timestamps))) * np.nan
+    
+    for i, year in enumerate(years):
+        split_idx[np.where(tstamps_years == year)] = year
+    
+    return tstamps_years
