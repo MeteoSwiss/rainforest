@@ -50,6 +50,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         *variables* : name of input features
         *beta* : weighting factor in vertical aggregation
         *degree* : order of the polyfit used in some bias-correction methods
+        *metadata* : configuration setup used to train this model
     
     For *bc_type* tHe available methods are currently "raw":
     simple linear fit between prediction and observation, "cdf": linear fit
@@ -66,7 +67,8 @@ class RandomForestRegressorBC(RandomForestRegressor):
                  beta,
                  visib_weighting, 
                  degree = 1, 
-                 bctype = 'cdf', 
+                 bctype = 'cdf',
+                 metadata = {},
                  n_estimators=100,
                  criterion="mse",
                  max_depth=None,
@@ -103,6 +105,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         self.variables = variables
         self.beta = beta
         self.visib_weighting = visib_weighting
+        self.metadata = metadata
 
     def fit(self, X,y, sample_weight = None):
         """
