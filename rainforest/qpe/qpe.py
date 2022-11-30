@@ -289,36 +289,6 @@ class QPEProcessor(object):
             except:
                 logging.error('Failed to retrieve data for radar {:s}'.format(rad))
 
-    def fetch_data(self, t0, t1):
-        """
-        Retrieves and add new polar radar and status data to the QPEProcessor
-        for a given time range
-
-        Parameters
-        ----------
-        t0 : datetime
-            Start time of the timerange in datetime format
-        t1 : datetime
-            End time of the timerange in datetime format
-        """
-
-        self.radar_files = {}
-        self.status_files = {}
-
-        # Retrieve polar files and lookup tables for all radars
-        for rad in self.config['RADARS']:
-            logging.info('Retrieving data for radar '+rad)
-            try:
-                radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
-                                   product_name = 'ML' + rad,
-                                   sweeps = self.config['SWEEPS'])
-                self.radar_files[rad] = split_by_time(radfiles)
-                statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
-                                   product_name = 'ST' + rad, pattern = 'ST*.xml')
-                self.status_files[rad] = split_by_time(statfiles)
-            except:
-                logging.error('Failed to retrieve data for radar {:s}'.format(rad))
-
     def fetch_data_test(self, t0, t1):
         """
         Fetch the data for a qpe run on the cloud, to be used for unit tests only
