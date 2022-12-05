@@ -26,13 +26,14 @@ from ..common.utils import perfscores, envyaml
 from ..common.graphics import plot_crossval_stats
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+FOLDER_MODELS = Path(os.environ['RAINFOREST_DATAPATH'], 'rf_models')
 
 class RFTraining(object):
     '''
     This is the main class that allows to preparate data for random forest
     training, train random forests and perform cross-validation of trained models
     '''
-    def __init__(self, db_location, input_location = None,
+    def __init__(self, db_location, input_location=None,
                  force_regenerate_input = False):
         """
         Initializes the class and if needed prepare input data for the training
@@ -292,7 +293,7 @@ class RFTraining(object):
         """
         
         if output_folder == None:
-            output_folder =  str(Path(dir_path, 'rf_models'))
+            output_folder =  str(Path(FOLDER_MODELS, 'rf_models'))
             
         try:
             config = envyaml(config_file)
@@ -311,7 +312,6 @@ class RFTraining(object):
         gaugetab = pd.read_parquet(str(Path(self.input_location, 'gauge.parquet')))
         grp = pickle.load(open(str(Path(self.input_location, 'grouping_idx_x0y0.p')),'rb'))
         grp_vertical = grp['grp_vertical']
-        vweights = 10**(config['VERT_AGG']['BETA'] * (radartab['HEIGHT']/1000.)) # vert. weights
         
         ###############################################################################
         # Compute additional data if needed
@@ -339,52 +339,56 @@ class RFTraining(object):
                     radartab['DIST_TO_RAD' + str(val)] = dist
                     
         ###############################################################################
-        # Compute data filter
+        # Compute data filter for each model
         ###############################################################################
-                    
-        filterconf = config['FILTERING']
-        logging.info('Computing data filter')
-        logging.info('List of stations to ignore {:s}'.format(','.join(filterconf['STA_TO_REMOVE'])))
-        logging.info('Start time {:s}'.format(str(tstart)))
-        logging.info('End time {:s}'.format(str(tend)))           
-        logging.info('ZH must be > {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MIN_ZH'][1],
-                                             filterconf['CONSTRAINT_MIN_ZH'][0]))   
-        logging.info('ZH must be < {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MAX_ZH'][1],
-                                             filterconf['CONSTRAINT_MAX_ZH'][0]))    
 
-        ZH_agg = vert_aggregation(pd.DataFrame(radartab['ZH_mean']),
-                                      vweights,
-                                      grp_vertical,
-                                      True, radartab['VISIB_mean'])
-        cond1 = np.array(np.isin(gaugetab['STATION'], filterconf['STA_TO_REMOVE']))
-        cond2 = np.logical_and(ZH_agg['ZH_mean'] < filterconf['CONSTRAINT_MIN_ZH'][1],
-               6 * gaugetab['RRE150Z0'].values >= filterconf['CONSTRAINT_MIN_ZH'][0])
-        cond3 = np.logical_and(ZH_agg['ZH_mean'] >  filterconf['CONSTRAINT_MAX_ZH'][1],
-               6 * gaugetab['RRE150Z0'].values <=  filterconf['CONSTRAINT_MIN_ZH'][0])
-        
-        invalid = np.logical_or(cond1,cond2)
-        invalid = np.logical_or(invalid,cond3)
-        invalid = np.logical_or(invalid,cond3)
-        invalid = np.array(invalid)
-        if tend != None:
-            tend_unix = (tend - datetime.datetime(1970,1,1) ).total_seconds()
-            invalid[gaugetab['TIMESTAMP'] > tend_unix] = 1
-        if tstart != None:
-            tstart_unix = (tstart - datetime.datetime(1970,1,1) ).total_seconds()
-            invalid[gaugetab['TIMESTAMP'] < tstart_unix] = 1
-        invalid[np.isnan(gaugetab['RRE150Z0'])] = 1
-        
-        ###############################################################################
-        # Prepare training dataset
-        ###############################################################################
-        
-        gaugetab = gaugetab[~invalid]
-        
         for model in features_dic.keys():
+
+            vweights = 10**(config[model]['VERT_AGG']['BETA'] * (radartab['HEIGHT']/1000.)) # vert. weights
+
+            filterconf = config[model]['FILTERING'].copy()
+            logging.info('Computing data filter')
+            logging.info('List of stations to ignore {:s}'.format(','.join(filterconf['STA_TO_REMOVE'])))
+            logging.info('Start time {:s}'.format(str(tstart)))
+            logging.info('End time {:s}'.format(str(tend)))           
+            logging.info('ZH must be > {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MIN_ZH'][1],
+                                                filterconf['CONSTRAINT_MIN_ZH'][0]))   
+            logging.info('ZH must be < {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MAX_ZH'][1],
+                                                filterconf['CONSTRAINT_MAX_ZH'][0]))    
+
+            ZH_agg = vert_aggregation(pd.DataFrame(radartab['ZH_mean']),
+                                        vweights,
+                                        grp_vertical,
+                                        True, radartab['VISIB_mean'])
+            cond1 = np.array(np.isin(gaugetab['STATION'], filterconf['STA_TO_REMOVE']))
+            cond2 = np.logical_and(ZH_agg['ZH_mean'] < filterconf['CONSTRAINT_MIN_ZH'][1],
+                6 * gaugetab['RRE150Z0'].values >= filterconf['CONSTRAINT_MIN_ZH'][0])
+            cond3 = np.logical_and(ZH_agg['ZH_mean'] >  filterconf['CONSTRAINT_MAX_ZH'][1],
+                6 * gaugetab['RRE150Z0'].values <=  filterconf['CONSTRAINT_MIN_ZH'][0])
+            
+            invalid = np.logical_or(cond1,cond2)
+            invalid = np.logical_or(invalid,cond3)
+            invalid = np.logical_or(invalid,cond3)
+            invalid = np.array(invalid)
+
+            if tend != None:
+                tend_unix = (tend - datetime.datetime(1970,1,1) ).total_seconds()
+                invalid[gaugetab['TIMESTAMP'] > tend_unix] = 1
+            if tstart != None:
+                tstart_unix = (tstart - datetime.datetime(1970,1,1) ).total_seconds()
+                invalid[gaugetab['TIMESTAMP'] < tstart_unix] = 1
+            invalid[np.isnan(gaugetab['RRE150Z0'])] = 1
+
+            ###############################################################################
+            # Prepare training dataset
+            ###############################################################################
+        
+            gaugetab_train = gaugetab[~invalid].copy()
+        
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))                
             features_VERT_AGG = vert_aggregation(radartab[features_dic[model]], 
                                  vweights, grp_vertical,
-                                 config['VERT_AGG']['VISIB_WEIGHTING'],
+                                 config[model]['VERT_AGG']['VISIB_WEIGHTING'],
                                  radartab['VISIB_mean'])
             features_VERT_AGG = features_VERT_AGG[~invalid]
                         
@@ -401,25 +405,34 @@ class RFTraining(object):
                 elif '_mean' in f:
                     f = f.replace('_mean','')
                 features.append(f)
+            
+            Y = np.array(gaugetab_train['RRE150Z0'] * 6)
+            valid = np.all(np.isfinite(features_VERT_AGG),axis=1)
 
-            reg = RandomForestRegressorBC(degree = 1, 
-                          bctype = config['BIAS_CORR'],
-                          visib_weighting = config['VERT_AGG']['VISIB_WEIGHTING'],
-                          variables = features,
-                          beta = config['VERT_AGG']['BETA'],
-                          **config['RANDOMFOREST_REGRESSOR'])
-            
-            Y = np.array(gaugetab['RRE150Z0'] * 6)
+            # Add some metadata
+            config[model]['FILTERING']['N_datapoints'] = len(Y[valid])
+            config[model]['FILTERING']['GAUGE_min_10min_mm_h'] = np.nanmin(Y)
+            config[model]['FILTERING']['GAUGE_max_10min_mm_h'] = np.nanmax(Y)
+
+            config[model]['FILTERING']['TIME_START'] = np.nanmin(gaugetab['TIMESTAMP'][~invalid])
+            config[model]['FILTERING']['TIME_END'] = np.nanmax(gaugetab['TIMESTAMP'][~invalid])
+
             logging.info('')
-            
             logging.info('Training model on gauge data')
 
-            valid = np.all(np.isfinite(features_VERT_AGG),axis=1)
+            reg = RandomForestRegressorBC(degree = 1, 
+                          bctype = config[model]['BIAS_CORR'],
+                          visib_weighting = config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                          variables = features,
+                          beta = config[model]['VERT_AGG']['BETA'],
+                          metadata = config[model]['FILTERING'],
+                          **config[model]['RANDOMFOREST_REGRESSOR'])
+
             reg.fit(features_VERT_AGG[valid], Y[valid])
             
             out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}.p'.format(model, 
-                                                  config['VERT_AGG']['BETA'],
-                                                  config['BIAS_CORR'])))
+                                                  config[model]['VERT_AGG']['BETA'],
+                                                  config[model]['BIAS_CORR'])))
             logging.info('Saving model to {:s}'.format(out_name))
             
             pickle.dump(reg, open(out_name, 'wb'))
@@ -443,7 +456,67 @@ class RFTraining(object):
             A date to define the end of the input data
         """
         logging.info('TODO')
-        pass
+
+        # MODEL = ['RADAR', 'zh_visib_mean', 'zv_visib_mean','KDP_mean','RHOHV_mean', 
+        #         'T', 'HEIGHT','VISIB_mean','AH_mean','RVEL_mean','SW_mean', 'NH_mean']
+
+        # #model= ['zhv','zvv','zdr','KDP','RHOHV']
+        # nt = 20
+        # max_depth = 20
+        # X_train = radar
+        # weights = lambda h: 10**(-0.5 * h/1000)
+        # weights = weights(radar['HEIGHT'])
+        # X_train = vert_aggregation(radar[MODEL], weights, grp_vertical)
+        # valid = np.all(np.isfinite(X_train),axis=1)
+
+        # gauge = gauge[valid]
+        # Y_train = gauge['RRE150Z0'] * 6
+        # grp_hourly = grp_hourly[valid]
+        # X_train = X_train[valid]
+
+        # reg = RandomForestRegressor(nt, max_depth = max_depth, verbose = 10, n_jobs = 12)
+        # K = 5
+        # idx = split_event(gauge['TIMESTAMP'], K)
+
+        # scores = {}
+        # for col in X_train.columns:
+        #     scores[col] = []
+            
+        # for i in range(K):
+        #     print(i)
+        #     reg.fit(X_train[idx != i], Y_train[idx != i])
+        #     rmse = errmetrics(reg.predict(X_train[idx == i]), Y_train[idx == i])['RMSE']   
+            
+        #     xtest = X_train[idx == i].values
+        #     for j in range(xtest.shape[1]):
+        #         X_t = xtest.copy()
+        #         np.random.shuffle(X_t[:,j])
+        #         shuff_rmse = errmetrics(reg.predict(X_t), Y_train[idx == i])['RMSE']   
+        #         scores[X_train.columns[j]].append((rmse - shuff_rmse) / rmse)
+                
+        # for k in scores.keys():
+        #     scores[k] = np.mean(scores[k])
+            
+        # scores['FRAC_RADAR'] = np.sum(np.array(list(scores.values()))[0:5])
+        # kk = list(scores.keys())
+        # for k in kk:
+        #     if 'prop' in k:
+        #         del scores[k]
+
+        # plt.figure(figsize = (10,4))
+        # plt.title('Relative increase in RMSE when randomly shuffling feature', fontsize = 16)
+        # x = -np.array(list(scores.values()))
+        # lab = ['Zh','Zv','KDP','FRAC_RADAR','RHOHV','SW','T','VISIB','HEIGHT','AH'
+        #         ,'NOISE_H',
+        #         'RVEL']
+        # a = np.argsort(-x)
+        # plt.bar(range(len(scores.values())),x[a])
+        # plt.gca().set_xticks(range(len(scores.values())))
+        # plt.gca().set_xticklabels(lab, rotation = 90)
+        # plt.savefig(OUTPUT_FOLDER + 'rel_importances.png',dpi = 300, bbox_inches = 'tight')
+
+
+
              
     def model_intercomparison(self, features_dic, intercomparison_configfile, 
                               output_folder, reference_products = ['CPCH','RZC'],
@@ -529,7 +602,7 @@ class RFTraining(object):
         #######################################################################
         # Read data
         #######################################################################
-        logging.info('Reading input data')
+        logging.info('Reading input data from {}'.format(self.input_location))
         radartab = pd.read_parquet(str(Path(self.input_location, 'radar_x0y0.parquet')))
         refertab = pd.read_parquet(str(Path(self.input_location, 'reference_x0y0.parquet')))
         gaugetab = pd.read_parquet(str(Path(self.input_location, 'gauge.parquet')))
@@ -720,6 +793,7 @@ class RFTraining(object):
                     R_pred_10 = regressors[model].predict(features_VERT_AGG[model][test])
     
                     if (save_model == True):
+                        regressors[model].variables = features_VERT_AGG[model].columns
                         out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}_excl_{}.p'.format(model, 
                                                             config[model]['VERT_AGG']['BETA'],
                                                             config[model]['BIAS_CORR'],k)))
@@ -928,6 +1002,6 @@ class RFTraining(object):
             pickle.dump(all_station_stats, open(name_file, 'wb'))
         
         
-        logging.info('Finished script')
+        logging.info('Finished script and saved all scores to {}'.format(output_folder))
         return all_scores, all_stats
             
