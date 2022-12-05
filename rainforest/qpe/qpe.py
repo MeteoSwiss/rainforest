@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Main function to compute the randomForest QPE estimate
+Main function to compute the QPE estimations on the Swiss grid
 
 Daniel Wolfensberger
 MeteoSwiss/EPFL
@@ -9,7 +9,7 @@ daniel.wolfensberger@epfl.ch
 December 2019
 
 Modified by D. Wolfensberger and R. Gugerli
-March 2022
+December 2022
 """
 
 
@@ -37,10 +37,10 @@ logging.getLogger().setLevel(logging.INFO)
 
 
 from ..common import constants
-from ..common.retrieve_data import retrieve_prod, get_COSMO_T
+from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod
 from ..common.lookup import get_lookup
 from ..common.utils import split_by_time, nanadd_at, envyaml
-from ..common.radarprocessing import Radar
+from ..common.radarprocessing import Radar, HZT_hourly_to_5min
 from ..common.io_data import save_gif
 
 try:
@@ -335,7 +335,7 @@ class QPEProcessor(object):
 
 
     def compute(self, output_folder, t0, t1, timestep = 5,
-                            basename = 'RFQ%y%j%H%M', test_mode = False):
+                            basename = 'RFO%y%j%H%M', test_mode = False):
         """
         Computes QPE values for a given time range and stores them in a
         folder, in a binary format
@@ -375,6 +375,11 @@ class QPEProcessor(object):
         else:    
             self.fetch_data(tL, t1)
 
+        # Retrieve iso0 height files
+        if 'ISO0_HEIGHT' in self.model_weights_per_var.keys():
+            self.files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],tL,t1)
+            self.files_hzt = split_by_time(self.files_hzt)
+
         # Get all timesteps in time range
         n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
         timeserie = tL + np.array([datetime.timedelta(minutes=timestep*i)
@@ -407,7 +412,18 @@ class QPEProcessor(object):
             """Part one - compute radar variables and mask"""
             # Get COSMO temperature for all radars for this timestamp
             if not test_mode:
-                T_cosmo = get_COSMO_T(t1, radar = self.config['RADARS'])
+                if 'T' in self.model_weights_per_var.keys():
+                    cosmo_var = 'T'
+                    T_cosmo_fields = get_COSMO_T(t1, radar = self.config['RADARS'])
+                elif 'ISO0_HEIGHT' in self.model_weights_per_var.keys():
+                    cosmo_var = 'ISO0_HEIGHT'
+                    # Saving computational time
+                    if ('hzt_cosmo_fields' not in locals()) or (t not in hzt_cosmo_fields):
+                        logging.info('Interpolating HZT fields for timestep {}'.format(t.strftime('%Y%m%d%H%M')))
+                        hzt_cosmo_fields = HZT_hourly_to_5min(t, self.files_hzt, tsteps_min=timestep)
+                else:
+                    cosmo_var = None
+
             radobjects = {}
 
             for rad in self.config['RADARS']:
@@ -417,7 +433,7 @@ class QPEProcessor(object):
                     continue
 
                 # if file does not exist, add to missing file list
-                if self.radar_files[rad][t] == None:
+                if (t not in self.radar_files[rad]) or (self.radar_files[rad][t] == None):
                     missing_files[rad] = t
                     continue
                 
@@ -445,9 +461,13 @@ class QPEProcessor(object):
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
                 if test_mode:
-                    T_cosmo = pickle.load(open(self.T_files[rad][t1], 'rb'))
+                    if cosmo_var == 'T':
+                        T_cosmo_fields = pickle.load(open(self.T_files[rad][t1], 'rb'))
 
-                radobjects[rad].add_cosmo_data(T_cosmo[rad])
+                if cosmo_var == 'T':
+                    radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
+                if cosmo_var == 'ISO0_HEIGHT':
+                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])
 
                 # Delete files if config files requires
                 try:
@@ -586,7 +606,7 @@ class QPEProcessor(object):
                 if i == 0:
                     qpe_prev[k] = qpe
                     # Because of lead time, we can go out here:
-                    logging.info('Processing time '+str(t)+' was only used as lead time and discarded')
+                    logging.info('Processing time '+str(t)+' was only used as lead time and the QPE maps will not be saved')
                     continue
 
                 comp = np.array([qpe_prev[k].copy(), qpe.copy()])
