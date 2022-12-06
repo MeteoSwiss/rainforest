@@ -1,7 +1,7 @@
 # rainforest
 
 
-[![Test rainforest](https://github.com/MeteoSwiss/rainforest/actions/workflows/test_rainforest_dev.yml/badge.svg)](https://github.com/MeteoSwiss/rainforest/actions/workflows/test_rainforest.yml)
+[![Test rainforest dev](https://github.com/MeteoSwiss/rainforest/actions/workflows/test_rainforest_dev.yml/badge.svg?branch=dev)](https://github.com/MeteoSwiss/rainforest/actions/workflows/test_rainforest_dev.yml)
 
 A python library to access and update the gauge/station database of MDR and compute randomForest QPE estimates
 
