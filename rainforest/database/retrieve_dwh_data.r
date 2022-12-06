@@ -77,7 +77,9 @@ stations = strsplit(stations,',')[[1]]
 # overwrite <- TRUE
 
 # Get directory of data_stations.csv, i.e rainforest/common/constants
-station_info_path = file.path(dirname(script.basename), 'common', 'data', 'data_stations.csv')
+# station_info_path = file.path(dirname(script.basename), 'common', 'data', 'data_stations.csv')
+path <- Sys.getenv("RAINFOREST_DATAPATH")
+station_info_path = file.path(path, 'references', 'metadata', 'data_stations.csv' )
 station_info = data.table::fread(station_info_path, sep = ';')
 station_info <- as.data.frame(station_info)
 
