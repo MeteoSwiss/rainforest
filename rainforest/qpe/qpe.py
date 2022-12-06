@@ -300,7 +300,7 @@ class QPEProcessor(object):
         self.radar_files = {}
         self.status_files = {}
         self.T_files = {}
-        self.HZT_files = {}
+        self.hzt_files = {}
 
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
@@ -328,16 +328,19 @@ class QPEProcessor(object):
                 fname = objsto.check_file(str(Path(INPUT_FOLDER, 'TL' + rad + datestr1 +'0.p')))
                 T_files = [fname]
 
-                # For COSMO we get use only data at end of timestep for test case
-                fname = objsto.check_file(str(Path(INPUT_FOLDER, 'HZT' + datestr1 +'0.p')))
-                HZT_files = [fname]
-
                 self.status_files[rad] = split_by_time(statfiles)
                 self.T_files[rad] = split_by_time(T_files)
-                self.HZT_files = split_by_time(HZT_files)
 
             except:
                 logging.error('Failed to retrieve data for radar {:s}'.format(rad))
+
+        # ISOTHERMAL HEIGHT is independent of radar gate, i.e. this step is done later
+        try:
+            # For COSMO we get use only data at end of timestep for test case
+            fname = objsto.check_file(str(Path(INPUT_FOLDER, 'hzt' + datestr1 +'0.p')))
+            self.hzt_files = split_by_time([fname])
+        except:
+            logging.error('Failed to retrieve HZT data')
 
 
     def compute(self, output_folder, t0, t1, timestep = 5,
@@ -416,20 +419,24 @@ class QPEProcessor(object):
                         weights_cart[weight] = np.zeros((NBINS_X, NBINS_Y))
 
             """Part one - compute radar variables and mask"""
+            # Find which temperature reference is used: COSMO1-1 temperature or ISO0_HEIGHT
+            if 'T' in self.model_weights_per_var.keys():
+                cosmo_var = 'T'
+            elif 'ISO0_HEIGHT' in self.model_weights_per_var.keys():
+                cosmo_var = 'ISO0_HEIGHT'
+            else:
+                cosmo_var = None
+
             # Get COSMO temperature for all radars for this timestamp
             if not test_mode:
-                if 'T' in self.model_weights_per_var.keys():
-                    cosmo_var = 'T'
+                if (cosmo_var == 'T') :
                     T_cosmo_fields = get_COSMO_T(t, radar = self.config['RADARS'])
-                elif 'ISO0_HEIGHT' in self.model_weights_per_var.keys():
-                    cosmo_var = 'ISO0_HEIGHT'
-                    # Saving computational time
+                if (cosmo_var == 'ISO0_HEIGHT') :
                     if ('hzt_cosmo_fields' not in locals()) or (t not in hzt_cosmo_fields):
                         logging.info('Interpolating HZT fields for timestep {}'.format(t.strftime('%Y%m%d%H%M')))
                         hzt_cosmo_fields = HZT_hourly_to_5min(t, self.files_hzt, tsteps_min=timestep)
-                else:
-                    cosmo_var = None
 
+            # Begin compilation of radarobject
             radobjects = {}
 
             for rad in self.config['RADARS']:
@@ -470,7 +477,7 @@ class QPEProcessor(object):
                     if cosmo_var == 'T':
                         T_cosmo_fields = pickle.load(open(self.T_files[rad][tL], 'rb'))
                     if cosmo_var == 'ISO0_HEIGHT':
-                        hzt_cosmo_fields = pickle.load(open(self.HZT_files[tL], 'rb'))
+                        hzt_cosmo_fields = pickle.load(open(self.hzt_files[tL], 'rb'))
 
                 if cosmo_var == 'T':
                     radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
