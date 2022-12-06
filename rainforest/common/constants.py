@@ -97,7 +97,7 @@ NYQUIST_VEL = [8.3,9.6,8.3,12.4,11,12.4,13.8,12.4,13.8,16.5,16.5,16.5,
 VPR_REF_HEIGHTS = {'A':1500,'D':2000,'L':2000,'P':1500,'W':1500}
 VPR_REF_RADAR = {'A':'A','P':'A','L':'L','W':'A','D':'D'}
 
-A_QPE = 250
+A_QPE = 316
 B_QPE = 1.5
 
 MAX_VPR_CORRECTION_DB = 4.77
@@ -318,13 +318,16 @@ SLURM_HEADER_R = '''#!/bin/sh
 #SBATCH -t 12:0:00  # time requested in hour:minute:second
 #SBATCH --partition=postproc
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_gauges_%A_%a.out"
-#SBATCH --error="db_gauges_%A_%a.err"
+#SBATCH --output="db_gauges_%A.out"
+#SBATCH --error="db_gauges_%A.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 
 export MODULEPATH="/store/msclim/share/modulefiles/modules/all:${MODULEPATH}"
 module load /store/msclim/share/modulefiles/modules/all/cat/tsa-R3.5.2
+
+export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/
+
 source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh
 conda activate rainforest_RandPython
 '''
