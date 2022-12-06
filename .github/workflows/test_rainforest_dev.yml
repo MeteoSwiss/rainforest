@@ -1,3 +1,4 @@
+<<<<<<< HEAD:.github/workflows/test_rainforest_dev.yml
 name: Test rainforest dev
 
 on:

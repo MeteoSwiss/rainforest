@@ -81,7 +81,7 @@ class ObjectStorage(object):
         userinput = input("Are you sure wou want to delete all content from the bucket y/n? ")
         if userinput == 'y':
             for object in objects['Contents']:
-                self.client.delete_object(Bucket = bucket, key = object['Key'])
+                self.client.delete_object(Bucket = bucket, Key = object['Key'])
     
     def delete_file(self, key, bucket = 'rainforest'):
         """
