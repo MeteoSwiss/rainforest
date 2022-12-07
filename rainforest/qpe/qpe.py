@@ -300,7 +300,7 @@ class QPEProcessor(object):
         self.radar_files = {}
         self.status_files = {}
         self.T_files = {}
-        self.hzt_files = {}
+        self.files_hzt = {}
 
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
@@ -338,7 +338,7 @@ class QPEProcessor(object):
         try:
             # For COSMO we get use only data at end of timestep for test case
             fname = objsto.check_file(str(Path(INPUT_FOLDER, 'hzt' + datestr1 +'0.p')))
-            self.hzt_files = split_by_time([fname])
+            self.files_hzt = split_by_time([fname])
         except:
             logging.error('Failed to retrieve HZT data')
 
@@ -385,9 +385,10 @@ class QPEProcessor(object):
             self.fetch_data(tL, t1)
 
         # Retrieve iso0 height files
-        if 'ISO0_HEIGHT' in self.model_weights_per_var.keys():
-            self.files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],tL,t1)
-            self.files_hzt = split_by_time(self.files_hzt)
+        if not test_mode:
+            if 'ISO0_HEIGHT' in self.model_weights_per_var.keys():
+                self.files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],tL,t1)
+                self.files_hzt = split_by_time(self.files_hzt)
 
         # Get all timesteps in time range
         n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
@@ -477,7 +478,7 @@ class QPEProcessor(object):
                     if cosmo_var == 'T':
                         T_cosmo_fields = pickle.load(open(self.T_files[rad][t1], 'rb'))
                     if cosmo_var == 'ISO0_HEIGHT':
-                        hzt_cosmo_fields = pickle.load(open(self.hzt_files[t1], 'rb'))
+                        hzt_cosmo_fields = pickle.load(open(self.files_hzt[t1], 'rb'))
 
                 if cosmo_var == 'T':
                     radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
