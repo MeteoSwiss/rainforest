@@ -14,9 +14,9 @@ def test_qpe():
     cwd = os.path.dirname(os.getenv('PYTEST_CURRENT_TEST')) + '/'
 
     # Get RF model
-    models = {}
-    models['RF_dualpol'] = read_rf('RF_dualpol_BETA_-0.5_BC_spline.p')
-    models['RFO'] = read_rf('RFO_BETA_-0.5_BC_spline_trained_2016_2019.p')
+    filename = {}
+    filename['RF_dualpol'] = 'RF_dualpol_BETA_-0.5_BC_spline.p'
+    filename['RFO'] = 'RFO_BETA_-0.5_BC_spline_trained_2016_2019.p'
 
     names = {}
     names['RF_dualpol'] = 'RFQ'
@@ -26,10 +26,12 @@ def test_qpe():
     t1 = datetime.datetime(2022,9,28,5,10)
     tstr = '%y%j%H%M'
 
-    for model in models.keys():
-
-        qpeproc = QPEProcessor(str(Path(cwd, 'test_config.yml')), models[model])
-
+    for model in filename.keys():
+        
+        models = {}
+        models[model] = read_rf(filename[model])
+        
+        qpeproc = QPEProcessor(str(Path(cwd, 'test_config.yml')), models)
         qpeproc.compute(cwd, t0,t1, basename = '{}{}'.format(names[model], tstr), test_mode = True)
         qpe = read_cart(str(Path(cwd, model, datetime.datetime.strftime(t1, '{}{}.h5'.format(names[model], tstr)))))
         qpe_field = qpe.data
