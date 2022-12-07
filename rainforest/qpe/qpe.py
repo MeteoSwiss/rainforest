@@ -475,9 +475,9 @@ class QPEProcessor(object):
 
                 if test_mode:
                     if cosmo_var == 'T':
-                        T_cosmo_fields = pickle.load(open(self.T_files[rad][tL], 'rb'))
+                        T_cosmo_fields = pickle.load(open(self.T_files[rad][t1], 'rb'))
                     if cosmo_var == 'ISO0_HEIGHT':
-                        hzt_cosmo_fields = pickle.load(open(self.hzt_files[tL], 'rb'))
+                        hzt_cosmo_fields = pickle.load(open(self.hzt_files[t1], 'rb'))
 
                 if cosmo_var == 'T':
                     radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
