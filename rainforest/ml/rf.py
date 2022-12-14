@@ -411,11 +411,15 @@ class RFTraining(object):
 
             # Add some metadata
             config[model]['FILTERING']['N_datapoints'] = len(Y[valid])
-            config[model]['FILTERING']['GAUGE_min_10min_mm_h'] = np.nanmin(Y)
-            config[model]['FILTERING']['GAUGE_max_10min_mm_h'] = np.nanmax(Y)
+            config[model]['FILTERING']['GAUGE_min_10min_mm_h'] = np.nanmin(Y[valid])
+            config[model]['FILTERING']['GAUGE_max_10min_mm_h'] = np.nanmax(Y[valid])
+            config[model]['FILTERING']['GAUGE_median_10min_mm_h'] = np.nanmedian(Y[valid])
 
             config[model]['FILTERING']['TIME_START'] = np.nanmin(gaugetab['TIMESTAMP'][~invalid])
             config[model]['FILTERING']['TIME_END'] = np.nanmax(gaugetab['TIMESTAMP'][~invalid])
+
+            config[model]['FILTERING']['STA_INCLUDED'] = gaugetab['STATION'][~invalid].unique()
+            config[model]['FILTERING']['CREATED'] = datetime.datetime.utcnow().strftime('%d %b %Y %H:%M UTC')
 
             logging.info('')
             logging.info('Training model on gauge data')
