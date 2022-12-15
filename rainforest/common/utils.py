@@ -123,18 +123,32 @@ def perfscores(est_data, ref_data, bounds = None, array = False):
         
     return all_metrics
 
-def _perfscores(est_data, ref_data):
+def _perfscores(est_data, ref_data, doublecond_thresh=0.1):
     """An unbounded version of the previous function"""
-    doublecond = np.logical_and(ref_data > 0.1, est_data > 0.1)
-    rmse = np.sqrt(np.nanmean((est_data-ref_data)**2))
+    doublecond = np.logical_and(ref_data > doublecond_thresh, 
+                                est_data > doublecond_thresh)
+    rmse = np.sqrt(np.nanmean((est_data[doublecond]-ref_data[doublecond])**2))
     db_err = 10 * np.log10(est_data[doublecond] / ref_data[doublecond])
     weights = ref_data[doublecond]/np.sum(ref_data[doublecond])
     scatter = 0.5 * (quantile(db_err,weights,0.84) -quantile(db_err,weights,0.16))
     bias_db = 10*np.log10(np.sum(est_data[doublecond]) / np.sum(ref_data[doublecond]))
-
     ed = energy_distance(est_data[np.isfinite(est_data)], ref_data[np.isfinite(est_data)])
-    metrics = {'RMSE':rmse,'scatter':scatter,'logBias':bias_db,
-       'ED':ed,'N':len(ref_data)}
+    
+    mest = np.nanmean(est_data[doublecond])
+    mref = np.nanmean(ref_data[doublecond])
+    stdest = np.nanstd(est_data[doublecond])
+    stdref = np.nanstd(ref_data[doublecond])
+
+    metrics = {'RMSE':rmse,
+            'scatter':scatter,
+            'logBias':bias_db,
+            'ED':ed,
+            'N':len(ref_data[doublecond]),
+            'N_all':len(ref_data),
+            'est_mean':mest,
+            'ref_mean':mref,
+            'est_std':stdest,
+            'ref_std':stdref}
     
     return metrics
 

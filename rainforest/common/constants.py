@@ -318,13 +318,16 @@ SLURM_HEADER_R = '''#!/bin/sh
 #SBATCH -t 12:0:00  # time requested in hour:minute:second
 #SBATCH --partition=postproc
 #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_gauges_%A_%a.out"
-#SBATCH --error="db_gauges_%A_%a.err"
+#SBATCH --output="db_gauges_%A.out"
+#SBATCH --error="db_gauges_%A.err"
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
 
 export MODULEPATH="/store/msclim/share/modulefiles/modules/all:${MODULEPATH}"
 module load /store/msclim/share/modulefiles/modules/all/cat/tsa-R3.5.2
+
+export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/
+
 source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh
 conda activate rainforest_RandPython
 '''

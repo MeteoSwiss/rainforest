@@ -5,6 +5,7 @@ Main module to
 """
 
 # Global imports
+from audioop import cross
 import logging
 logging.getLogger().setLevel(logging.INFO)
 import os
@@ -19,19 +20,20 @@ from scipy.stats import rankdata
 
 # Local imports
 from ..common import constants
-from .utils import vert_aggregation, split_event
+from .utils import vert_aggregation, split_event, split_years
 from .rfdefinitions import RandomForestRegressorBC
 from ..common.utils import perfscores, envyaml
 from ..common.graphics import plot_crossval_stats
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
+FOLDER_MODELS = Path(os.environ['RAINFOREST_DATAPATH'], 'rf_models')
 
 class RFTraining(object):
     '''
     This is the main class that allows to preparate data for random forest
     training, train random forests and perform cross-validation of trained models
     '''
-    def __init__(self, db_location, input_location = None,
+    def __init__(self, db_location, input_location=None,
                  force_regenerate_input = False):
         """
         Initializes the class and if needed prepare input data for the training
@@ -47,8 +49,8 @@ class RFTraining(object):
             Location of the main directory of the database (with subfolders
             'reference', 'gauge' and 'radar' on the filesystem)
         input_location : str
-            Location of the prepared input data, if this data can not be found
-            in this folder, it will computed here, default is a subfolder
+            Location of the prepared input data, if this data cannot be found
+            in this folder, it will be computed here, default is a subfolder
             called rf_input_data within db_location
         force_regenerate_input : bool
             if True the input parquet files will always be regenerated from
@@ -75,11 +77,11 @@ class RFTraining(object):
         
         if not valid :
             logging.info('Could not find valid input data from the folder {:s}'.format(input_location))
-        if force_regenerate_input or not valid:
-            logging.info('The program will now compute this input data from the database, this takes quite some time')
-            self.prepare_input()
+        # if force_regenerate_input or not valid:
+        #     logging.info('The program will now compute this input data from the database, this takes quite some time')
+        #     self.prepare_input()
     
-    def prepare_input(self, only_center = True):
+    def prepare_input(self, only_center=True, foldername_radar='radar'):
         """
         Reads the data from the database  in db_location and processes it to 
         create easy to use parquet input files for the ML training and stores 
@@ -106,9 +108,14 @@ class RFTraining(object):
             i.e. NX = NY = 0 (the location of the gauge) will be recomputed
             this takes much less time and is the default option since until
             now the neighbour values are not used in the training of the RF
-            QPE            
+            QPE
+        foldername_radar: str
+            Name of the folder to use for the radar data. Default name is 'radar'            
         """
         
+        if not os.path.exists(Path(self.db_location, foldername_radar)):
+            logging.error('Invalid foldername for radar data, please check')
+
         if only_center:
             nx = [0]
             ny = [0]
@@ -125,7 +132,7 @@ class RFTraining(object):
         for x in nx:
             for y in ny:
                 logging.info('Processing neighbour {:d}{:d}'.format(x, y))
-                radar = dd.read_parquet(str(Path(self.db_location, 'radar',
+                radar = dd.read_parquet(str(Path(self.db_location, foldername_radar,
                                                   '*.parquet')))
                 refer = dd.read_parquet(str(Path(self.db_location, 'reference', 
                                                  '*.parquet')))
@@ -286,7 +293,7 @@ class RFTraining(object):
         """
         
         if output_folder == None:
-            output_folder =  str(Path(dir_path, 'rf_models'))
+            output_folder =  str(Path(FOLDER_MODELS, 'rf_models'))
             
         try:
             config = envyaml(config_file)
@@ -305,7 +312,6 @@ class RFTraining(object):
         gaugetab = pd.read_parquet(str(Path(self.input_location, 'gauge.parquet')))
         grp = pickle.load(open(str(Path(self.input_location, 'grouping_idx_x0y0.p')),'rb'))
         grp_vertical = grp['grp_vertical']
-        vweights = 10**(config['VERT_AGG']['BETA'] * (radartab['HEIGHT']/1000.)) # vert. weights
         
         ###############################################################################
         # Compute additional data if needed
@@ -333,52 +339,56 @@ class RFTraining(object):
                     radartab['DIST_TO_RAD' + str(val)] = dist
                     
         ###############################################################################
-        # Compute data filter
+        # Compute data filter for each model
         ###############################################################################
-                    
-        filterconf = config['FILTERING']
-        logging.info('Computing data filter')
-        logging.info('List of stations to ignore {:s}'.format(','.join(filterconf['STA_TO_REMOVE'])))
-        logging.info('Start time {:s}'.format(str(tstart)))
-        logging.info('End time {:s}'.format(str(tend)))           
-        logging.info('ZH must be > {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MIN_ZH'][1],
-                                             filterconf['CONSTRAINT_MIN_ZH'][0]))   
-        logging.info('ZH must be < {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MAX_ZH'][1],
-                                             filterconf['CONSTRAINT_MAX_ZH'][0]))    
 
-        ZH_agg = vert_aggregation(pd.DataFrame(radartab['ZH_mean']),
-                                      vweights,
-                                      grp_vertical,
-                                      True, radartab['VISIB_mean'])
-        cond1 = np.array(np.isin(gaugetab['STATION'], filterconf['STA_TO_REMOVE']))
-        cond2 = np.logical_and(ZH_agg['ZH_mean'] < filterconf['CONSTRAINT_MIN_ZH'][1],
-               6 * gaugetab['RRE150Z0'].values >= filterconf['CONSTRAINT_MIN_ZH'][0])
-        cond3 = np.logical_and(ZH_agg['ZH_mean'] >  filterconf['CONSTRAINT_MAX_ZH'][1],
-               6 * gaugetab['RRE150Z0'].values <=  filterconf['CONSTRAINT_MIN_ZH'][0])
-        
-        invalid = np.logical_or(cond1,cond2)
-        invalid = np.logical_or(invalid,cond3)
-        invalid = np.logical_or(invalid,cond3)
-        invalid = np.array(invalid)
-        if tend != None:
-            tend_unix = (tend - datetime.datetime(1970,1,1) ).total_seconds()
-            invalid[gaugetab['TIMESTAMP'] > tend_unix] = 1
-        if tstart != None:
-            tstart_unix = (tstart - datetime.datetime(1970,1,1) ).total_seconds()
-            invalid[gaugetab['TIMESTAMP'] < tstart_unix] = 1
-        invalid[np.isnan(gaugetab['RRE150Z0'])] = 1
-        
-        ###############################################################################
-        # Prepare training dataset
-        ###############################################################################
-        
-        gaugetab = gaugetab[~invalid]
-        
         for model in features_dic.keys():
+
+            vweights = 10**(config[model]['VERT_AGG']['BETA'] * (radartab['HEIGHT']/1000.)) # vert. weights
+
+            filterconf = config[model]['FILTERING'].copy()
+            logging.info('Computing data filter')
+            logging.info('List of stations to ignore {:s}'.format(','.join(filterconf['STA_TO_REMOVE'])))
+            logging.info('Start time {:s}'.format(str(tstart)))
+            logging.info('End time {:s}'.format(str(tend)))           
+            logging.info('ZH must be > {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MIN_ZH'][1],
+                                                filterconf['CONSTRAINT_MIN_ZH'][0]))   
+            logging.info('ZH must be < {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MAX_ZH'][1],
+                                                filterconf['CONSTRAINT_MAX_ZH'][0]))    
+
+            ZH_agg = vert_aggregation(pd.DataFrame(radartab['ZH_mean']),
+                                        vweights,
+                                        grp_vertical,
+                                        True, radartab['VISIB_mean'])
+            cond1 = np.array(np.isin(gaugetab['STATION'], filterconf['STA_TO_REMOVE']))
+            cond2 = np.logical_and(ZH_agg['ZH_mean'] < filterconf['CONSTRAINT_MIN_ZH'][1],
+                6 * gaugetab['RRE150Z0'].values >= filterconf['CONSTRAINT_MIN_ZH'][0])
+            cond3 = np.logical_and(ZH_agg['ZH_mean'] >  filterconf['CONSTRAINT_MAX_ZH'][1],
+                6 * gaugetab['RRE150Z0'].values <=  filterconf['CONSTRAINT_MIN_ZH'][0])
+            
+            invalid = np.logical_or(cond1,cond2)
+            invalid = np.logical_or(invalid,cond3)
+            invalid = np.logical_or(invalid,cond3)
+            invalid = np.array(invalid)
+
+            if tend != None:
+                tend_unix = (tend - datetime.datetime(1970,1,1) ).total_seconds()
+                invalid[gaugetab['TIMESTAMP'] > tend_unix] = 1
+            if tstart != None:
+                tstart_unix = (tstart - datetime.datetime(1970,1,1) ).total_seconds()
+                invalid[gaugetab['TIMESTAMP'] < tstart_unix] = 1
+            invalid[np.isnan(gaugetab['RRE150Z0'])] = 1
+
+            ###############################################################################
+            # Prepare training dataset
+            ###############################################################################
+        
+            gaugetab_train = gaugetab[~invalid].copy()
+        
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))                
             features_VERT_AGG = vert_aggregation(radartab[features_dic[model]], 
                                  vweights, grp_vertical,
-                                 config['VERT_AGG']['VISIB_WEIGHTING'],
+                                 config[model]['VERT_AGG']['VISIB_WEIGHTING'],
                                  radartab['VISIB_mean'])
             features_VERT_AGG = features_VERT_AGG[~invalid]
                         
@@ -395,34 +405,129 @@ class RFTraining(object):
                 elif '_mean' in f:
                     f = f.replace('_mean','')
                 features.append(f)
+            
+            Y = np.array(gaugetab_train['RRE150Z0'] * 6)
+            valid = np.all(np.isfinite(features_VERT_AGG),axis=1)
 
-            reg = RandomForestRegressorBC(degree = 1, 
-                          bctype = config['BIAS_CORR'],
-                          visib_weighting = config['VERT_AGG']['VISIB_WEIGHTING'],
-                          variables = features,
-                          beta = config['VERT_AGG']['BETA'],
-                          **config['RANDOMFOREST_REGRESSOR'])
-            
-            Y = np.array(gaugetab['RRE150Z0'] * 6)
+            # Add some metadata
+            config[model]['FILTERING']['N_datapoints'] = len(Y[valid])
+            config[model]['FILTERING']['GAUGE_min_10min_mm_h'] = np.nanmin(Y[valid])
+            config[model]['FILTERING']['GAUGE_max_10min_mm_h'] = np.nanmax(Y[valid])
+            config[model]['FILTERING']['GAUGE_median_10min_mm_h'] = np.nanmedian(Y[valid])
+
+            config[model]['FILTERING']['TIME_START'] = np.nanmin(gaugetab['TIMESTAMP'][~invalid])
+            config[model]['FILTERING']['TIME_END'] = np.nanmax(gaugetab['TIMESTAMP'][~invalid])
+
+            config[model]['FILTERING']['STA_INCLUDED'] = gaugetab['STATION'][~invalid].unique()
+            config[model]['FILTERING']['CREATED'] = datetime.datetime.utcnow().strftime('%d %b %Y %H:%M UTC')
+
             logging.info('')
-            
             logging.info('Training model on gauge data')
 
-            valid = np.all(np.isfinite(features_VERT_AGG),axis=1)
+            reg = RandomForestRegressorBC(degree = 1, 
+                          bctype = config[model]['BIAS_CORR'],
+                          visib_weighting = config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                          variables = features,
+                          beta = config[model]['VERT_AGG']['BETA'],
+                          metadata = config[model]['FILTERING'],
+                          **config[model]['RANDOMFOREST_REGRESSOR'])
+
             reg.fit(features_VERT_AGG[valid], Y[valid])
             
             out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}.p'.format(model, 
-                                                  config['VERT_AGG']['BETA'],
-                                                  config['BIAS_CORR'])))
+                                                  config[model]['VERT_AGG']['BETA'],
+                                                  config[model]['BIAS_CORR'])))
             logging.info('Saving model to {:s}'.format(out_name))
             
             pickle.dump(reg, open(out_name, 'wb'))
-        
+
+    def feature_selection(self, features):
+        """
+        The relative importance of all available input vairables aggregated to 
+        to the ground and to choose the most important ones, an approach 
+        from Han et al. (2016) was adpated to for regression.
+        See Wolfensberger et al. (2021) for further information.
+
+        Parameters
+        -----------
+        features : dic
+            A dictionnary with all eligible features to test
+        output_folder : str
+            Path to where to store the scores
+        tstart: str (YYYYMMDDHHMM)
+            A date to define a starting time for the input data
+        tend: str (YYYYMMDDHHMM)
+            A date to define the end of the input data
+        """
+        logging.info('TODO')
+
+        # MODEL = ['RADAR', 'zh_visib_mean', 'zv_visib_mean','KDP_mean','RHOHV_mean', 
+        #         'T', 'HEIGHT','VISIB_mean','AH_mean','RVEL_mean','SW_mean', 'NH_mean']
+
+        # #model= ['zhv','zvv','zdr','KDP','RHOHV']
+        # nt = 20
+        # max_depth = 20
+        # X_train = radar
+        # weights = lambda h: 10**(-0.5 * h/1000)
+        # weights = weights(radar['HEIGHT'])
+        # X_train = vert_aggregation(radar[MODEL], weights, grp_vertical)
+        # valid = np.all(np.isfinite(X_train),axis=1)
+
+        # gauge = gauge[valid]
+        # Y_train = gauge['RRE150Z0'] * 6
+        # grp_hourly = grp_hourly[valid]
+        # X_train = X_train[valid]
+
+        # reg = RandomForestRegressor(nt, max_depth = max_depth, verbose = 10, n_jobs = 12)
+        # K = 5
+        # idx = split_event(gauge['TIMESTAMP'], K)
+
+        # scores = {}
+        # for col in X_train.columns:
+        #     scores[col] = []
+            
+        # for i in range(K):
+        #     print(i)
+        #     reg.fit(X_train[idx != i], Y_train[idx != i])
+        #     rmse = errmetrics(reg.predict(X_train[idx == i]), Y_train[idx == i])['RMSE']   
+            
+        #     xtest = X_train[idx == i].values
+        #     for j in range(xtest.shape[1]):
+        #         X_t = xtest.copy()
+        #         np.random.shuffle(X_t[:,j])
+        #         shuff_rmse = errmetrics(reg.predict(X_t), Y_train[idx == i])['RMSE']   
+        #         scores[X_train.columns[j]].append((rmse - shuff_rmse) / rmse)
+                
+        # for k in scores.keys():
+        #     scores[k] = np.mean(scores[k])
+            
+        # scores['FRAC_RADAR'] = np.sum(np.array(list(scores.values()))[0:5])
+        # kk = list(scores.keys())
+        # for k in kk:
+        #     if 'prop' in k:
+        #         del scores[k]
+
+        # plt.figure(figsize = (10,4))
+        # plt.title('Relative increase in RMSE when randomly shuffling feature', fontsize = 16)
+        # x = -np.array(list(scores.values()))
+        # lab = ['Zh','Zv','KDP','FRAC_RADAR','RHOHV','SW','T','VISIB','HEIGHT','AH'
+        #         ,'NOISE_H',
+        #         'RVEL']
+        # a = np.argsort(-x)
+        # plt.bar(range(len(scores.values())),x[a])
+        # plt.gca().set_xticks(range(len(scores.values())))
+        # plt.gca().set_xticklabels(lab, rotation = 90)
+        # plt.savefig(OUTPUT_FOLDER + 'rel_importances.png',dpi = 300, bbox_inches = 'tight')
+
+
+
              
     def model_intercomparison(self, features_dic, intercomparison_configfile, 
-                              output_folder, reference_products = ['CPC','RZC'],
-                              bounds10 = [0,2,10,100], bounds60 = [0,1,10,100],
-                              K = 5):
+                              output_folder, reference_products = ['CPCH','RZC'],
+                              bounds10 = [0,2,10,100], bounds60 = [0,2,10,100],
+                              cross_val_type='years', K=5, years=None,
+                              tstart=None, tend=None, station_scores=False,
+                              save_model=False):
         """
         Does an intercomparison (cross-validation) of different RF models and
         reference products (RZC, CPC, ...) and plots the performance plots
@@ -455,13 +560,28 @@ class RFTraining(object):
             list of precipitation bounds for which to compute scores separately
             at hourly time resolution
             [0,1,10,100] will give scores in range [0-1], [1-10] and [10-100]
-        K : int
+        cross_val_type: str
+            Define how the split of events is done. Options are "random events", 
+            "years" and "seasons" (TODO)
+        K : int or None
             Number of splits in iterations do perform in the K fold cross-val
-                    
+        years : list or None
+            List with the years that should be used in cross validation
+            Default is [2016,2017,2018,2019,2020,2021]
+        tstart: str (YYYYMMDDHHMM)
+            A date to define a starting time for the input data
+        tend: str (YYYYMMDDHHMM)
+            A date to define the end of the input data
+        station_scores: True or False (Boolean)
+            If True, performance scores for all stations will be calculated
+            If False, only the scores across Switzerland are calculated
+        save_model: True or False (Boolean)
+            If True, all models of the cross-validation are saved into a pickle file
+            This is useful for reproducibility
         """
         
         # dict of statistics to compute for every score over the K-fold crossval,
-        stats =  {'mean': np.nanmean, 'std': np.nanstd}
+        stats =  {'mean': np.nanmean, 'std': np.nanstd, 'min': np.nanmin, 'max': np.nanmax}
         
         config = envyaml(intercomparison_configfile)
         
@@ -471,21 +591,50 @@ class RFTraining(object):
         if not all([m in keysconfig for m in modelnames]):
             raise ValueError('Keys in features_dic are not all present in intercomparison config file!')
   
+        if (cross_val_type == 'years') and (years == None):
+            logging.info('Cross validation years defined, but not specified, years from 2016-2021 used')
+            K = list(range(2016,2022,1))
+        elif (cross_val_type == 'years') and (years != None):
+            K = years
+
+        if (cross_val_type == 'random events') and (K != None):
+            K = list(range(K))
+        elif (cross_val_type == 'random events') and (K == None):
+            logging.info('Cross validation with random events defined but not specified, applying 5-fold CV')
+            K = list(range(5))
+
         #######################################################################
         # Read data
         #######################################################################
-        logging.info('Reading input data')
+        logging.info('Reading input data from {}'.format(self.input_location))
         radartab = pd.read_parquet(str(Path(self.input_location, 'radar_x0y0.parquet')))
         refertab = pd.read_parquet(str(Path(self.input_location, 'reference_x0y0.parquet')))
         gaugetab = pd.read_parquet(str(Path(self.input_location, 'gauge.parquet')))
         grp = pickle.load(open(str(Path(self.input_location, 'grouping_idx_x0y0.p')),'rb'))
         grp_vertical = grp['grp_vertical']
         grp_hourly = grp['grp_hourly']
-        
+
+        #######################################################################
+        # Filter time
+        #######################################################################
+        if tstart != None:
+            try:
+                tstart = datetime.datetime.strptime(tstart,
+                        '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc).timestamp()
+            except:
+                tstart = gaugetab['TIMESTAMP'].min()
+                logging.info('The format of tstart was wrong, taking the earliest date')
+        if tend != None:
+            try:
+                tend = datetime.datetime.strptime(tend,
+                        '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc).timestamp()
+            except:
+                tend = gaugetab['TIMESTAMP'].max()
+                logging.info('The format of tend was wrong, taking the earliest date')
+
         ###############################################################################
         # Compute additional data if needed
         ###############################################################################
-    
         # currently the only supported additional features is zh (refl in linear units)
         # and DIST_TO_RAD{A-D-L-W-P} (dist to individual radars)
         # Get list of unique features names
@@ -506,7 +655,6 @@ class RFTraining(object):
                            (radartab['Y'] - info_radar['Y'][val])**2) / 1000.
                     radartab['DIST_TO_RAD' + str(val)] = dist
                     
-        
         ###############################################################################
         # Compute vertical aggregation
         ###############################################################################
@@ -532,7 +680,19 @@ class RFTraining(object):
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
                        axis = 1)
-        
+        # if (tstart != None) and (tend == None):
+        #     (gaugetab['TIMESTAMP'] >= tstart)
+        # elif (tstart == None) and (tend != None):
+        #     timeperiod = (gaugetab['TIMESTAMP'] <= tend)
+        # elif (tstart != None) and (tend != None):
+        #     timeperiod = (gaugetab['TIMESTAMP'] >= tstart) & (gaugetab['TIMESTAMP'] <= tend)
+        # else:
+        #     timeperiod = valid
+        if (tstart != None):
+            valid[(gaugetab['TIMESTAMP'] < tstart)] = False
+        if (tend != None):
+            valid[(gaugetab['TIMESTAMP'] > tend)] = False
+
         for model in modelnames:
             features_VERT_AGG[model] = features_VERT_AGG[model][valid]
         
@@ -546,15 +706,24 @@ class RFTraining(object):
         
         T = np.array(gaugetab['TRE200S0'])  # Reference temp in degrees
         # features must have the same size as gauge
-        idx_testtrain = split_event(gaugetab['TIMESTAMP'].values, K)
-        
-        
+
+        if cross_val_type == 'random_events':
+            idx_testtrain = split_event(gaugetab['TIMESTAMP'].values, len(K))
+        elif cross_val_type == 'years':
+            idx_testtrain = split_years(gaugetab['TIMESTAMP'].values, years=K)
+        else:
+            logging.error('Please define your cross validation separation')
+
+
         modelnames.extend(reference_products)
 
-             
         all_scores = {'10min':{},'60min':{}}
         all_stats = {'10min':{},'60min':{}}
         
+        if station_scores == True:
+            all_station_scores = {'10min': {}, '60min': {}}
+            all_station_stats = {'10min': {}, '60min': {}}
+
         ###############################################################################
         # Initialize outputs
         ###############################################################################
@@ -564,18 +733,31 @@ class RFTraining(object):
             all_scores['60min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
                          'test':  {'solid':[],'liquid':[],'all':[]}}
             
-    
             all_stats['10min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
                          'test':  {'solid':{},'liquid':{},'all':{}}}
             
             all_stats['60min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
                          'test':  {'solid':{},'liquid':{},'all':{}}}
             
-        for k in range(K):
-            logging.info('Run {:d}/{:d} of cross-validation'.format(k + 1, K))
+            if station_scores == True:
+                # for station scores we will limit the output to test data only
+                for timeagg in all_station_scores.keys():
+                    all_station_scores[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
+                    all_station_stats[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
+            
+
+        for k in K:
+            logging.info('Run {:d}/{:d}-{:d} of cross-validation'.format(k,np.nanmin(K),np.nanmax(K)))
+
             test = idx_testtrain == k
             train = idx_testtrain != k
             
+            if cross_val_type == 'years':
+                logging.info('Time range for testing set: {} - {} with {:3.2f}% of datapoints'.format(
+                                datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].min()),
+                                datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].max()),
+                                gaugetab['TIMESTAMP'][test].count()/ gaugetab['TIMESTAMP'].count()*100))
+
             # Get reference values
             R_test_60 = np.squeeze(np.array(pd.DataFrame(R[test])
                             .groupby(grp_hourly[test]).mean()))
@@ -607,17 +789,28 @@ class RFTraining(object):
                 # 10 min
                 logging.info('at 10 min')
 
+                # Performing fit
                 if model not in reference_products:
                     logging.info('Training model on gauge data')
-                    regressors[model].fit(features_VERT_AGG[model][train],
-                                          R[train])
+
+                    regressors[model].fit(features_VERT_AGG[model][train],R[train])
                     R_pred_10 = regressors[model].predict(features_VERT_AGG[model][test])
+    
+                    if (save_model == True):
+                        regressors[model].variables = features_VERT_AGG[model].columns
+                        out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}_excl_{}.p'.format(model, 
+                                                            config[model]['VERT_AGG']['BETA'],
+                                                            config[model]['BIAS_CORR'],k)))
+                        logging.info('Saving model to {:s}'.format(out_name))
+                        pickle.dump(regressors[model], open(out_name, 'wb'))
+
                 else:
                     R_pred_10 = refertab[model].values[test]
-                    
+                
+
                 scores_solid = perfscores(R_pred_10[sol_10_test],
-                                                 R[test][sol_10_test],
-                                                 bounds = bounds10)
+                                          R[test][sol_10_test],
+                                          bounds = bounds10)
                
                 all_scores['10min'][model]['test']['solid'].append(scores_solid)
                 
@@ -652,7 +845,56 @@ class RFTraining(object):
                                                  bounds = bounds60)
                 all_scores['60min'][model]['test']['all'].append(scores_all)
                 
-                  
+                if station_scores == True:
+                    logging.info('Calculating station performances for model {}'.format(model)) 
+                    
+                    stations_60 = np.array(gaugetab['STATION'][test]
+                                    .groupby(grp_hourly[test]).first())
+
+                    df = pd.DataFrame(columns=gaugetab['STATION'].unique(),      
+                    index = scores_all['all'].keys())
+
+                    for timeagg in all_station_scores.keys():
+                        all_station_scores[timeagg][model]['all'][k] = df.copy()
+                        all_station_scores[timeagg][model]['liquid'][k] = df.copy()
+                        all_station_scores[timeagg][model]['solid'][k] = df.copy()
+                    
+                    for sta in gaugetab['STATION'].unique():
+                        sta_idx = (gaugetab['STATION'][test] == sta)
+                        sta_idx_60 = (stations_60 == sta)
+
+                        try:                            
+                            scores_all_10 = perfscores(R_pred_10[sta_idx],
+                                                    R[test][sta_idx])['all']
+                            all_station_scores['10min'][model]['all'][k][sta] = scores_all_10
+                            
+                            scores_all_60 = perfscores(R_pred_60[sta_idx_60],R_test_60[sta_idx_60])['all']
+                            all_station_scores['60min'][model]['all'][k][sta] = scores_all_60
+                            
+                            del scores_all_10, scores_all_60
+                        except:
+                            logging.info('No performance score for {}'.format(sta))
+                        try:                            
+                            scores_liquid_10 = perfscores(R_pred_10[liq_10_test & sta_idx],
+                                                    R[test][liq_10_test & sta_idx])['all']
+                            all_station_scores['10min'][model]['liquid'][k][sta] = scores_liquid_10
+                            
+                            scores_liquid_60 = perfscores(R_pred_60[liq_60_test & sta_idx_60],
+                                                    R_test_60[liq_60_test & sta_idx_60])['all']
+                            all_station_scores['60min'][model]['liquid'][k][sta] = scores_liquid_60  
+                        except:
+                            logging.info('No performance score for liquid precip for {}'.format(sta))
+                        try:                            
+                            scores_solid_10 = perfscores(R_pred_10[sol_10_test & sta_idx],
+                                                    R[test][sol_10_test & sta_idx])['all']  
+                            all_station_scores['10min'][model]['solid'][k][sta] = scores_solid_10 
+                            
+                            scores_solid_60 = perfscores(R_pred_60[sol_60_test & sta_idx_60],
+                                                        R_test_60[sol_60_test & sta_idx_60])['all']
+                            all_station_scores['60min'][model]['solid'][k][sta] = scores_solid_60
+                        except:
+                            logging.info('No performance score for solid precip for {}'.format(sta))
+
                 # train
                 logging.info('Evaluating train error')
                 # 10 min
@@ -688,21 +930,21 @@ class RFTraining(object):
                 # Evaluate model 10 min
     
                 scores_solid = perfscores(R_pred_60[sol_60_train],
-                                                 R_train_60[sol_60_train],
-                                                 bounds = bounds60)
+                                        R_train_60[sol_60_train],
+                                        bounds = bounds60)
                 all_scores['60min'][model]['train']['solid'].append(scores_solid)
                 
                 scores_liquid = perfscores(R_pred_60[liq_60_train],
-                                                 R_train_60[liq_60_train],
-                                                 bounds = bounds60)
+                                        R_train_60[liq_60_train],
+                                         bounds = bounds60)
                 all_scores['60min'][model]['train']['liquid'].append(scores_liquid)
                 
-                scores_all = perfscores(R_pred_60,
-                                                 R_train_60,
-                                                 bounds = bounds60)
+                scores_all = perfscores(R_pred_60,R_train_60,
+                                        bounds = bounds60)
                 all_scores['60min'][model]['train']['all'].append(scores_all)
-                
-        # Compute statistics
+
+
+        # Compute statistics after the 5-fold cross validation
         for agg in all_scores.keys():
             for model in all_scores[agg].keys():
                 for veriftype in all_scores[agg][model].keys():
@@ -728,12 +970,42 @@ class RFTraining(object):
                                 for stat in stats.keys():
                                     sdata = stats[stat](datasc)
                                     all_stats[agg][model][veriftype][preciptype][bound][score][stat] = sdata
-                                 
+
+        if station_scores == True:
+            for agg in all_station_scores.keys():
+                for model in all_station_scores[agg].keys():
+                    for preciptype in all_station_scores[agg][model].keys():
+                        df = pd.DataFrame(columns=gaugetab['STATION'].unique())
+                        perfs = {'RMSE': df.copy(), 'scatter':df.copy(), 
+                                 'logBias':df.copy(), 'ED':df.copy(), 'N':df.copy(),
+                                 'mest':df.copy(), 'mref':df.copy()}
+                        all_station_stats[agg][model][preciptype] = {}
+                        for score in perfs.keys():
+                            for kidx in all_station_scores[agg][model][preciptype].keys():
+                                df_dummy = all_station_scores[agg][model][preciptype][kidx].copy()
+                                perfs[score] = perfs[score].append(df_dummy.loc[df_dummy.index == score])
+            
+                            all_station_stats[agg][model][preciptype][score] = pd.concat([perfs[score].mean().rename('mean'),
+                                                                                          perfs[score].std().rename('std')],
+                                                                                         axis=1)
+
+
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
         plot_crossval_stats(all_stats, output_folder)
         name_file = str(Path(output_folder, 'all_scores.p'))
         pickle.dump(all_scores, open(name_file, 'wb'))
         name_file = str(Path(output_folder, 'all_scores_stats.p'))
-        pickle.dump(all_stats, open(name_file, 'wb'))        
+        pickle.dump(all_stats, open(name_file, 'wb'))     
         
+        if station_scores == True:
+            name_file = str(Path(output_folder, 'all_station_scores.p'))
+            pickle.dump(all_station_scores, open(name_file, 'wb'))
+            name_file = str(Path(output_folder, 'all_station_stats.p'))
+            pickle.dump(all_station_stats, open(name_file, 'wb'))
+        
+        
+        logging.info('Finished script and saved all scores to {}'.format(output_folder))
         return all_scores, all_stats
             

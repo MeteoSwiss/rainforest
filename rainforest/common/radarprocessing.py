@@ -496,7 +496,7 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
             list with timesteps, path and filename of HZT files only
             typically derived in database.retrieve_radar_data.Updater.retrieve_radar_files()
         tsteps_min: int
-            resolution of new fields
+            resolution of new fields in minutes
 
         Returns
         ----------
@@ -504,7 +504,7 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     """
     if time.minute != 0:
         # Minutes are set to 0 below, here is only a notification
-        logging.info('HZT temporal interpolation timestamp {} set to 0 minutes'.format(time))
+        logging.info('HZT temporal interpolation timestamp {} set to HH:00'.format(time))
 
     tstamp_hzt0 = datetime.datetime(time.year, time.month, time.day, time.hour,0)
     tstamp_hzt1 = tstamp_hzt0+ datetime.timedelta(hours=1)
@@ -515,7 +515,7 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
 
     # Get the incremental difference for e.g. 5min steps (divided by 12):
     dt = datetime.timedelta(minutes=tsteps_min)
-    ndt = np.arange(1,12)
+    ndt = np.arange(1,int(60/tsteps_min))
     deltaHZT = (hzt[tstamp_hzt1]-hzt[tstamp_hzt0])/ (len(ndt)+1)
 
     # Loop through all min increments and add the calculated increment of deltaHZT

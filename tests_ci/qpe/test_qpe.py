@@ -14,20 +14,30 @@ def test_qpe():
     cwd = os.path.dirname(os.getenv('PYTEST_CURRENT_TEST')) + '/'
 
     # Get RF model
-    models = {}
-    models['RF_dualpol'] = read_rf('RF_dualpol_BETA_-0.5_BC_spline.p')
+    filename = {}
+    filename['RF_dualpol'] = 'RF_dualpol_BETA_-0.5_BC_spline.p'
+    filename['RFO'] = 'RFO_BETA_-0.5_BC_spline_trained_2016_2019.p'
 
-    qpeproc = QPEProcessor(str(Path(cwd, 'test_config.yml')), models)
+    names = {}
+    names['RF_dualpol'] = 'RFQ'
+    names['RFO'] = 'RFO'
 
-    t0 = datetime.datetime(2022,9,28,5,10 )
-    t1 = datetime.datetime(2022,9,28,5,10 )
+    t0 = datetime.datetime(2022,9,28,5,10)
+    t1 = datetime.datetime(2022,9,28,5,10)
+    tstr = '%y%j%H%M'
 
-    qpeproc.compute(cwd, t0,t1, test_mode = True)
-    qpe = read_cart(str(Path(cwd, 'RF_dualpol', 'RFQ222710510.h5')))
-    qpe_field = qpe.data
+    for model in filename.keys():
+        
+        models = {}
+        models[model] = read_rf(filename[model])
+        
+        qpeproc = QPEProcessor(str(Path(cwd, 'test_config.yml')), models)
+        qpeproc.compute(cwd, t0,t1, basename = '{}{}'.format(names[model], tstr), test_mode = True)
+        qpe = read_cart(str(Path(cwd, model, datetime.datetime.strftime(t1, '{}{}.h5'.format(names[model], tstr)))))
+        qpe_field = qpe.data
 
-    # Assertions
-    assert qpe_field.shape == (640, 710)
-    assert len(np.unique(qpe_field)) > 2
+        # Assertions
+        assert qpe_field.shape == (640, 710)
+        assert len(np.unique(qpe_field)) > 2
 
-    shutil.rmtree(str(Path(cwd, 'RF_dualpol')))
+        shutil.rmtree(str(Path(cwd, model)))
