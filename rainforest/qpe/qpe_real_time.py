@@ -289,8 +289,6 @@ class QPEProcessor_RT(object):
 
         # Get list of available files
         content_zip = np.array(os.listdir(folder_in))
-        times_zip = np.array([datetime.datetime.strptime(c[3:12],
-                            '%y%j%H%M') for c in content_zip])
     
         if pattern != None:
             if pattern_type == 'shell':
@@ -301,6 +299,10 @@ class QPEProcessor_RT(object):
                             if re.match(os.path.basename(c), pattern) != None]
             else:
                 raise ValueError('Unknown pattern_type, must be either "shell" or "regex".')
+    
+        # Derive datetime of each file
+        times_zip = np.array([datetime.datetime.strptime(c[3:12],
+                    '%y%j%H%M') for c in content_zip])
     
         # Get a list of all files to retrieve
         conditions = (times_zip == time)
