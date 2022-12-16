@@ -255,7 +255,7 @@ OFFSET_CCS4 = [297,-100]
 # Folder depends on server:
 if 'lom' in socket.gethostname():
     FOLDER_RADAR = '/srn/data/'
-    FOLDER_ISO0 = '/srn/data/'
+    FOLDER_ISO0 = '/srn/data/HZT/'
 elif 'tsa' in socket.gethostname():
     FOLDER_DATABASE = '/store/msrad/radar/radar_database/'
     FOLDER_RADAR = '/store/msrad/radar/swiss/data/'
