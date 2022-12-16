@@ -510,12 +510,11 @@ class QPEProcessor_RT(object):
             
             # Get lead time file
             if i == 0 :
-                logging.info('Processing LEAD time '+str(t))
                 for k in self.models.keys():
-                    tL_x_file = self.config['TMP_FOLDER']+'/'+datetime.datetime.strftime(t, basename)+\
-                                '_{}_xprev.txt'.format(k)
-                    tL_qpe_file = self.config['TMP_FOLDER']+'/'+datetime.datetime.strftime(t, basename)+\
-                                '_{}_qpeprev.txt'.format(k)
+                    tL_x_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
+                                datetime.datetime.strftime(t, basename)+'_xprev.npy'
+                    tL_qpe_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
+                                datetime.datetime.strftime(t, basename)+'_qpeprev.npy'
                     one_file_missing = False
                     try:
                         X_prev[k] = np.load(tL_x_file)
@@ -524,9 +523,13 @@ class QPEProcessor_RT(object):
                         one_file_missing = True
                 # If all the files could be loaded, go directly to current timestep
                 if one_file_missing == False:
+                    logging.info('Already available: LEAD time '+str(t))
                     continue
+                else:
+                    logging.info('Processing LEAD time '+str(t))
+            else:
+                logging.info('Processing time '+str(t))
             
-            logging.info('Processing time '+str(t))
 
             # Retrieve data for time range
             self.fetch_data_RT(t)
@@ -562,7 +565,7 @@ class QPEProcessor_RT(object):
             radobjects = {}
             for rad in self.config['RADARS']:                
                 # if radar does not exist, add to missing file list
-                if self.radar_files[rad] == None:
+                if (rad not in self.radar_files) or (self.radar_files[rad] == None):
                     self.missing_files[rad] = t
                     continue
 
@@ -687,15 +690,19 @@ class QPEProcessor_RT(object):
 
                 X = np.array(X).T
                 
-                if i == 0:
+                if (i == 0) or (k not in X_prev.keys()):
                     X_prev[k] = X
 
                 # Take average between current timestep and t-5min
                 Xcomb = np.nanmean((X_prev[k] , X),axis = 0)
                 X_prev[k]  = X
-                Xcomb[np.isnan(Xcomb)] = 0
+                
+                # Save files in a temporary format
+                np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
+                            '_xprev', X)
 
                 # Remove axis with only zeros
+                Xcomb[np.isnan(Xcomb)] = 0
                 validrows = (Xcomb>0).any(axis=1)
 
                 # Convert radar data to precipitation estimates
@@ -722,6 +729,9 @@ class QPEProcessor_RT(object):
                 disag[np.isnan(disag)] = 0
                 qpe = qpe * disag
                 
+                if self.config['SAVE_NON_POSTPROCESSED_DATA']:
+                    qpe_non_pp = qpe.copy()
+                
                 """Part five - Postprocessing"""
                 if self.config['OUTLIER_REMOVAL']:
                     qpe = _outlier_removal(qpe)
@@ -729,32 +739,57 @@ class QPEProcessor_RT(object):
                 if self.config['GAUSSIAN_SIGMA'] > 0:
                     qpe = gaussian_filter(qpe,
                        self.config['GAUSSIAN_SIGMA'])
-
-                if i == 0:
-                    qpe_prev[k] = qpe
-                    # Because of lead time, we can go out here:
-                    logging.info('Processing time '+str(t)+' was only used as lead time and the final QPE map will not be saved')
-                    continue
                 
                 # Save files in a temporary format
-                np.save(self.config['TMP_FOLDER']+'/'+datetime.datetime.strftime(t, basename)+\
-                            '{}_xprev.txt'.format(k), X_prev[k])
-                np.save(self.config['TMP_FOLDER']+'/'+datetime.datetime.strftime(t, basename)+\
-                            '{}_qpeprev.txt'.format(k), qpe_prev[k])
+                np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
+                            '_qpeprev', qpe)
 
+                if (i == 0) or (k not in qpe_prev.keys()):
+                    qpe_prev[k] = qpe
+                    # Because this is only the lead time, we go out here:
+                    logging.info('Processing time '+str(t)+' was only used as lead time and the final QPE map will not be saved')
+                    continue
+
+                """ for advection correction use separate path """
                 comp = np.array([qpe_prev[k].copy(), qpe.copy()])
                 qpe_prev[k] = qpe
+                
                 if self.config['ADVECTION_CORRECTION'] and i > 0:
                     if not _PYSTEPS_AVAILABLE:
                         logging.error("Pysteps is not available, no qpe disaggregation will be performed!")
-                    qpe = _disaggregate(comp)
+                    qpe_ac = _disaggregate(comp)
 
-                tstr = datetime.datetime.strftime(t, basename)
-                filepath = output_folder + '/' + k
-                if self.config['ADVECTION_CORRECTION']:
-                    filepath += '_AC'
-
-                filepath += '/' + tstr
-                
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_AC/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    self.save_output(qpe_ac, t, filepath + tstr)
+                    
                 """Part six - Save output"""
+                tstr = datetime.datetime.strftime(t, basename)
+                filepath = output_folder + '/' + k                
+                filepath += '/' + tstr
                 self.save_output(qpe, t, filepath)
+                
+                if self.config['SAVE_NON_POSTPROCESSED_DATA']:
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_O0G0/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    self.save_output(qpe, t, filepath+tstr)
+                    
+                    # With outlier removal (O1), but without Gaussian smoothing (G0)
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_O1G0/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    qpe_temp = _outlier_removal(qpe_non_pp)
+                    self.save_output(qpe_temp, t, filepath+tstr)
+                    
+                    # Without outlier removal (O0), but without Gaussian smoothing (G1)
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_O0G1/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    qpe_temp = gaussian_filter(qpe_non_pp, self.config['GAUSSIAN_SIGMA'])
+                    self.save_output(qpe_temp, t, filepath+tstr)
