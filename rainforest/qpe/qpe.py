@@ -610,8 +610,8 @@ class QPEProcessor(object):
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
                 disag[np.isnan(disag)] = 0
                 qpe = qpe * disag
-
-                # Postprocessing
+                
+                """Part five - Postprocessing"""
                 if self.config['OUTLIER_REMOVAL']:
                     qpe = _outlier_removal(qpe)
 
