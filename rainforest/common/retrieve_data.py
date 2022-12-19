@@ -121,7 +121,7 @@ def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type = 's
     folder_out += '/'
     
     suffix =  str(start_time.year)[-2:] + str(start_time.timetuple().tm_yday).zfill(3)
-    folder_in = constants.FOLDER_RADAR + str(start_time.year) + '/' +  suffix + '/'
+    folder_in = constants.FOLDER_ISO0 + str(start_time.year) + '/' +  suffix + '/'
     name_zipfile = 'HZT'+ suffix+'.zip'
     
     try:

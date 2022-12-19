@@ -14,6 +14,8 @@ import glob
 import datetime
 from scipy.stats import mode
 
+import socket
+
 from .object_storage import ObjectStorage
 ObjStorage = ObjectStorage()
 
@@ -246,27 +248,35 @@ BORDER_SHP = shapefile.Reader(str(path_shp))
 ###############
 # Data retrieval
 ###############
-FOLDER_DATABASE = '/store/msrad/radar/radar_database/'
-FOLDER_RADAR = '/store/msrad/radar/swiss/data/'
-FOLDER_RADARH = '/store/msrad/radar/polarHR/data/'
-FOLDER_CPCCV = '/store/msrad/radar/cpc_validation/daily/'
-COSMO1_START = datetime.datetime(2015,10,1)
-COSMO1E_START = datetime.datetime(2019,7,2)
-FOLDER_RADAR = '/store/msrad/radar/swiss/data/'
-FOLDER_COSMO1 = '/store/s83/owm/COSMO-1/'
-FOLDER_COSMO1E = '/store/s83/osm/KENDA-1/'
-FOLDER_COSMO1_T = '/store/s83/owm/COSMO-1/ORDERS/MDR/'
-FOLDER_COSMO1E_T = '/store/s83/osm/COSMO-1E/ORDERS/MDR/'
-FOLDER_COSMO2_T = '/store/msrad/cosmo/cosmo2/data/'
 FILTER_COMMAND = '~owm/bin/fxfilter'
 CONVERT_COMMAND = '~owm/bin/fxconvert'
 OFFSET_CCS4 = [297,-100]
-FILES_COSMO1_T = sorted(glob.glob(FOLDER_COSMO1_T + '*.nc'))
-TIMES_COSMO1_T = np.array([datetime.datetime.strptime(f[-13:-3],'%Y%m%d%H')
-      for f in FILES_COSMO1_T])
-FILES_COSMO1E_T = sorted(glob.glob(FOLDER_COSMO1E_T + '*.nc'))
-TIMES_COSMO1E_T = np.array([datetime.datetime.strptime(f[-13:-3],'%Y%m%d%H')
-      for f in FILES_COSMO1E_T])
+
+# Folder depends on server:
+if 'lom' in socket.gethostname():
+    FOLDER_RADAR = '/srn/data/'
+    FOLDER_ISO0 = '/srn/data/HZT/'
+elif 'tsa' in socket.gethostname():
+    FOLDER_DATABASE = '/store/msrad/radar/radar_database/'
+    FOLDER_RADAR = '/store/msrad/radar/swiss/data/'
+    FOLDER_RADARH = '/store/msrad/radar/polarHR/data/'
+    FOLDER_CPCCV = '/store/msrad/radar/cpc_validation/daily/'
+
+    FOLDER_ISO0 = '/store/msrad/radar/swiss/data/'
+    COSMO1_START = datetime.datetime(2015,10,1)
+    COSMO1E_START = datetime.datetime(2019,7,2)
+    FOLDER_COSMO1 = '/store/s83/owm/COSMO-1/'
+    FOLDER_COSMO1E = '/store/s83/osm/KENDA-1/'
+    FOLDER_COSMO1_T = '/store/s83/owm/COSMO-1/ORDERS/MDR/'
+    FOLDER_COSMO1E_T = '/store/s83/osm/COSMO-1E/ORDERS/MDR/'
+    FOLDER_COSMO2_T = '/store/msrad/cosmo/cosmo2/data/'
+    FILES_COSMO1_T = sorted(glob.glob(FOLDER_COSMO1_T + '*.nc'))
+    TIMES_COSMO1_T = np.array([datetime.datetime.strptime(f[-13:-3],'%Y%m%d%H')
+        for f in FILES_COSMO1_T])
+    FILES_COSMO1E_T = sorted(glob.glob(FOLDER_COSMO1E_T + '*.nc'))
+    TIMES_COSMO1E_T = np.array([datetime.datetime.strptime(f[-13:-3],'%Y%m%d%H')
+        for f in FILES_COSMO1E_T])
+
 
  ###############
  # Radar processing
