@@ -467,7 +467,7 @@ class QPEProcessor_RT(object):
                 write_odim_grid_h5(filepath, grid)
 
     def compute(self, output_folder, t0, t1, timestep = 5,
-                basename = 'RFO%y%j%H%M'):
+                basename = 'RFO%y%j%H%MVH'):
         """
         Computes QPE values for a given time range and stores them in a
         folder, in a binary format
