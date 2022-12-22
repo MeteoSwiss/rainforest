@@ -345,7 +345,8 @@ class QPEProcessor_RT(object):
 
         # Get list of available files
         folder_in = constants.FOLDER_ISO0
-        content_zip = np.array(os.listdir(folder_in))
+        content_zip = np.array([c for c in os.listdir(folder_in) 
+                                if (len(c.split('.')) == 2) and (int(c.split('.')[-1])>=800)])
         
         # HZT files are produced once an hour
         start_time = tstep.replace(minute=0)
@@ -423,9 +424,12 @@ class QPEProcessor_RT(object):
         
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
-            files_hzt = self._retrieve_hzt_RT(tstep)
-            self.files_hzt = split_by_time(files_hzt)
-
+            try:
+                files_hzt = self._retrieve_hzt_RT(tstep)
+                self.files_hzt = split_by_time(files_hzt)
+            except:
+                self.files_hzt = {}
+                logging.error('Failed to retrieve hzt data')
 
     def save_output(self, qpe, t, filepath):
         """ Saves output as defined in config file
@@ -557,8 +561,12 @@ class QPEProcessor_RT(object):
                 T_cosmo_fields = get_COSMO_T(t, radar = self.config['RADARS'])
             if ('ISO0_HEIGHT' in self.cosmo_var) :
                 if ('hzt_cosmo_fields' not in locals()) or (t not in hzt_cosmo_fields):
-                    logging.info('Interpolating HZT fields for timestep {}'.format(t.strftime('%Y%m%d%H%M')))
-                    hzt_cosmo_fields = HZT_hourly_to_5min(t, self.files_hzt, tsteps_min=timestep)
+                    try:
+                        hzt_cosmo_fields = HZT_hourly_to_5min(t, self.files_hzt, tsteps_min=timestep)
+                        logging.info('Interpolating HZT fields for timestep {}'.format(t.strftime('%Y%m%d%H%M')))
+                    except:
+                        hzt_cosmo_fields = { t : np.ma.array(np.empty([640,710]))*np.nan }
+                        logging.info('HZT fields for timestep {} missing, creating empty one'.format(t.strftime('%Y%m%d%H%M')))
 
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
@@ -582,8 +590,8 @@ class QPEProcessor_RT(object):
                 if len(radobjects[rad].radarfields) == 0:
                     self.missing_files[rad] = t
                     logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
-                    return
-                
+                    return                
+
                 # Process the radar data
                 radobjects[rad].visib_mask(self.config['VISIB_CORR']['MIN_VISIB'],
                                 self.config['VISIB_CORR']['MAX_CORR'])
@@ -594,7 +602,7 @@ class QPEProcessor_RT(object):
                     self.missing_files[rad] = t
                     logging.info(e)
                     logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
-                    return 
+                    return
                 
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
@@ -602,13 +610,14 @@ class QPEProcessor_RT(object):
                 if 'T' in self.cosmo_var:
                     radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
                 if 'ISO0_HEIGHT' in self.cosmo_var:
-                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])
+                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])                    
             
             for sweep in self.config['SWEEPS']: # Loop on sweeps
                 logging.info('---')
                 logging.info('Processing sweep ' + str(sweep))
 
-                for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W
+                for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
+                    
                     # If there is no radar file for the specific radar, continue to next radar
                     if rad not in radobjects.keys():
                         logging.info('Processing radar {} - no data for this timestep!'.format(rad))
@@ -713,6 +722,10 @@ class QPEProcessor_RT(object):
                     logging.error('Model failed!')
                     pass
 
+                qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
+                if self.config['SAVE_NON_POSTPROCESSED_DATA']:
+                    qpe_no_temp = qpe.copy()
+
                 """Temporal disaggregation; Rescale qpe through rproxy"""
                 idx_zh = np.where(np.array(model.variables)
                                   == 'zh_VISIB')[0][0]
@@ -725,12 +738,11 @@ class QPEProcessor_RT(object):
                 
                 disag = rproxy / rproxy_mean
                 disag = np.reshape(disag, (NBINS_X, NBINS_Y))
-                qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
                 disag[np.isnan(disag)] = 0
                 qpe = qpe * disag
                 
                 if self.config['SAVE_NON_POSTPROCESSED_DATA']:
-                    qpe_non_pp = qpe.copy()
+                    qpe_no_pp = qpe.copy()
                 
                 """Part five - Postprocessing"""
                 if self.config['OUTLIER_REMOVAL']:
@@ -765,31 +777,42 @@ class QPEProcessor_RT(object):
                         os.mkdir(filepath)
                     self.save_output(qpe_ac, t, filepath + tstr)
                     
-                """Part six - Save output"""
+                """Part six - Save main output"""
                 tstr = datetime.datetime.strftime(t, basename)
                 filepath = output_folder + '/' + k                
                 filepath += '/' + tstr
                 self.save_output(qpe, t, filepath)
                 
                 if self.config['SAVE_NON_POSTPROCESSED_DATA']:
+                    # Coding of folders (0 not applied, 1 applied)
+                    # T: temporal disaggregation
+                    # O: outlier removal
+                    # G: Gaussian smoothing
+                    
                     tstr = datetime.datetime.strftime(t, basename)
-                    filepath = output_folder + '/' + k +'_O0G0/'
+                    filepath = output_folder + '/' + k +'_T0O0G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    self.save_output(qpe, t, filepath+tstr)
+                    self.save_output(qpe_no_temp, t, filepath+tstr)                    
+                    
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_T1O0G0/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    self.save_output(qpe_no_pp, t, filepath+tstr)
                     
                     # With outlier removal (O1), but without Gaussian smoothing (G0)
                     tstr = datetime.datetime.strftime(t, basename)
-                    filepath = output_folder + '/' + k +'_O1G0/'
+                    filepath = output_folder + '/' + k +'_T1O1G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    qpe_temp = _outlier_removal(qpe_non_pp)
+                    qpe_temp = _outlier_removal(qpe_no_pp)
                     self.save_output(qpe_temp, t, filepath+tstr)
                     
                     # Without outlier removal (O0), but without Gaussian smoothing (G1)
                     tstr = datetime.datetime.strftime(t, basename)
-                    filepath = output_folder + '/' + k +'_O0G1/'
+                    filepath = output_folder + '/' + k +'_T1O0G1/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    qpe_temp = gaussian_filter(qpe_non_pp, self.config['GAUSSIAN_SIGMA'])
+                    qpe_temp = gaussian_filter(qpe_no_pp, self.config['GAUSSIAN_SIGMA'])
                     self.save_output(qpe_temp, t, filepath+tstr)
