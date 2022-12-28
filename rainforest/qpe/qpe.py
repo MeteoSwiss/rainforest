@@ -35,7 +35,6 @@ from pyart.aux_io.odim_h5 import proj4_to_dict
 
 logging.getLogger().setLevel(logging.INFO)
 
-
 from ..common import constants
 from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod
 from ..common.lookup import get_lookup
@@ -250,6 +249,7 @@ class QPEProcessor(object):
                 self.rad_heights[rad][sweep] = coords[sweep][2]
 
         self.model_weights_per_var = {}
+        self.cosmo_var = []
         # keys of this dict are the variable used for the RF models, their values
         # is a list of lists with 1. the vertical weighting beta parameters to be used, 2. if visib_weighting is used or not
         for k in self.models.keys():
@@ -258,6 +258,8 @@ class QPEProcessor(object):
                     self.model_weights_per_var[var] = []
                 if models[k].beta not in self.model_weights_per_var[var]:
                     self.model_weights_per_var[var].append((models[k].beta, models[k].visib_weighting))
+                if (var == 'T') or (var == 'ISO0_HEIGHT'):
+                    self.cosmo_var.append(var)
 
     def fetch_data(self, t0, t1):
         """
@@ -288,6 +290,11 @@ class QPEProcessor(object):
                 self.status_files[rad] = split_by_time(statfiles)
             except:
                 logging.error('Failed to retrieve data for radar {:s}'.format(rad))
+                
+        # Retrieve iso0 height files
+        if 'ISO0_HEIGHT' in self.cosmo_var:
+            self.files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],t0,t1)
+            self.files_hzt = split_by_time(self.files_hzt)
 
     def fetch_data_test(self, t0, t1):
         """
@@ -340,8 +347,42 @@ class QPEProcessor(object):
             fname = objsto.check_file(str(Path(INPUT_FOLDER, 'hzt' + datestr1 +'0.p')))
             self.files_hzt = split_by_time([fname])
         except:
-            logging.error('Failed to retrieve HZT data')
+            logging.error('Failed to retrieve hzt data')
+            
+    def save_output(self, qpe, t, filepath):
+        """ Saves output as defined in config file
 
+        Args:
+            qpe (array): Precipitation estimates on grid
+            t (datetime object): timestep of QPE
+            filepath (str): Destination where file is saved
+        """
+        # Output in binary data and .gif format
+        if (self.config['DATA_FORMAT'] == 'DN'):
+            if (self.config['FILE_FORMAT'] == 'DN'):
+                # Find idx from CPC scale
+                qpe = np.searchsorted(constants.SCALE_CPC, qpe)
+                qpe = qpe.astype('B') # Convert to byte
+                qpe[constants.MASK_NAN] = 255
+                qpe.tofile(filepath)
+            else:
+                if (self.config['FILE_FORMAT'] != 'gif'):
+                    logging.error('Invalid file_format with data format DN, using gif output instead')
+                qpe[constants.MASK_NAN] = -99
+                filepath += '.gif'
+                save_gif(filepath, qpe)
+
+        # Output in binary data and .gif format
+        qpe[constants.MASK_NAN] = np.nan
+        if (self.config['DATA_FORMAT'] == 'float'):
+            if (self.config['FILE_FORMAT'] == 'float'):
+                qpe.astype(np.float32).tofile(filepath)
+            else:
+                if (self.config['FILE_FORMAT'] != 'ODIM'):
+                    logging.error('Invalid file format with data format float, using ODIM HDF5 output instead')
+                grid = _qpe_to_chgrid(qpe, t, radar_list=self.missing_files)
+                filepath += '.h5'
+                write_odim_grid_h5(filepath, grid)
 
     def compute(self, output_folder, t0, t1, timestep = 5,
                             basename = 'RFO%y%j%H%M', test_mode = False):
@@ -384,12 +425,6 @@ class QPEProcessor(object):
         else:    
             self.fetch_data(tL, t1)
 
-        # Retrieve iso0 height files
-        if not test_mode:
-            if 'ISO0_HEIGHT' in self.model_weights_per_var.keys():
-                self.files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],tL,t1)
-                self.files_hzt = split_by_time(self.files_hzt)
-
         # Get all timesteps in time range
         n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
         timeserie = tL + np.array([datetime.timedelta(minutes=timestep*i)
@@ -403,11 +438,12 @@ class QPEProcessor(object):
             logging.info('Processing time '+str(t))
 
             # Log missing radar files
-            missing_files = {}
+            self.missing_files = {}
 
             # Initialize RF features
             rf_features_cart = {}
             weights_cart = {}
+            
             for var in self.model_weights_per_var.keys():
                 for weight in self.model_weights_per_var[var]:
                     if weight not in list(rf_features_cart.keys()):
@@ -419,36 +455,31 @@ class QPEProcessor(object):
                     if weight not in weights_cart.keys():
                         weights_cart[weight] = np.zeros((NBINS_X, NBINS_Y))
 
-            """Part one - compute radar variables and mask"""
-            # Find which temperature reference is used: COSMO1-1 temperature or ISO0_HEIGHT
-            if 'T' in self.model_weights_per_var.keys():
-                cosmo_var = 'T'
-            elif 'ISO0_HEIGHT' in self.model_weights_per_var.keys():
-                cosmo_var = 'ISO0_HEIGHT'
-            else:
-                cosmo_var = None
-
             # Get COSMO temperature for all radars for this timestamp
             if not test_mode:
-                if (cosmo_var == 'T') :
+                if ('T' in self.cosmo_var) :
                     T_cosmo_fields = get_COSMO_T(t, radar = self.config['RADARS'])
-                if (cosmo_var == 'ISO0_HEIGHT') :
+                if ('ISO0_HEIGHT' in self.cosmo_var) :
                     if ('hzt_cosmo_fields' not in locals()) or (t not in hzt_cosmo_fields):
-                        logging.info('Interpolating HZT fields for timestep {}'.format(t.strftime('%Y%m%d%H%M')))
-                        hzt_cosmo_fields = HZT_hourly_to_5min(t, self.files_hzt, tsteps_min=timestep)
+                        try:
+                            hzt_cosmo_fields = HZT_hourly_to_5min(t, self.files_hzt, tsteps_min=timestep)
+                            logging.info('Interpolating HZT fields for timestep {}'.format(t.strftime('%Y%m%d%H%M')))
+                        except:
+                            hzt_cosmo_fields = { t : np.ma.array(np.empty([640,710]))*np.nan }
+                            logging.info('HZT fields for timestep {} missing, creating empty one'.format(t.strftime('%Y%m%d%H%M')))
 
+            """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
             radobjects = {}
-
             for rad in self.config['RADARS']:
                 # if radar does not exist, add to missing file list
-                if self.radar_files[rad] == None:
-                    missing_files[rad] = t
+                if (rad not in self.radar_files) or (self.radar_files[rad] == None):
+                    self.missing_files[rad] = t
                     continue
 
                 # if file does not exist, add to missing file list
                 if (t not in self.radar_files[rad]) or (self.radar_files[rad][t] == None):
-                    missing_files[rad] = t
+                    self.missing_files[rad] = t
                     continue
                 
                 # Read raw radar file and create a RADAR object
@@ -457,7 +488,7 @@ class QPEProcessor(object):
                 
                 # if problem with radar file, exclude it and add to missing files list
                 if len(radobjects[rad].radarfields) == 0:
-                    missing_files[rad] = t
+                    self.missing_files[rad] = t
                     logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 
@@ -468,22 +499,38 @@ class QPEProcessor(object):
                 try:
                     radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
                 except Exception as e:
-                    missing_files[rad] = t
+                    self.missing_files[rad] = t
                     logging.info(e)
                     logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
                 if test_mode:
-                    if cosmo_var == 'T':
+                    if 'T' in self.cosmo_var :
                         T_cosmo_fields = pickle.load(open(self.T_files[rad][t1], 'rb'))
-                    if cosmo_var == 'ISO0_HEIGHT':
+                    if 'ISO0_HEIGHT' in self.cosmo_var:
                         hzt_cosmo_fields = pickle.load(open(self.files_hzt[t1], 'rb'))
-
-                if cosmo_var == 'T':
+                        
+                # Add temperature indication to radar object
+                if 'T' in self.cosmo_var:
                     radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
-                if cosmo_var == 'ISO0_HEIGHT':
+                if 'ISO0_HEIGHT' in self.cosmo_var:
                     radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])
+
+                # # Check that there is no issue due to calibration (in development)
+                # try:
+                #     for sweep in self.config['SWEEPS']:
+                #         if sweep != 20:
+                #             print(rad, sweep, float(radobjects[rad].status['status']['sweep'][sweep]['RADAR']['STAT']
+                #                     ['CALIB']['noisepower_frontend_h']['@value']))
+                #         if float(radobjects[rad].status['status']['sweep'][constants.STATUS_QC_FLAG_SWEEP]['RADAR']['STAT']
+                #                 ['CALIB']['noisepower_frontend_h']['@value']) <= constants.STATUS_QC_FLAG_TH:
+                #             #del radobjects[rad].radsweeps[sweep]
+                #             self.missing_files[rad] = t
+                #             logging.info('Removing timestep {:s} of radar {:s} - erroneous data'.format(str(t), rad))
+                # except:
+                #     logging.info('Could not read sweep info')     
+
 
                 # Delete files if config files requires
                 try:
@@ -500,14 +547,18 @@ class QPEProcessor(object):
                 logging.info('---')
                 logging.info('Processing sweep ' + str(sweep))
 
-                for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W
+                for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
+                    
                     # If there is no radar file for the specific radar, continue to next radar
                     if rad not in radobjects.keys():
                         logging.info('Processing radar {} - no data for this timestep!'.format(rad))
                         continue
-                    logging.info('Processing radar ' + str(rad))
-                    if sweep not in radobjects[rad].radsweeps.keys():
+                    elif sweep not in radobjects[rad].radsweeps.keys():
+                        logging.info('Processing sweep {} of {} - no data for this timestep!'.format(sweep, rad))
                         continue
+                    else:
+                        logging.info('Processing radar ' + str(rad))
+                        
                     try:
                         """Part two - retrieve radar data at every sweep"""
                         datasweep = {}
@@ -568,6 +619,7 @@ class QPEProcessor(object):
 
             """Part four - RF prediction"""
             # Get QPE estimate
+            # X: current time step; X_prev: previous timestep (t-5min)
             for k in self.models.keys():
                 model = self.models[k]
                 X = []
@@ -577,23 +629,16 @@ class QPEProcessor(object):
                     X.append(dat.ravel())
 
                 X = np.array(X).T
+                
                 if i == 0:
                     X_prev[k] = X
 
-                idx_zh = np.where(np.array(model.variables)
-                                  == 'zh_VISIB')[0][0]
-
-                rproxy = (X[:,idx_zh]/constants.A_QPE)**(1/constants.B_QPE)
-                rproxy[np.isnan(rproxy)] = 0
-
+                # Take average between current timestep and t-5min
                 Xcomb = np.nanmean((X_prev[k] , X),axis = 0)
                 X_prev[k]  = X
 
-                Xcomb[np.isnan(Xcomb)] = 0
-                rproxy_mean = (Xcomb[:,idx_zh]/constants.A_QPE)**(1/constants.B_QPE)
-                rproxy_mean[np.isnan(rproxy_mean)] = 0
-
                 # Remove axis with only zeros
+                Xcomb[np.isnan(Xcomb)] = 0
                 validrows = (Xcomb>0).any(axis=1)
 
                 # Convert radar data to precipitation estimates
@@ -601,15 +646,30 @@ class QPEProcessor(object):
                 try:
                     qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
                 except:
-                    logging.error('RF failed!')
+                    logging.error('Model failed!')
                     pass
+                
+                qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
+                if self.config['SAVE_NON_POSTPROCESSED_DATA']:
+                    qpe_no_temp = qpe.copy()
+                    
+                """Temporal disaggregation; Rescale qpe through rproxy"""
+                idx_zh = np.where(np.array(model.variables)
+                                == 'zh_VISIB')[0][0]
 
-                # Rescale qpe through rproxy
+                rproxy = (X[:,idx_zh]/constants.A_QPE)**(1/constants.B_QPE)
+                rproxy[np.isnan(rproxy)] = 0
+
+                rproxy_mean = (Xcomb[:,idx_zh]/constants.A_QPE)**(1/constants.B_QPE)
+                rproxy_mean[np.isnan(rproxy_mean)] = 0
+                
                 disag = rproxy / rproxy_mean
                 disag = np.reshape(disag, (NBINS_X, NBINS_Y))
-                qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
                 disag[np.isnan(disag)] = 0
                 qpe = qpe * disag
+
+                if self.config['SAVE_NON_POSTPROCESSED_DATA']:
+                    qpe_no_pp = qpe.copy()
                 
                 """Part five - Postprocessing"""
                 if self.config['OUTLIER_REMOVAL']:
@@ -621,49 +681,60 @@ class QPEProcessor(object):
 
                 if i == 0:
                     qpe_prev[k] = qpe
-                    # Because of lead time, we can go out here:
+                    # Because this is only the lead time, we go out here:
                     logging.info('Processing time '+str(t)+' was only used as lead time and the QPE maps will not be saved')
                     continue
 
                 comp = np.array([qpe_prev[k].copy(), qpe.copy()])
                 qpe_prev[k] = qpe
+                
                 if self.config['ADVECTION_CORRECTION'] and i > 0:
                     if not _PYSTEPS_AVAILABLE:
                         logging.error("Pysteps is not available, no qpe disaggregation will be performed!")
-                    qpe = _disaggregate(comp)
+                    qpe_ac = _disaggregate(comp)
+                    
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_AC/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    self.save_output(qpe_ac, t, filepath + tstr)
 
+                """Part six - Save main output"""
                 tstr = datetime.datetime.strftime(t, basename)
-                filepath = output_folder + '/' + k
-                if self.config['ADVECTION_CORRECTION']:
-                    filepath += '_AC'
-
+                filepath = output_folder + '/' + k                
                 filepath += '/' + tstr
-
-                # Output in binary data and .gif format
-                if (self.config['DATA_FORMAT'] == 'DN'):
-                    if (self.config['FILE_FORMAT'] == 'DN'):
-                        # Find idx from CPC scale
-                        qpe = np.searchsorted(constants.SCALE_CPC, qpe)
-                        qpe = qpe.astype('B') # Convert to byte
-                        qpe[constants.MASK_NAN] = 255
-                        qpe.tofile(filepath)
-
-                    else:
-                        if (self.config['FILE_FORMAT'] != 'gif'):
-                            logging.error('Invalid file_format with data format DN, using gif output instead')
-                        qpe[constants.MASK_NAN] = -99
-                        filepath += '.gif'
-                        save_gif(filepath, qpe)
-
-                # Output in binary data and .gif format
-                qpe[constants.MASK_NAN] = np.nan
-                if (self.config['DATA_FORMAT'] == 'float'):
-                    if (self.config['FILE_FORMAT'] == 'float'):
-                        qpe.astype(np.float32).tofile(filepath)
-
-                    else:
-                        if (self.config['FILE_FORMAT'] != 'ODIM'):
-                            logging.error('Invalid file format with data format float, using ODIM HDF5 output instead')
-                        grid = _qpe_to_chgrid(qpe, t, radar_list=missing_files)
-                        filepath += '.h5'
-                        write_odim_grid_h5(filepath, grid)
+                self.save_output(qpe, t, filepath)
+                
+                if self.config['SAVE_NON_POSTPROCESSED_DATA']:
+                    # Coding of folders (0 not applied, 1 applied)
+                    # T: temporal disaggregation
+                    # O: outlier removal
+                    # G: Gaussian smoothing
+                    
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_T0O0G0/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    self.save_output(qpe_no_temp, t, filepath+tstr)                    
+                    
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_T1O0G0/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    self.save_output(qpe_no_pp, t, filepath+tstr)
+                    
+                    # With outlier removal (O1), but without Gaussian smoothing (G0)
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_T1O1G0/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    qpe_temp = _outlier_removal(qpe_no_pp)
+                    self.save_output(qpe_temp, t, filepath+tstr)
+                    
+                    # Without outlier removal (O0), but without Gaussian smoothing (G1)
+                    tstr = datetime.datetime.strftime(t, basename)
+                    filepath = output_folder + '/' + k +'_T1O0G1/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    qpe_temp = gaussian_filter(qpe_no_pp, self.config['GAUSSIAN_SIGMA'])
+                    self.save_output(qpe_temp, t, filepath+tstr)
