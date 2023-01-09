@@ -385,7 +385,7 @@ class QPEProcessor(object):
                 write_odim_grid_h5(filepath, grid)
 
     def compute(self, output_folder, t0, t1, timestep = 5,
-                            basename = 'RFO%y%j%H%M', test_mode = False):
+                basename = 'RFO%y%j%H%M', test_mode = False):
         """
         Computes QPE values for a given time range and stores them in a
         folder, in a binary format
@@ -685,6 +685,7 @@ class QPEProcessor(object):
                     logging.info('Processing time '+str(t)+' was only used as lead time and the QPE maps will not be saved')
                     continue
 
+                """ for advection correction use separate path """
                 comp = np.array([qpe_prev[k].copy(), qpe.copy()])
                 qpe_prev[k] = qpe
                 
@@ -701,7 +702,9 @@ class QPEProcessor(object):
 
                 """Part six - Save main output"""
                 tstr = datetime.datetime.strftime(t, basename)
-                filepath = output_folder + '/' + k                
+                filepath = output_folder + '/' + k
+                if not os.path.exists(filepath):
+                    os.mkdir(filepath)                
                 filepath += '/' + tstr
                 self.save_output(qpe, t, filepath)
                 
