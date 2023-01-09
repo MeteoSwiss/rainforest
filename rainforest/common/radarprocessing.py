@@ -504,7 +504,7 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     """
     if time.minute != 0:
         # Minutes are set to 0 below, here is only a notification
-        logging.info('HZT temporal interpolation timestamp {} set to HH:00'.format(time))
+        logging.info('ISO0_HEIGHT: Temporal interpolation, timestamp {} set to HH:00'.format(time))
 
     tstamp_hzt0 = datetime.datetime(time.year, time.month, time.day, time.hour,0)
     tstamp_hzt1 = tstamp_hzt0+ datetime.timedelta(hours=1)
@@ -512,6 +512,9 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     hzt = {}
     hzt[tstamp_hzt0] = read_cartesian_metranet(filelist[tstamp_hzt0]).fields['iso0_height']['data'][0]
     hzt[tstamp_hzt1] = read_cartesian_metranet(filelist[tstamp_hzt1]).fields['iso0_height']['data'][0]
+
+    # Giving info about which files are used
+    logging.info('ISO0_HEIGHT: Temporal interpolation between {} and {}'.format(filelist[tstamp_hzt0], filelist[tstamp_hzt1]))
 
     # Get the incremental difference for e.g. 5min steps (divided by 12):
     dt = datetime.timedelta(minutes=tsteps_min)
