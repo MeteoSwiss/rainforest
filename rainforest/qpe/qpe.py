@@ -567,7 +567,7 @@ class QPEProcessor(object):
 
                         for var in self.model_weights_per_var.keys():
                             if 'RADAR' in var:
-                                datasweep['RADAR_{:s}'.format(rad)] = np.isfinite(ZH).astype(float)
+                                datasweep['RADAR_prop_{:s}'.format(rad)] = np.isfinite(ZH).astype(float)
                             elif var == 'HEIGHT':
                                 datasweep['HEIGHT'] = self.rad_heights[rad][sweep].copy()
                             else:
