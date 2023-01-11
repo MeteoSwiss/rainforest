@@ -17,5 +17,6 @@ RADARS: ['A','D','L','P','W']
 OUTLIER_REMOVAL: 1
 GAUSSIAN_SIGMA: 0.5
 ADVECTION_CORRECTION: 0
+SAVE_NON_POSTPROCESSED_DATA : 0 # 0 for no, 1 for yes
 DATA_FORMAT: 'float' # either 'float' or 'DN'
 FILE_FORMAT: 'ODIM' # either 'ODIM' (hdf5) or 'gif'
