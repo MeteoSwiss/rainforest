@@ -58,6 +58,30 @@ NBINS_Y = len(Y_QPE_CENTERS)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+def _pol_to_cart(pol_data, idx_cart):
+    """
+    Converts polar data to the Cartesian QPE grid
+
+    Parameters
+    ----------
+    pol_data : ndarray
+        1D array of polar radar data to convert to Cartesian
+    idx_cart : ndarray
+        List of Cartesian pixel coordinates of pol_data, its shape must be N x 2, where N
+        is the length of pol_data
+    
+    Returns
+    -------
+    A numpy array of the size of the Cartesian grid
+
+    """
+    cart_data  = np.zeros((NBINS_X, NBINS_Y))
+    weights = np.zeros((NBINS_X, NBINS_Y))
+    nanadd_at(cart_data, idx_cart, pol_data)
+    nanadd_at(weights, idx_cart, np.isfinite(pol_data))
+    return cart_data / weights
+
+
 def _qpe_to_chgrid(qpe, time, radar_list, precision=2):
     """
     Creates a pyart grid object from a QPE array
@@ -244,9 +268,9 @@ class QPEProcessor(object):
             self.lut_cart[rad] = np.array(get_lookup('qpegrid_to_rad',
                          radar = rad))
             self.rad_heights[rad] = {}
-            coords = get_lookup('cartcoords_rad', rad)
+            heights = get_lookup('qpegrid_to_height_rad', rad)
             for sweep in self.config['SWEEPS']:
-                self.rad_heights[rad][sweep] = coords[sweep][2]
+                self.rad_heights[rad][sweep] = heights[sweep]
 
         self.model_weights_per_var = {}
         self.cosmo_var = []
@@ -566,13 +590,12 @@ class QPEProcessor(object):
                                           np.nan)
 
                         for var in self.model_weights_per_var.keys():
-                            if 'RADAR' in var:
-                                datasweep['RADAR_{:s}'.format(rad)] = np.isfinite(ZH).astype(float)
-                            elif var == 'HEIGHT':
-                                datasweep['HEIGHT'] = self.rad_heights[rad][sweep].copy()
-                            else:
-                                datasweep[var] = np.ma.filled(radobjects[rad].get_field(sweep, var),
-                                          np.nan)
+                            # These variables are computed differently
+                            if 'RADAR_prop' in var or 'HEIGHT' in var:
+                                continue 
+                        
+                            datasweep[var] = np.ma.filled(radobjects[rad].get_field(sweep, var),
+                                        np.nan)
 
                         # Mask on minimum zh
                         invalid = np.logical_or(np.isnan(ZH),
@@ -595,22 +618,44 @@ class QPEProcessor(object):
                         idx_ch = idx_ch.astype(int)
                         idx_polar = [lut_elev[:,1], lut_elev[:,2]]
 
+                        # Compute VISIB at a given sweep/radar integrated over QPE grid
+                        # This is used for visibility weighting in the vert integration
+                        visib_radsweep  = _pol_to_cart(datasweep['VISIB'][idx_polar[0], idx_polar[1]],
+                                            idx_ch) 
+                        # Compute validity of ZH at a given sweep/radar integrated over QPE grid
+                        # This is used to compute radar fraction, it will be 1 only if at least one ZH is defined at a given
+                        # QPE grid for this sweep/radar
+                        isvalidzh_radsweep = _pol_to_cart(np.isfinite(ZH[idx_polar[0], idx_polar[1]]),
+                                            idx_ch) 
+
                         for weight in rf_features_cart.keys():
+
                             # Compute altitude weighting
-                            W = 10 ** (weight[0] * (datasweep['HEIGHT']/1000.))
-                            W[invalid] = 0
-                            
+                            W = 10 ** (weight[0] * (self.rad_heights[rad][sweep]/1000.))                            
                             # Compute visib weighting
                             if weight[1]:
-                                W *= datasweep['VISIB'] / 100
+                                W *= visib_radsweep / 100
 
                             for var in rf_features_cart[weight].keys():
-                                if var in datasweep.keys():
-                                    # Add variable to cart grid
-                                    nanadd_at(rf_features_cart[weight][var],
-                                        idx_ch, (W * datasweep[var])[idx_polar[0], idx_polar[1]])
-                            # Add weights to cart grid
-                            nanadd_at(weights_cart[weight], idx_ch, W[idx_polar[0], idx_polar[1]])
+                                if var == 'HEIGHT': # precomputed in lookup tables
+                                    var_radsweep = self.rad_heights[rad][sweep]
+                                elif var == 'VISB':
+                                    var_radsweep = visib_radsweep
+                                elif 'RADAR_prop_' in var:
+                                    if var[-1] != rad: # Can update RADAR_prop only for the current radar
+                                        continue
+                                else:
+                                    if var in datasweep.keys():
+                                        # Compute variable integrated over QPE grid for rad/sweep
+                                        var_radsweep = _pol_to_cart(datasweep[var][idx_polar[0], idx_polar[1]],
+                                            idx_ch) 
+
+                                # Do a weighted update of the rf_features_cart array
+                                rf_features_cart[weight][var] = np.nansum(np.dstack((rf_features_cart[weight][var], 
+                                    var_radsweep * W)),2)
+
+                                weights_cart[weight] = np.nansum(np.dstack((rf_features_cart[weight][var], 
+                                    W)),2)
                     except:
                         raise
                         logging.error('Could not compute sweep {:d}'.format(sweep))
@@ -646,6 +691,7 @@ class QPEProcessor(object):
                 try:
                     qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
                 except:
+                    raise
                     logging.error('Model failed!')
                     pass
                 

@@ -410,8 +410,8 @@ def calc_lookup(lookup_type, radar = None):
 
             for sweep in sweeps:        
                 sweep_idx = sweep - 1
-                heights_qpe =  np.zeros((len(Y_QPE_CENTERS), len(Y_QPE_CENTERS)))
-                weights = np.zeros((len(Y_QPE_CENTERS), len(Y_QPE_CENTERS)))
+                heights_qpe =  np.zeros((len(X_QPE_CENTERS), len(Y_QPE_CENTERS)))
+                weights = np.zeros((len(X_QPE_CENTERS), len(Y_QPE_CENTERS)))
 
                 lut_elev = lut_cart[lut_cart[:,0] == sweep-1] # 0-indexed
                                     
