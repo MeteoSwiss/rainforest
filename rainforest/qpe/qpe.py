@@ -630,10 +630,12 @@ class QPEProcessor(object):
 
                         for weight in rf_features_cart.keys():
 
+                            beta, visibweighting = weight
+
                             # Compute altitude weighting
-                            W = 10 ** (weight[0] * (self.rad_heights[rad][sweep]/1000.))                            
+                            W = 10 ** (beta * (self.rad_heights[rad][sweep]/1000.))                            
                             # Compute visib weighting
-                            if weight[1]:
+                            if visibweighting:
                                 W *= visib_radsweep / 100
 
                             for var in rf_features_cart[weight].keys():
@@ -644,6 +646,7 @@ class QPEProcessor(object):
                                 elif 'RADAR_prop_' in var:
                                     if var[-1] != rad: # Can update RADAR_prop only for the current radar
                                         continue
+                                    var_radsweep = isvalidzh_radsweep
                                 else:
                                     if var in datasweep.keys():
                                         # Compute variable integrated over QPE grid for rad/sweep
@@ -652,12 +655,12 @@ class QPEProcessor(object):
 
                                 # Do a weighted update of the rf_features_cart array
                                 rf_features_cart[weight][var] = np.nansum(np.dstack((rf_features_cart[weight][var], 
-                                    var_radsweep * W)),2)
+                                    var_radsweep * W * (isvalidzh_radsweep == 1))),2)
 
-                                weights_cart[weight] = np.nansum(np.dstack((rf_features_cart[weight][var], 
-                                    W)),2)
+                            # Do a weighted update of the sum of vertical weights, only where radar measures are available (ZH)
+                            weights_cart[weight] = np.nansum(np.dstack((weights_cart[weight], 
+                                W * (isvalidzh_radsweep == 1))),2)
                     except:
-                        raise
                         logging.error('Could not compute sweep {:d}'.format(sweep))
                         pass
 
@@ -671,10 +674,11 @@ class QPEProcessor(object):
                 for v in model.variables:
                     dat = (rf_features_cart[(model.beta,model.visib_weighting)][v] 
                              / weights_cart[(model.beta,model.visib_weighting)])
+                    # Inf occurs when weights are zero
+                    dat[np.isinf(dat)] = np.nan
                     X.append(dat.ravel())
 
                 X = np.array(X).T
-                
                 if i == 0:
                     X_prev[k] = X
 
