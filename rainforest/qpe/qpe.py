@@ -591,7 +591,7 @@ class QPEProcessor(object):
 
                         for var in self.model_weights_per_var.keys():
                             # These variables are computed differently
-                            if 'RADAR_prop' in var or 'HEIGHT' in var:
+                            if 'RADAR_prop' in var or var == 'HEIGHT':
                                 continue 
                         
                             datasweep[var] = np.ma.filled(radobjects[rad].get_field(sweep, var),
