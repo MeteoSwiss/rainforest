@@ -697,9 +697,8 @@ class QPEProcessor(object):
                                         # Compute variable integrated over QPE grid for rad/sweep
                                         var_radsweep = _pol_to_cart(datasweep[var][idx_polar[0], idx_polar[1]],
                                             idx_ch) 
-                                var_radsweep[np.isnan(var_radsweep)] = 0 # avoids using np nansum which is slow
                                 # Do a weighted update of the rf_features_cart array
-                                rf_features_cart[weight][var] = np.sum(np.dstack((rf_features_cart[weight][var], 
+                                rf_features_cart[weight][var] = np.nansum(np.dstack((rf_features_cart[weight][var], 
                                     var_radsweep * W * (isvalidzh_radsweep == 1))),2)
                             # Do a weighted update of the sum of vertical weights, only where radar measures are available (ZH)
                             weights_cart[weight] = np.nansum(np.dstack((weights_cart[weight], 
