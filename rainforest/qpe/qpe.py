@@ -641,7 +641,7 @@ class QPEProcessor(object):
                                 tf2 = time.time()
                                 if var == 'HEIGHT': # precomputed in lookup tables
                                     var_radsweep = self.rad_heights[rad][sweep]
-                                elif var == 'VISB':
+                                elif var == 'VISIB':
                                     var_radsweep = visib_radsweep
                                 elif 'RADAR_prop_' in var:
                                     if var[-1] != rad: # Can update RADAR_prop only for the current radar
