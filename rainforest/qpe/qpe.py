@@ -36,7 +36,7 @@ from pyart.aux_io.odim_h5 import proj4_to_dict
 
 from ..common.logger import logger
 from ..common import constants
-from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod, retrieve_prod_RT, retrieve_prod_RT
+from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod, retrieve_prod_RT, retrieve_hzt_RT
 from ..common.lookup import get_lookup
 from ..common.utils import split_by_time, nanadd_at, envyaml
 from ..common.radarprocessing import Radar, HZT_hourly_to_5min
@@ -289,6 +289,12 @@ class QPEProcessor(object):
                 if (var == 'T') or (var == 'ISO0_HEIGHT'):
                     self.cosmo_var.append(var)
 
+        if self.rt:
+            import socket
+            if 'tsa' in socket.gethostname():
+                constants.FOLDER_RADAR = '/scratch/rgugerli/rainforest_debug/output/output_RT/temp/'
+                constants.FOLDER_ISO0 = '/scratch/rgugerli/rainforest_debug/output/output_RT/temp/HZT/'
+
     def fetch_data(self, t0, t1 = None):
         """
         Retrieves and add new polar radar and status data to the QPEProcessor
@@ -431,7 +437,7 @@ class QPEProcessor(object):
                 write_odim_grid_h5(filepath, grid)
 
     def compute(self, output_folder, t0, t1, timestep = 5,
-                basename = 'RFO%y%j%H%M', test_mode = False):
+                basename = 'RFO%y%j%H%MVH', test_mode = False):
         """
         Computes QPE values for a given time range and stores them in a
         folder, in a binary format
@@ -452,18 +458,12 @@ class QPEProcessor(object):
         basename: str (optional)
             Pattern for the filenames, default is  'RFQ%y%j%H%M' which uses
             the same standard as other MeteoSwiss products
-            (example RFQ191011055)
+            (example RFQ191011055), in real-time version, it is 'RFQ%y%j%H%MVH'
         test_mode : bool
             Is used only in github actions CI with special data for unit tests, should always be set to
             false
 
         """
-
-        for model in self.models.keys():
-            if self.config['ADVECTION_CORRECTION']:
-                model += '_AC'
-            if not os.path.exists(str(Path(output_folder, model))):
-                os.makedirs(str(Path(output_folder, model)))
 
         # Retrieve one timestamp before beginning for lead time
         tL = t0-datetime.timedelta(minutes=timestep)
@@ -782,7 +782,12 @@ class QPEProcessor(object):
                     qpe = gaussian_filter(qpe,
                        self.config['GAUSSIAN_SIGMA'])
 
-                if i == 0:
+                if self.rt:
+                    # Save files in a temporary format
+                    np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
+                                '_qpeprev', qpe)
+
+                if i == 0 or (k not in X_prev.keys()):
                     qpe_prev[k] = qpe
                     # Because this is only the lead time, we go out here:
                     logger.info('Processing time '+str(t)+' was only used as lead time and the QPE maps will not be saved')
