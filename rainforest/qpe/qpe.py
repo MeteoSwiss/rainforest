@@ -336,7 +336,7 @@ class QPEProcessor(object):
                 self.files_hzt = split_by_time(files_hzt)
             except:
                 self.files_hzt = {}
-                logging.error('Failed to retrieve hzt data')
+                logger.error('Failed to retrieve hzt data')
 
     def fetch_data_test(self, t0, t1):
         """
@@ -498,12 +498,12 @@ class QPEProcessor(object):
                         one_file_missing = True
                 # If all the files could be loaded, go directly to current timestep
                 if one_file_missing == False:
-                    logging.info('Already available: LEAD time '+str(t))
+                    logger.info('Already available: LEAD time '+str(t))
                     continue
                 else:
-                    logging.info('Processing LEAD time '+str(t))
+                    logger.info('Processing LEAD time '+str(t))
             else:
-                logging.info('Processing time '+str(t))
+                logger.info('Processing time '+str(t))
 
             if self.rt:
                 # Retrieve data for timestep
