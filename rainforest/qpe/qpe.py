@@ -36,7 +36,7 @@ from pyart.aux_io.odim_h5 import proj4_to_dict
 
 from ..common.logger import logger
 from ..common import constants
-from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod
+from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod, retrieve_prod_RT, retrieve_prod_RT
 from ..common.lookup import get_lookup
 from ..common.utils import split_by_time, nanadd_at, envyaml
 from ..common.radarprocessing import Radar, HZT_hourly_to_5min
@@ -227,7 +227,7 @@ def _disaggregate(R, T = 5, t = 1,):
 
 
 class QPEProcessor(object):
-    def __init__(self, config_file, models):
+    def __init__(self, config_file, models, rt = False):
         """
         Creates a QPEProcessor object which can be used to compute QPE
         realizations with the RandomForest Regressors
@@ -242,6 +242,8 @@ class QPEProcessor(object):
             keys in this dictionary are used to store outputs in separate
             folders whereas the values must be valid RF regressor instances
             as stored in the rf_models subfolder
+        rt : bool
+            Whether or not to run the model in real-time mode
         """
 
         try:
@@ -253,8 +255,8 @@ class QPEProcessor(object):
         config = envyaml(config_file)
 
         self.config = config
-
         self.models = models
+        self.rt = rt
 
         if self.config['RADARS'] == 'all':
             self.config['RADARS'] = list(constants.RADARS.Abbrev)
@@ -307,20 +309,34 @@ class QPEProcessor(object):
         for rad in self.config['RADARS']:
             logger.info('Retrieving data for radar '+rad)
             try:
-                radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
-                                   product_name = 'ML' + rad,
-                                   sweeps = self.config['SWEEPS'])
-                self.radar_files[rad] = split_by_time(radfiles)
-                statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
+                if self.rt:
+                    radfiles = retrieve_prod_RT(tstep, product_name = 'ML'+rad,
+                                                  sweeps = self.config['SWEEPS'])
+                    statfiles = retrieve_prod_RT(tstep, product_name = 'ST' + rad,
+                                                    pattern = 'ST*.xml', sweeps = None)
+                else:
+                    radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
+                                    product_name = 'ML' + rad,
+                                    sweeps = self.config['SWEEPS'])
+                    statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
                                    product_name = 'ST' + rad, pattern = 'ST*.xml')
+
+                self.radar_files[rad] = split_by_time(radfiles)
                 self.status_files[rad] = split_by_time(statfiles)
             except:
                 logger.error('Failed to retrieve data for radar {:s}'.format(rad))
                 
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
-            self.files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],t0,t1)
-            self.files_hzt = split_by_time(self.files_hzt)
+            try:
+                if self.rt:
+                    files_hzt = retrieve_hzt_RT(tstep)
+                else:
+                    files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],t0,t1)
+                self.files_hzt = split_by_time(files_hzt)
+            except:
+                self.files_hzt = {}
+                logging.error('Failed to retrieve hzt data')
 
     def fetch_data_test(self, t0, t1):
         """
@@ -433,6 +449,9 @@ class QPEProcessor(object):
             Pattern for the filenames, default is  'RFQ%y%j%H%M' which uses
             the same standard as other MeteoSwiss products
             (example RFQ191011055)
+        test_mode : bool
+            Is used only in github actions CI with special data for unit tests, should always be set to
+            false
 
         """
 
@@ -445,11 +464,12 @@ class QPEProcessor(object):
         # Retrieve one timestamp before beginning for lead time
         tL = t0-datetime.timedelta(minutes=timestep)
         
-        # Retrieve data for time range
-        if test_mode:
-            self.fetch_data_test(tL, t1)
-        else:    
-            self.fetch_data(tL, t1)
+        if not self.rt:
+            # Retrieve data for whole time range
+            if test_mode:
+                self.fetch_data_test(tL, t1)
+            else:    
+                self.fetch_data(tL, t1)
 
         # Get all timesteps in time range
         n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
@@ -462,6 +482,32 @@ class QPEProcessor(object):
         for i, t in enumerate(timeserie): # Loop on timesteps
             logger.info('====')
             logger.info('Processing time '+str(t))
+            
+            # Get lead time file in RT mode
+            if i == 0 and self.rt:
+                for k in self.models.keys():
+                    tL_x_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
+                                datetime.datetime.strftime(t, basename)+'_xprev.npy'
+                    tL_qpe_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
+                                datetime.datetime.strftime(t, basename)+'_qpeprev.npy'
+                    one_file_missing = False
+                    try:
+                        X_prev[k] = np.load(tL_x_file)
+                        qpe_prev[k] = np.load(tL_qpe_file)
+                    except:
+                        one_file_missing = True
+                # If all the files could be loaded, go directly to current timestep
+                if one_file_missing == False:
+                    logging.info('Already available: LEAD time '+str(t))
+                    continue
+                else:
+                    logging.info('Processing LEAD time '+str(t))
+            else:
+                logging.info('Processing time '+str(t))
+
+            if self.rt:
+                # Retrieve data for timestep
+                self.fetch_data(t)
 
             # Log missing radar files
             self.missing_files = {}
@@ -638,7 +684,6 @@ class QPEProcessor(object):
                                 W *= visib_radsweep / 100
 
                             for var in rf_features_cart[weight].keys():
-                                tf2 = time.time()
                                 if var == 'HEIGHT': # precomputed in lookup tables
                                     var_radsweep = self.rad_heights[rad][sweep]
                                 elif var == 'VISIB':
@@ -679,12 +724,17 @@ class QPEProcessor(object):
                     X.append(dat.ravel())
 
                 X = np.array(X).T
-                if i == 0:
+                if i == 0 or (self.rt and (k not in X_prev.keys())):
                     X_prev[k] = X
 
                 # Take average between current timestep and t-5min
                 Xcomb = np.nanmean((X_prev[k] , X),axis = 0)
                 X_prev[k]  = X
+
+                if self.rt:
+                    # Save files in a temporary format
+                    np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
+                                '_xprev', X)
 
                 # Remove axis with only zeros
                 Xcomb[np.isnan(Xcomb)] = 0
