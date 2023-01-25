@@ -289,7 +289,7 @@ class QPEProcessor(object):
                 if (var == 'T') or (var == 'ISO0_HEIGHT'):
                     self.cosmo_var.append(var)
 
-    def fetch_data(self, t0, t1):
+    def fetch_data(self, t0, t1 = None):
         """
         Retrieves and add new polar radar and status data to the QPEProcessor
         for a given time range
@@ -299,12 +299,16 @@ class QPEProcessor(object):
         t0 : datetime
             Start time of the timerange in datetime format
         t1 : datetime
-            End time of the timerange in datetime format
+            End time of the timerange in datetime format, will not be used if rt mode is on,
+            as in this case only data for t0 will be obtained
         """
 
         self.radar_files = {}
         self.status_files = {}
 
+        if self.rt:
+            tstep = t0
+            
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
             logger.info('Retrieving data for radar '+rad)
