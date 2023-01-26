@@ -647,7 +647,7 @@ class QPEProcessor(object):
                         
                             datasweep[var] = np.ma.filled(radobjects[rad].get_field(sweep, var).astype(np.float64),
                                         np.nan)
-
+                                        
                         # Mask on minimum zh
                         invalid = np.logical_or(np.isnan(ZH),
                                                 ZH < self.config['ZH_THRESHOLD'])
