@@ -18,12 +18,12 @@ import numpy as np
 from scipy.stats import energy_distance
 from dateutil import parser
 import glob
-import logging
 import yaml
 import  dask.dataframe as dd
 import re
 
 # Local imports
+from .logger import logger
 from .wgs84_ch1903 import GPSConverter
 from . import constants
 
@@ -563,7 +563,7 @@ def read_df(pattern, dbsystem = 'dask', sqlContext = None):
             else:
                 df = dd.read_csv(pattern)
     else:
-        logging.error("""Invalid data, only csv and parquet files are accepted.
+        logger.error("""Invalid data, only csv and parquet files are accepted.
         Make sure that they have a valid suffix (.csv, .csv.gz, .parquet,
         .parq)""")
 
@@ -691,7 +691,7 @@ def get_qpe_files_multiple_dirs(input_folder, t0 = None, t1 = None, time_agg = N
     
     # If there is only one input folder, use function above
     if (type(input_folder) != list):
-        logging.info('Only one directory is given, switch to get_qpe_files() routine')
+        logger.info('Only one directory is given, switch to get_qpe_files() routine')
         all_files = get_qpe_files(input_folder, t0, t1, time_agg,list_models)
         return all_files
     

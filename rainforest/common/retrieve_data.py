@@ -93,6 +93,75 @@ def retrieve_hzt_prod(folder_out, start_time, end_time,pattern_type='shell'):
         
     return all_files
 
+def retrieve_hzt_RT(tstep):
+    
+    """ Retrieves the preprocessed HZT products
+        A version adapted to real time implementation
+        Only used in for the function retrieve_hzt_prod
+
+    Parameters
+    ----------
+    
+    tstep: datetime
+        directory where to store the unzipped files
+                
+    Returns
+    -------
+    A list containing all the filepaths of the retrieved files
+
+    """
+
+    # Get list of available files
+    folder_in = constants.FOLDER_ISO0
+    content_zip = np.array([c for c in os.listdir(folder_in) 
+                            if (len(c.split('.')) == 2) and (int(c.split('.')[-1])>=800)])
+    
+    # HZT files are produced once an hour
+    start_time = tstep.replace(minute=0)
+    end_time = start_time + datetime.timedelta(hours=1)
+
+    try:            
+        # Sort filelist to most recent prediction
+        content_filt = np.array([c for c in content_zip if c.endswith('800')])
+        times_filt = np.array([datetime.datetime.strptime(c[3:12],
+                            '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_filt])
+        conditions = np.array([np.logical_and((t >= start_time), (t <= end_time)) for t in times_filt])
+        
+        content_filt = content_filt[conditions]
+        times_filt = times_filt[conditions]
+    except:
+        logging.error('HZT data does not exist for '+start_time.strftime('%d-%b-%y'))
+        files = None
+        return
+        
+    # Check that an hourly estimate is available
+    all_hours = pd.date_range(start=start_time, end=end_time, freq='H')
+    
+    if len(all_hours) != len(times_filt):
+        content_times = np.array([datetime.datetime.strptime(c[3:12],
+                '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_zip])
+        # Find time that is missing:
+        for hh in all_hours:
+            if not hh in times_filt:
+                hh_last = np.where(hh==content_times)
+                times_filt = np.sort(np.append(times_filt, content_times[hh_last][-1]))
+                content_filt = np.sort(np.append(content_filt, content_zip[hh_last][-1]))
+    
+    # Get a list of all files to retrieve
+    conditions = np.array([np.logical_and(t >= start_time, t <= end_time)
+                        for t in times_filt])
+
+    if not np.any(conditions):
+        msg = '''
+        No file was found corresponding to this format, verify pattern and product_name
+        '''
+        raise ValueError(msg)
+        
+    files = sorted(np.array([folder_in + c for c in
+                            np.array(content_filt)[conditions]]))
+    
+    return files
+
 #-----------------------------------------------------------------------------------------
 def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type = 'shell'):
     
@@ -457,6 +526,66 @@ def retrieve_prod(folder_out, start_time, end_time, product_name,
         all_files.extend(files)
             
     return all_files
+
+def retrieve_prod_RT(time, product_name, 
+                          pattern = None, pattern_type = 'shell', sweeps = None):
+    """ Adapted function from rainforest.common.retrieve_data
+        Here, it reads the data per timestep, and in the real-time
+        operation, the radar data is not zipped
+
+    Args:
+        time (datetime object): timestamp to extract
+        product_name (string): Name of the product to be extracted
+        sweeps (list): List of sweeps if not all want to be extracted. Defaults to None.
+
+    Raises:
+        ValueError: If no data is found
+        
+    Returns:
+        dict: dictionary containing with the the file list
+    """
+    
+    # Get all files
+    folder_radar = constants.FOLDER_RADAR
+    folder_in = folder_radar + product_name + '/'
+
+    # Get list of available files
+    content_zip = np.array(os.listdir(folder_in))
+
+    if pattern != None:
+        if pattern_type == 'shell':
+            content_zip = [c for c in content_zip 
+                        if fnmatch.fnmatch(os.path.basename(c), pattern)]
+        elif pattern_type == 'regex':
+            content_zip = [c for c in content_zip 
+                        if re.match(os.path.basename(c), pattern) != None]
+        else:
+            raise ValueError('Unknown pattern_type, must be either "shell" or "regex".')
+
+    # Derive datetime of each file
+    times_zip = np.array([datetime.datetime.strptime(c[3:12],
+                '%y%j%H%M') for c in content_zip])
+
+    # Get a list of all files to retrieve
+    conditions = (times_zip == time)
+    
+    # Filter on sweeps:
+    if sweeps != None:
+        sweeps_zip = np.array([int(c[-3:]) for c in content_zip])
+            # Get a list of all files to retrieve
+        conditions_sweep = np.array([s in sweeps for s in sweeps_zip])
+        conditions = np.logical_and(conditions, conditions_sweep)
+
+    if not np.any(conditions):
+        msg = '''
+        No file was found corresponding to this format, verify pattern and product_name
+        '''
+        raise ValueError(msg)
+    
+    files = sorted(np.array([folder_in + c for c in
+                            np.array(content_zip)[conditions]]))
+
+    return files   
 
 #-----------------------------------------------------------------------------------------
 def _retrieve_prod_daily(folder_out, start_time, end_time, product_name,
