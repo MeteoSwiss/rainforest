@@ -598,10 +598,12 @@ class RFTraining(object):
         # Prepare score dictionnary
         ###############################################################################
         scores = {}
-        for model in modelnames:
-            scores[model] = {}
-            for feat in features_VERT_AGG[model].keys():
-                scores[model][feat] = []
+        for tagg in ['10min', '60min']:
+            scores[tagg] = {}
+            for model in modelnames:
+                scores[tagg][model] = {}
+                for feat in features_VERT_AGG[model].keys():
+                    scores[tagg][model][feat] = []
 
         for k in K:
             logging.info('Run {:d}/{:d}-{:d} of cross-validation'.format(k,np.nanmin(K),np.nanmax(K)))
@@ -610,23 +612,38 @@ class RFTraining(object):
             train = idx_testtrain != k
 
             for model in modelnames:
+                # Model fit always based on 10min values
                 regressors[model].fit(features_VERT_AGG[model][train],R[train])
                 R_pred_10 = regressors[model].predict(features_VERT_AGG[model][test])
 
                 # Get reference RMSE
                 rmse_ref = perfscores(R_pred_10, R[test], bounds=None)['all']['RMSE']
 
+                # At hourly values
+                R_test_60 = np.squeeze(np.array(pd.DataFrame(R[test])
+                            .groupby(grp_hourly[test]).mean()))
+                R_pred_60 = np.squeeze(np.array(pd.DataFrame(R_pred_10)
+                            .groupby(grp_hourly[test]).mean()))
+                rmse_ref_60 = perfscores(R_pred_60, R_test_60, bounds=None)['all']['RMSE']
+
                 for feat in features_VERT_AGG[model].keys():
+                    logging.info('Shuffling feature: '.format(feat))
                     # Shuffle input feature on test fraction, keep others untouched
                     x_test = features_VERT_AGG[model][test].copy()
                     x_test[feat] = np.random.permutation(x_test[feat].values)
 
                     # Calculate estimates and shuffled RMSE
                     R_pred_shuffled = regressors[model].predict(x_test)
-                    rmse_shuff = perfscores(R_pred_shuffled, R[test], bounds=None)['all']['RMSE']
 
-                    #Compute increase in RMSE score
-                    scores[model][feat].append((rmse_shuff - rmse_ref) / rmse_ref)
+                    #Compute increase in RMSE score at 10min
+                    rmse_shuff = perfscores(R_pred_shuffled, R[test], bounds=None)['all']['RMSE']
+                    scores['10min'][model][feat].append((rmse_shuff - rmse_ref) / rmse_ref)
+                    
+                    #Compute increase in RMSE score at 60min
+                    R_pred_shuffled_60 = np.squeeze(np.array(pd.DataFrame(R_pred_shuffled)
+                                .groupby(grp_hourly[test]).mean()))
+                    rmse_shuff_60 = perfscores(R_pred_shuffled_60, R_test_60, bounds=None)['all']['RMSE']
+                    scores['60min'][model][feat].append((rmse_shuff_60- rmse_ref_60) / rmse_ref_60)
 
         # Save all output
         name_file = str(Path(output_folder, 'feature_selection_scores.p'))
