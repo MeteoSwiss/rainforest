@@ -45,6 +45,10 @@ and last is Swiss Z coordinate (altitude)
 QPE grid. It is simply a 2D array with 5 columns 
 | sweep | azimuth_idx | range_idx | Swiss Y coord | Swiss X coord|
 
+**qpegrid_to_height_rad** : gives for every pixel of the Swiss Cartesian QPE grid
+the average height of radar observations for a given radar, for every sweep. It is a dictionary
+where the key is the sweep number ( 1 - 20) and the value is a 640 x 710 array of heights above ground
+
 **station_to_qpegrid** : maps every station to the corresponding QPE gridpoint
 it is a dict of keys [station][ncode] and gives the index of every 
 neighbour of every station in the QPE 2D grid 640 x 710 pixels
@@ -67,6 +71,7 @@ from pyart.aux_io import read_metranet
 
 # Local imports
 from . import constants
+from .utils import nanadd_at
 from .wgs84_ch1903 import GPSConverter
 from .object_storage import ObjectStorage
 ObjStorage = ObjectStorage()
@@ -205,7 +210,7 @@ def calc_lookup(lookup_type, radar = None):
                     # e.g. x = 563, means that radar pixels are between 563 and 564
                     #x_llc_sta = np.int(x_sta/constants.CART_GRID_SIZE)
                     # For y the columns in the Cartesian lookup tables are upper bounds
-                    # e.g. x = 182, means that radar pixels are between 181 and 182            
+                    # e.g. y = 182, means that radar pixels are between 181 and 182            
                     #y_llc_sta = np.int(np.ceil(y_sta/constants.CART_GRID_SIZE))
                     
                     # x and y are reversed (following the Swiss convention),
@@ -373,7 +378,7 @@ def calc_lookup(lookup_type, radar = None):
                 lut[sweep]['mask'] = mask.astype(np.bool_)
 
             lut_names.append(str(lut_name))
-            lut_objects.append([all_idx_sta, all_distances_sta, all_heights_sta])
+            lut_objects.append(lut)
 
 
     elif lookup_type == 'qpebias_station':
@@ -384,6 +389,50 @@ def calc_lookup(lookup_type, radar = None):
                          dtype = np.float32).reshape(640,710)
 
         # TODO
+
+    elif lookup_type == 'qpegrid_to_height_rad':
+        for r in radar:
+            lut_name =  Path(LOOKUP_FOLDER, 'lut_' + lookup_type+'{:s}.p'.format(r))
+
+            try:
+                lut_cart = get_lookup('qpegrid_to_rad', r)
+            except:
+                raise IOError('Could not load qpegrid_to_rad lookup for radar {:s}, compute it first!'.format(r))
+            try:
+                lut_coords = get_lookup('cartcoords_rad', r)
+            except:    
+                raise IOError('Could not load cartcoords_rad lookup for radar {:s}, compute it first!'.format(r))
+
+            Y_QPE_CENTERS = constants.Y_QPE_CENTERS
+            X_QPE_CENTERS = constants.X_QPE_CENTERS
+
+            all_heights_qpe = {}
+
+            for sweep in sweeps:        
+                sweep_idx = sweep - 1
+                heights_qpe =  np.zeros((len(X_QPE_CENTERS), len(Y_QPE_CENTERS)))
+                weights = np.zeros((len(X_QPE_CENTERS), len(Y_QPE_CENTERS)))
+
+                lut_elev = lut_cart[lut_cart[:,0] == sweep-1] # 0-indexed
+                                    
+                # Convert from Swiss-coordinates to array index
+                idx_ch = np.vstack((len(X_QPE_CENTERS)  -
+                                (lut_elev[:,4] - np.min(X_QPE_CENTERS)),
+                                lut_elev[:,3] -  np.min(Y_QPE_CENTERS))).T
+
+                idx_ch = idx_ch.astype(int)
+                idx_polar = [lut_elev[:,1], lut_elev[:,2]]
+
+                nanadd_at(heights_qpe, idx_ch, lut_coords[sweep][2][idx_polar[0],
+                                                    idx_polar[1]])
+                nanadd_at(weights, idx_ch, np.isfinite(lut_coords[sweep][2][idx_polar[0],
+                                                    idx_polar[1]]))
+                            
+                all_heights_qpe[sweep] = heights_qpe / weights
+
+            lut_names.append(str(lut_name))
+            lut_objects.append(all_heights_qpe)
+
     elif lookup_type == 'station_to_qpegrid':
            
         df_stations = constants.METSTATIONS

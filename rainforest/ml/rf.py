@@ -441,7 +441,8 @@ class RFTraining(object):
             
             pickle.dump(reg, open(out_name, 'wb'))
 
-    def feature_selection(self, features):
+    def feature_selection(self, features_dic, featuresel_configfile, 
+                        output_folder, K=5, tstart=None, tend=None):
         """
         The relative importance of all available input vairables aggregated to 
         to the ground and to choose the most important ones, an approach 
@@ -452,75 +453,184 @@ class RFTraining(object):
         -----------
         features : dic
             A dictionnary with all eligible features to test
+        feature_sel_config : str
+            yaml file with setup
         output_folder : str
             Path to where to store the scores
         tstart: str (YYYYMMDDHHMM)
             A date to define a starting time for the input data
         tend: str (YYYYMMDDHHMM)
             A date to define the end of the input data
+        K : int or None
+            Number of splits in iterations do perform in the K fold cross-val
         """
-        logging.info('TODO')
 
-        # MODEL = ['RADAR', 'zh_visib_mean', 'zv_visib_mean','KDP_mean','RHOHV_mean', 
-        #         'T', 'HEIGHT','VISIB_mean','AH_mean','RVEL_mean','SW_mean', 'NH_mean']
+        config = envyaml(featuresel_configfile)
+        modelnames = list(features_dic.keys())
 
-        # #model= ['zhv','zvv','zdr','KDP','RHOHV']
-        # nt = 20
-        # max_depth = 20
-        # X_train = radar
-        # weights = lambda h: 10**(-0.5 * h/1000)
-        # weights = weights(radar['HEIGHT'])
-        # X_train = vert_aggregation(radar[MODEL], weights, grp_vertical)
-        # valid = np.all(np.isfinite(X_train),axis=1)
+        #######################################################################
+        # Read data
+        #######################################################################
+        logging.info('Reading input data from {}'.format(self.input_location))
+        radartab = pd.read_parquet(str(Path(self.input_location, 'radar_x0y0.parquet')))
+        gaugetab = pd.read_parquet(str(Path(self.input_location, 'gauge.parquet')))
+        grp = pickle.load(open(str(Path(self.input_location, 'grouping_idx_x0y0.p')),'rb'))
+        grp_vertical = grp['grp_vertical']
+        grp_hourly = grp['grp_hourly']
 
-        # gauge = gauge[valid]
-        # Y_train = gauge['RRE150Z0'] * 6
-        # grp_hourly = grp_hourly[valid]
-        # X_train = X_train[valid]
+        #######################################################################
+        # Filter time
+        #######################################################################
+        if tstart != None:
+            try:
+                tstart = datetime.datetime.strptime(tstart,
+                        '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc).timestamp()
+            except:
+                tstart = gaugetab['TIMESTAMP'].min()
+                logging.info('The format of tstart was wrong, taking the earliest date')
+        if tend != None:
+            try:
+                tend = datetime.datetime.strptime(tend,
+                        '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc).timestamp()
+            except:
+                tend = gaugetab['TIMESTAMP'].max()
+                logging.info('The format of tend was wrong, taking the earliest date')
 
-        # reg = RandomForestRegressor(nt, max_depth = max_depth, verbose = 10, n_jobs = 12)
-        # K = 5
-        # idx = split_event(gauge['TIMESTAMP'], K)
+        timevalid = gaugetab['TIMESTAMP'].copy().astype(bool)
+        vertvalid = radartab['TIMESTAMP'].copy().astype(bool)
 
-        # scores = {}
-        # for col in X_train.columns:
-        #     scores[col] = []
-            
-        # for i in range(K):
-        #     print(i)
-        #     reg.fit(X_train[idx != i], Y_train[idx != i])
-        #     rmse = errmetrics(reg.predict(X_train[idx == i]), Y_train[idx == i])['RMSE']   
-            
-        #     xtest = X_train[idx == i].values
-        #     for j in range(xtest.shape[1]):
-        #         X_t = xtest.copy()
-        #         np.random.shuffle(X_t[:,j])
-        #         shuff_rmse = errmetrics(reg.predict(X_t), Y_train[idx == i])['RMSE']   
-        #         scores[X_train.columns[j]].append((rmse - shuff_rmse) / rmse)
-                
-        # for k in scores.keys():
-        #     scores[k] = np.mean(scores[k])
-            
-        # scores['FRAC_RADAR'] = np.sum(np.array(list(scores.values()))[0:5])
-        # kk = list(scores.keys())
-        # for k in kk:
-        #     if 'prop' in k:
-        #         del scores[k]
+        if (tstart != None):
+            timevalid[(gaugetab['TIMESTAMP'] < tstart)] = False
+            vertvalid[(radartab['TIMESTAMP'] < tstart)] = False
+        if (tend != None):
+            timevalid[(gaugetab['TIMESTAMP'] > tend)] = False
+            vertvalid[(radartab['TIMESTAMP'] > tend)] = False
 
-        # plt.figure(figsize = (10,4))
-        # plt.title('Relative increase in RMSE when randomly shuffling feature', fontsize = 16)
-        # x = -np.array(list(scores.values()))
-        # lab = ['Zh','Zv','KDP','FRAC_RADAR','RHOHV','SW','T','VISIB','HEIGHT','AH'
-        #         ,'NOISE_H',
-        #         'RVEL']
-        # a = np.argsort(-x)
-        # plt.bar(range(len(scores.values())),x[a])
-        # plt.gca().set_xticks(range(len(scores.values())))
-        # plt.gca().set_xticklabels(lab, rotation = 90)
-        # plt.savefig(OUTPUT_FOLDER + 'rel_importances.png',dpi = 300, bbox_inches = 'tight')
+        gaugetab = gaugetab[timevalid]
+        grp_hourly = grp_hourly[timevalid]
+        radartab = radartab[vertvalid]
+        grp_vertical = grp_vertical[vertvalid]
 
+        ###############################################################################
+        # Compute additional data if needed
+        ###############################################################################
+        # currently the only supported additional features is zh (refl in linear units)
+        # and DIST_TO_RAD{A-D-L-W-P} (dist to individual radars)
+        # Get list of unique features names
+        features = np.unique([item for sub in list(features_dic.values())
+                            for item in sub])
+        for f in features:
+            if 'zh' in f:
+                logging.info('Computing derived variable {:s}'.format(f))
+                radartab[f] = 10**(0.1 * radartab[f.replace('zh','ZH')])
+            elif 'zv' in f:
+                logging.info('Computing derived variable {:s}'.format(f))
+                radartab[f] = 10**(0.1 * radartab[f.replace('zv','ZV')])        
+            if 'DIST_TO_RAD' in f:
+                info_radar = constants.RADARS
+                vals = np.unique(radartab['RADAR'])
+                for val in vals:
+                    dist = np.sqrt((radartab['X'] - info_radar['X'][val])**2+
+                           (radartab['Y'] - info_radar['Y'][val])**2) / 1000.
+                    radartab['DIST_TO_RAD' + str(val)] = dist
 
+        ###############################################################################
+        # Compute vertical aggregation
+        ###############################################################################
+        features_VERT_AGG = {}
+        regressors = {}
+        for model in modelnames:
+            logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))            
+          
+            vweights = 10**(config[model]['VERT_AGG']['BETA'] *
+                                (radartab['HEIGHT']/1000.)) # vert. weights
+            features_VERT_AGG[model] = vert_aggregation(radartab[features_dic[model]], 
+                                 vweights, grp_vertical,
+                                 config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                                 radartab['VISIB_mean'])
+                  
+            regressors[model] = RandomForestRegressorBC(degree = 1, 
+                          bctype = config[model]['BIAS_CORR'],
+                          beta = config[model]['VERT_AGG']['BETA'],
+                          variables = features_dic[model],
+                          visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                          **config[model]['RANDOMFOREST_REGRESSOR'])
+        
+        # remove nans
+        valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
+                       axis = 1)
 
+        # if (tstart != None):
+        #     valid[(gaugetab['TIMESTAMP'] < tstart)] = False
+        # if (tend != None):
+        #     valid[(gaugetab['TIMESTAMP'] > tend)] = False
+
+        test_not_ok = False
+        for iv, val in enumerate(radartab['s-tstamp'].groupby(grp_vertical).first()):
+            if gaugetab['s-tstamp'][iv] != val:
+                test_not_ok = True
+                print(gaugetab['s-tstamp'][iv])
+        if test_not_ok:
+            logging.error('Time cut went wrong!!')
+
+        for model in modelnames:
+            features_VERT_AGG[model] = features_VERT_AGG[model][valid]
+        
+        gaugetab = gaugetab[valid]
+        grp_hourly = grp_hourly[valid]
+        
+        # Get R, T and idx test/train
+        R = np.array(gaugetab['RRE150Z0'] * 6) # Reference precip in mm/h
+        R[np.isnan(R)] = 0
+
+        ###############################################################################
+        # Randomly split test/ train dataset
+        ###############################################################################
+        if (K != None):
+            K = list(range(K))
+        elif (K == None):
+            logging.info('Cross validation with random events defined but not specified, applying 5-fold CV')
+            K = list(range(5))
+
+        idx_testtrain = split_event(gaugetab['TIMESTAMP'].values, len(K))
+
+        ###############################################################################
+        # Prepare score dictionnary
+        ###############################################################################
+        scores = {}
+        for model in modelnames:
+            scores[model] = {}
+            for feat in features_VERT_AGG[model].keys():
+                scores[model][feat] = []
+
+        for k in K:
+            logging.info('Run {:d}/{:d}-{:d} of cross-validation'.format(k,np.nanmin(K),np.nanmax(K)))
+
+            test = idx_testtrain == k
+            train = idx_testtrain != k
+
+            for model in modelnames:
+                regressors[model].fit(features_VERT_AGG[model][train],R[train])
+                R_pred_10 = regressors[model].predict(features_VERT_AGG[model][test])
+
+                # Get reference RMSE
+                rmse_ref = perfscores(R_pred_10, R[test], bounds=None)['all']['RMSE']
+
+                for feat in features_VERT_AGG[model].keys():
+                    # Shuffle input feature on test fraction, keep others untouched
+                    x_test = features_VERT_AGG[model][test].copy()
+                    x_test[feat] = np.random.permutation(x_test[feat].values)
+
+                    # Calculate estimates and shuffled RMSE
+                    R_pred_shuffled = regressors[model].predict(x_test)
+                    rmse_shuff = perfscores(R_pred_shuffled, R[test], bounds=None)['all']['RMSE']
+
+                    #Compute increase in RMSE score
+                    scores[model][feat].append((rmse_shuff - rmse_ref) / rmse_ref)
+
+        # Save all output
+        name_file = str(Path(output_folder, 'feature_selection_scores.p'))
+        pickle.dump(scores, open(name_file, 'wb'))
              
     def model_intercomparison(self, features_dic, intercomparison_configfile, 
                               output_folder, reference_products = ['CPCH','RZC'],

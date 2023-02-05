@@ -44,6 +44,7 @@ from ..common.lookup import get_lookup
 from ..common.utils import split_by_time, nanadd_at, envyaml
 from ..common.radarprocessing import Radar, HZT_hourly_to_5min
 from ..common.io_data import save_gif
+from ..qpe.qpe import _pol_to_cart, _qpe_to_chgrid, _outlier_removal, _disaggregate
 
 try:
     import pysteps
@@ -60,147 +61,6 @@ NBINS_X = len(X_QPE_CENTERS)
 NBINS_Y = len(Y_QPE_CENTERS)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-
-def _qpe_to_chgrid(qpe, time, radar_list, precision=2):
-    """
-    Creates a pyart grid object from a QPE array
-
-    Parameters
-    ----------
-    qpe : ndarray
-        2D numpy array containing the QPE data in the Swiss QPE grid
-    time : datetime
-        Start time of the scan
-    precision : int
-        Precision to use when storing the QPE data in the grid, default is 2
-        (0.01)
-    quality : dictionnary
-        Containing all radars with corresponding timestamps that are missing
-        
-
-    Returns
-    -------
-    A pyart Grid object
-    """
-
-
-    grid = make_empty_grid([1, NBINS_X, NBINS_Y], [[0,0],
-                                           [1000 * np.min(X_QPE_CENTERS),
-                                            1000 * np.max(X_QPE_CENTERS)],
-                                           [1000 * np.min(Y_QPE_CENTERS),
-                                            1000 * np.max(Y_QPE_CENTERS)]])
-
-
-    time_start = time - datetime.timedelta(seconds = 5 * 60)
-    grid.time['units'] = 'seconds since {:s}'.format(
-                    datetime.datetime.strftime(time_start,
-                                               '%Y-%m-%dT%H:%M:%SZ'))
-    grid.time['data'] = np.arange(0, 5 *60)
-    grid.origin_latitude['data'] = 46.9524
-    grid.origin_longitude['data'] = 7.43958333
-    grid.projection = proj4_to_dict("+proj=somerc +lat_0=46.95240555555556 "+\
-        "+lon_0=7.439583333333333 +k_0=1 +x_0=600000 +y_0=200000"+\
-            " +ellps=bessel +towgs84=674.4,15.1,405.3,0,0,0,0 +units=m +no_defs")
-    data = {}
-    data['data'] = np.around(qpe, precision)
-    data['units'] = 'mm/hr'
-    data['long_name'] = 'Rainforest estimated rain rate'
-    data['coordinates'] = 'elevation azimuth range'
-    data['product'] = b'RR'
-    data['prodname'] = b'CHRFQ'
-    data['nodata'] = np.nan
-    data['_FillValue'] = np.nan
-
-    grid.fields['radar_estimated_rain_rate'] = data
-    grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
-    grid.metadata['version'] = b'H5rad 2.3'
-    # Add missing radar information
-    quality = 'ADLPW'
-    if len(radar_list) != 0:
-        rad_list = list(radar_list.keys())
-        qual_new = quality
-        for rad in rad_list:
-            qual_new = qual_new.replace(rad, '-')
-        quality = qual_new
-    grid.metadata['radar'] = quality.encode()
-
-    return grid
-
-
-def _outlier_removal(image, N = 3, threshold = 3):
-    """
-    Performs localized outlier correction by standardizing the data in a moving
-    window and remove values that are below - threshold or above + threshold
-
-    Parameters
-    ----------
-    image : ndarray
-        2D numpy array
-    N : int
-        size of the moving window, for both rows and columns ( the window is
-        square)
-    threshold : threshold for a standardized value to be considered an outlier
-
-    Returns
-    -------
-    An outlier removed version of the image with the same shape
-    """
-
-    im = np.array(image, dtype=float)
-    im2 = im**2
-
-    im_copy = im.copy()
-    ones = np.ones(im.shape)
-
-    kernel = np.ones((2*N+1, 2*N+1))
-    s = convolve2d(im, kernel, mode="same")
-    s2 = convolve2d(im2, kernel, mode="same")
-    ns = convolve2d(ones, kernel, mode="same")
-
-    mean = (s/ns)
-    std = (np.sqrt((s2 - s**2 / ns) / ns))
-
-    z = (image - mean)/std
-    im_copy[z >= threshold] = mean[z >= threshold]
-    return im_copy
-
-def _disaggregate(R, T = 5, t = 1,):
-    """
-    Disaggregates a set of two consecutive QPE images to 1 min resolution and
-    then averages them to get a new advection corrected QPE estimates
-
-    Parameters
-    ----------
-    R : list
-        List of two numpy 2D arrays, containing the previous and the current
-        QPE estimate
-    T : int
-        The time interval that separates the two QPE images, default is 5 min
-    t : int
-        The reference time interval used for the disaggregation, 1 min by
-        default, should not be touched I think
-
-    Returns
-    -------
-    An advection corrected QPE estimate
-
-    """
-    x,y = np.meshgrid(np.arange(R[0].shape[1],dtype=float),
-                  np.arange(R[0].shape[0],dtype=float))
-    oflow_method = pysteps.motion.get_method("LK")
-    V1 = oflow_method(np.log(R))
-    Rd = np.zeros((R[0].shape))
-
-    for i in range(1 + int(T/t)):
-
-        pos1 = (y - i/T * V1[1],x - i/T * V1[0])
-        R1 = map_coordinates(R[0],pos1, order = 1)
-
-        pos2 = (y + (T-i)/T * V1[1],x + (T-i)/T * V1[0])
-        R2 = map_coordinates(R[1],pos2, order = 1)
-
-        Rd += (T-i) * R1 + i * R2
-    return 1/T**2 * Rd
 
 
 class QPEProcessor_RT(object):
@@ -247,9 +107,9 @@ class QPEProcessor_RT(object):
             self.lut_cart[rad] = np.array(get_lookup('qpegrid_to_rad',
                          radar = rad))
             self.rad_heights[rad] = {}
-            coords = get_lookup('cartcoords_rad', rad)
+            heights = get_lookup('qpegrid_to_height_rad', rad)
             for sweep in self.config['SWEEPS']:
-                self.rad_heights[rad][sweep] = coords[sweep][2]
+                self.rad_heights[rad][sweep] = heights[sweep]
 
         self.model_weights_per_var = {}
         self.cosmo_var = []
@@ -263,7 +123,6 @@ class QPEProcessor_RT(object):
                     self.model_weights_per_var[var].append((models[k].beta, models[k].visib_weighting))
                 if (var == 'T') or (var == 'ISO0_HEIGHT'):
                     self.cosmo_var.append(var)
-
 
     def _retrieve_prod_RT(self, time, product_name, 
                           pattern = None, pattern_type = 'shell', sweeps = None):
@@ -590,7 +449,7 @@ class QPEProcessor_RT(object):
                 if len(radobjects[rad].radarfields) == 0:
                     self.missing_files[rad] = t
                     logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
-                    return                
+                    continue                
 
                 # Process the radar data
                 radobjects[rad].visib_mask(self.config['VISIB_CORR']['MIN_VISIB'],
@@ -602,7 +461,7 @@ class QPEProcessor_RT(object):
                     self.missing_files[rad] = t
                     logging.info(e)
                     logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
-                    return
+                    continue
                 
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
@@ -610,8 +469,8 @@ class QPEProcessor_RT(object):
                 if 'T' in self.cosmo_var:
                     radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
                 if 'ISO0_HEIGHT' in self.cosmo_var:
-                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])                    
-            
+                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])
+                                                       
             for sweep in self.config['SWEEPS']: # Loop on sweeps
                 logging.info('---')
                 logging.info('Processing sweep ' + str(sweep))
@@ -635,13 +494,12 @@ class QPEProcessor_RT(object):
                                           np.nan)
 
                         for var in self.model_weights_per_var.keys():
-                            if 'RADAR' in var:
-                                datasweep['RADAR_{:s}'.format(rad)] = np.isfinite(ZH).astype(float)
-                            elif var == 'HEIGHT':
-                                datasweep['HEIGHT'] = self.rad_heights[rad][sweep].copy()
-                            else:
-                                datasweep[var] = np.ma.filled(radobjects[rad].get_field(sweep, var),
-                                          np.nan)
+                            # These variables are computed differently
+                            if 'RADAR_prop' in var or var == 'HEIGHT':
+                                continue 
+                        
+                            datasweep[var] = np.ma.filled(radobjects[rad].get_field(sweep, var),
+                                        np.nan)
 
                         # Mask on minimum zh
                         invalid = np.logical_or(np.isnan(ZH),
@@ -664,24 +522,49 @@ class QPEProcessor_RT(object):
                         idx_ch = idx_ch.astype(int)
                         idx_polar = [lut_elev[:,1], lut_elev[:,2]]
 
+                        # Compute VISIB at a given sweep/radar integrated over QPE grid
+                        # This is used for visibility weighting in the vert integration
+                        visib_radsweep  = _pol_to_cart(datasweep['VISIB'][idx_polar[0], idx_polar[1]],
+                                            idx_ch) 
+                        # Compute validity of ZH at a given sweep/radar integrated over QPE grid
+                        # This is used to compute radar fraction, it will be 1 only if at least one ZH is defined at a given
+                        # QPE grid for this sweep/radar
+                        isvalidzh_radsweep = _pol_to_cart(np.isfinite(ZH[idx_polar[0], idx_polar[1]]),
+                                            idx_ch) 
+
                         for weight in rf_features_cart.keys():
+
+                            beta, visibweighting = weight
+
                             # Compute altitude weighting
-                            W = 10 ** (weight[0] * (datasweep['HEIGHT']/1000.))
-                            W[invalid] = 0
-                            
+                            W = 10 ** (beta * (self.rad_heights[rad][sweep]/1000.))                            
                             # Compute visib weighting
-                            if weight[1]:
-                                W *= datasweep['VISIB'] / 100
+                            if visibweighting:
+                                W *= visib_radsweep / 100
 
                             for var in rf_features_cart[weight].keys():
-                                if var in datasweep.keys():
-                                    # Add variable to cart grid
-                                    nanadd_at(rf_features_cart[weight][var],
-                                        idx_ch, (W * datasweep[var])[idx_polar[0], idx_polar[1]])
-                            # Add weights to cart grid
-                            nanadd_at(weights_cart[weight], idx_ch, W[idx_polar[0], idx_polar[1]])
+                                if var == 'HEIGHT': # precomputed in lookup tables
+                                    var_radsweep = self.rad_heights[rad][sweep]
+                                elif var == 'VISIB':
+                                    var_radsweep = visib_radsweep
+                                elif 'RADAR_prop_' in var:
+                                    if var[-1] != rad: # Can update RADAR_prop only for the current radar
+                                        continue
+                                    var_radsweep = isvalidzh_radsweep
+                                else:
+                                    if var in datasweep.keys():
+                                        # Compute variable integrated over QPE grid for rad/sweep
+                                        var_radsweep = _pol_to_cart(datasweep[var][idx_polar[0], idx_polar[1]],
+                                            idx_ch) 
+
+                                # Do a weighted update of the rf_features_cart array
+                                rf_features_cart[weight][var] = np.nansum(np.dstack((rf_features_cart[weight][var], 
+                                    var_radsweep * W * (isvalidzh_radsweep == 1))),2)
+
+                            # Do a weighted update of the sum of vertical weights, only where radar measures are available (ZH)
+                            weights_cart[weight] = np.nansum(np.dstack((weights_cart[weight], 
+                                W * (isvalidzh_radsweep == 1))),2)
                     except:
-                        raise
                         logging.error('Could not compute sweep {:d}'.format(sweep))
                         pass
 
@@ -695,6 +578,8 @@ class QPEProcessor_RT(object):
                 for v in model.variables:
                     dat = (rf_features_cart[(model.beta,model.visib_weighting)][v] 
                              / weights_cart[(model.beta,model.visib_weighting)])
+                    # Inf occurs when weights are zero
+                    dat[np.isinf(dat)] = np.nan
                     X.append(dat.ravel())
 
                 X = np.array(X).T

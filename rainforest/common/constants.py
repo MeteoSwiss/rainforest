@@ -96,6 +96,11 @@ NYQUIST_VEL = [8.3,9.6,8.3,12.4,11,12.4,13.8,12.4,13.8,16.5,16.5,16.5,
 # QPE
 ###############
 
+# Quality checks to avoid the inclusion of erroneous data
+STATUS_QC_FLAG_TH = 0.01 #dBADU
+STATUS_QC_FLAG_SWEEP = 19
+STATUS_QC_REMOVE_TH = 13
+
 VPR_REF_HEIGHTS = {'A':1500,'D':2000,'L':2000,'P':1500,'W':1500}
 VPR_REF_RADAR = {'A':'A','P':'A','L':'L','W':'A','D':'D'}
 
@@ -253,7 +258,7 @@ CONVERT_COMMAND = '~owm/bin/fxconvert'
 OFFSET_CCS4 = [297,-100]
 
 # Folder depends on server:
-if 'lom' in socket.gethostname():
+if ('lom' in socket.gethostname()) or ('meteoswiss' in socket.gethostname()):
     FOLDER_RADAR = '/srn/data/'
     FOLDER_ISO0 = '/srn/data/HZT/'
 elif 'tsa' in socket.gethostname():
@@ -276,7 +281,6 @@ elif 'tsa' in socket.gethostname():
     FILES_COSMO1E_T = sorted(glob.glob(FOLDER_COSMO1E_T + '*.nc'))
     TIMES_COSMO1E_T = np.array([datetime.datetime.strptime(f[-13:-3],'%Y%m%d%H')
         for f in FILES_COSMO1E_T])
-
 
  ###############
  # Radar processing

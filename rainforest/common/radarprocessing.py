@@ -10,7 +10,6 @@ import numpy as np
 from scipy.spatial import KDTree
 from scipy.spatial.distance import cdist
 from textwrap import  dedent
-import logging
 import datetime
 
 from pyart.retrieve import kdp_leastsquare_single_window
@@ -22,6 +21,7 @@ from pyart.aux_io import read_metranet, read_cartesian_metranet
 from pyart.testing import make_empty_ppi_radar
 from pyart.core.transforms import antenna_vectors_to_cartesian
 
+from .logger import logger
 from .utils import sweepnumber_fromfile, rename_fields
 from .io_data import read_status, read_vpr
 from . import constants
@@ -77,7 +77,7 @@ class Radar(object):
                 self.radsweeps[sweep] = radinstance
                 self.sweeps.append(sweep)
             except:
-                logging.error('Could not read file {:s}'.format(f))
+                logger.error('Could not read file {:s}'.format(f))
                 pass
 
         self.radname = radname
@@ -90,14 +90,14 @@ class Radar(object):
                 self.status =  read_status(statusfile)
                 self.compute_noise()
             except:
-                logging.error('Could not compute noise from status file!')
+                logger.error('Could not compute noise from status file!')
                 pass
             
         if vprfile != None:
             try:
                 self.vpr = read_vpr(vprfile, self.radname)
             except:
-                logging.error('Could not add vpr file!')
+                logger.error('Could not add vpr file!')
                 pass
 
         # To get a variable to define the temperature reference
@@ -504,7 +504,7 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     """
     if time.minute != 0:
         # Minutes are set to 0 below, here is only a notification
-        logging.info('HZT temporal interpolation timestamp {} set to HH:00'.format(time))
+        logger.info('ISO0_HEIGHT: Temporal interpolation, timestamp {} set to HH:00'.format(time))
 
     tstamp_hzt0 = datetime.datetime(time.year, time.month, time.day, time.hour,0)
     tstamp_hzt1 = tstamp_hzt0+ datetime.timedelta(hours=1)
@@ -512,6 +512,9 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
     hzt = {}
     hzt[tstamp_hzt0] = read_cartesian_metranet(filelist[tstamp_hzt0]).fields['iso0_height']['data'][0]
     hzt[tstamp_hzt1] = read_cartesian_metranet(filelist[tstamp_hzt1]).fields['iso0_height']['data'][0]
+
+    # Giving info about which files are used
+    logger.info('ISO0_HEIGHT: Temporal interpolation between {} and {}'.format(filelist[tstamp_hzt0], filelist[tstamp_hzt1]))
 
     # Get the incremental difference for e.g. 5min steps (divided by 12):
     dt = datetime.timedelta(minutes=tsteps_min)
