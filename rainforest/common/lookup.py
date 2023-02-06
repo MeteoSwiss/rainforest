@@ -456,10 +456,10 @@ def calc_lookup(lookup_type, radar = None):
             
             # For x the columns in the Cartesian lookup tables are lower bounds
             # e.g. x = 563, means that radar pixels are between 563 and 564
-            y_llc_sta = (y_sta / constants.CART_GRID_SIZE).astype(int)
+            y_llc_sta = int(y_sta / constants.CART_GRID_SIZE)
             # For y the columns in the Cartesian lookup tables are upper bounds
             # e.g. x = 182, means that radar pixels are between 181 and 182            
-            x_llc_sta = (np.ceil(x_sta / constants.CART_GRID_SIZE)).astype(int)
+            x_llc_sta = int(np.ceil(x_sta / constants.CART_GRID_SIZE))
             
           
             for i in range(-offset_y, offset_y + 1):
