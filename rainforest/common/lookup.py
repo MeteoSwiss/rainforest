@@ -216,8 +216,8 @@ def calc_lookup(lookup_type, radar = None):
                     # x and y are reversed (following the Swiss convention),
                     # therefore, the station cell number needs to be 
                     # defined as follows:
-                    x_llc_sta = (np.ceil(x_sta/constants.CART_GRID_SIZE)).astype(int)
-                    y_llc_sta = (y_sta/constants.CART_GRID_SIZE).astype(int)
+                    x_llc_sta = int(np.ceil(x_sta/constants.CART_GRID_SIZE))
+                    y_llc_sta = int(y_sta/constants.CART_GRID_SIZE)
                     
                     # Distance from all gates to gauge
                     idx = lut_cart[np.logical_and(lut_cart[:,0] == sweep_idx,
