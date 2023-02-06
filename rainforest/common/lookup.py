@@ -216,8 +216,8 @@ def calc_lookup(lookup_type, radar = None):
                     # x and y are reversed (following the Swiss convention),
                     # therefore, the station cell number needs to be 
                     # defined as follows:
-                    x_llc_sta = np.int(np.ceil(x_sta/constants.CART_GRID_SIZE))
-                    y_llc_sta = np.int(y_sta/constants.CART_GRID_SIZE)
+                    x_llc_sta = (np.ceil(x_sta/constants.CART_GRID_SIZE)).astype(int)
+                    y_llc_sta = (y_sta/constants.CART_GRID_SIZE).astype(int)
                     
                     # Distance from all gates to gauge
                     idx = lut_cart[np.logical_and(lut_cart[:,0] == sweep_idx,
@@ -456,10 +456,10 @@ def calc_lookup(lookup_type, radar = None):
             
             # For x the columns in the Cartesian lookup tables are lower bounds
             # e.g. x = 563, means that radar pixels are between 563 and 564
-            y_llc_sta = np.int(y_sta / constants.CART_GRID_SIZE)
+            y_llc_sta = (y_sta / constants.CART_GRID_SIZE).astype(int)
             # For y the columns in the Cartesian lookup tables are upper bounds
             # e.g. x = 182, means that radar pixels are between 181 and 182            
-            x_llc_sta = np.int(np.ceil(x_sta / constants.CART_GRID_SIZE))
+            x_llc_sta = (np.ceil(x_sta / constants.CART_GRID_SIZE)).astype(int)
             
           
             for i in range(-offset_y, offset_y + 1):
