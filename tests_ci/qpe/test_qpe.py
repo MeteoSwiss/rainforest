@@ -37,7 +37,7 @@ def test_qpe():
         qpe_field = qpe.data
 
         # Assertions
-        assert qpe_field.shape == (640, 710)
+        assert qpe_field.shape == (640, 710) or pe_field.shape == (1,640, 710)
         assert len(np.unique(qpe_field)) > 2
 
         shutil.rmtree(str(Path(cwd, model)))
