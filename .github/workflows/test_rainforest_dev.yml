@@ -51,8 +51,9 @@ jobs:
           mkdir -p ${{github.workspace}}/rainforest_data
       - name: Check imports
         env:
-           AWS_KEY: ${{ secrets.AWS_KEY }}
+           AWS_KEY: ${{ secrets.AWS_KEY }}/rainforest_data
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
+        working-directory: ${{github.workspace}}
         run: |
           python -c "import rainforest; print(rainforest.__file__)" 
       - name: Run tests
