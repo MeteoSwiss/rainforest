@@ -53,7 +53,7 @@ jobs:
         env:
            AWS_KEY: ${{ secrets.AWS_KEY }}/rainforest_data
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
-        working-directory: ${{github.workspace}}
+        working-directory: /tmp/
         run: |
           python -c "import rainforest; print(rainforest.__file__)" 
       - name: Run tests
