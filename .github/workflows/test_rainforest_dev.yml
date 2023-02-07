@@ -51,7 +51,7 @@ jobs:
           mkdir -p ${{github.workspace}}/rainforest_data
       - name: Check imports
         env:
-           AWS_KEY: ${{ secrets.AWS_KEY }}/rainforest_data
+           AWS_KEY: ${{ secrets.AWS_KEY }}
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
         working-directory: /tmp/
         run: |
