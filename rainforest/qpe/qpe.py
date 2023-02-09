@@ -775,8 +775,8 @@ class QPEProcessor(object):
                         # Compute validity of ZH at a given sweep/radar integrated over QPE grid
                         # This is used to compute radar fraction, it will be 1 only if at least one ZH is defined at a given
                         # QPE grid for this sweep/radar
-                        isvalidzh_radsweep = (_pol_to_cart_valid(np.isfinite(ZH[idx_polar[0], idx_polar[1]]).astype(np.int),
-                                            idx_ch)).astype(int)
+                        isvalidzh_radsweep = _pol_to_cart_valid(np.isfinite(ZH[idx_polar[0], idx_polar[1]]).astype(int),
+                                            idx_ch)
                         for weight in rf_features_cart.keys():
                             beta, visibweighting = weight
                             # Compute altitude weighting
