@@ -59,6 +59,27 @@ NBINS_Y = len(Y_QPE_CENTERS)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+def _pol_to_cart_valid(isvalid, idx_cart):
+    """
+    Converts polar data to the Cartesian QPE grid
+
+    Parameters
+    ----------
+    isvalid : ndarray
+        1D array of polar radar data mask, 1 if data is valid, 0 otherwise
+    idx_cart : ndarray
+        List of Cartesian pixel coordinates of pol_data, its shape must be N x 2, where N
+        is the length of pol_data
+    
+    Returns
+    -------
+    A numpy array of the size of the Cartesian grid
+
+    """
+    weights = np.zeros((NBINS_X, NBINS_Y)).astype(int)
+    add_at_int(weights, idx_cart, isvalid)
+    return weights > 0
+
 def _pol_to_cart(pol_data, idx_cart):
     """
     Converts polar data to the Cartesian QPE grid
@@ -83,6 +104,71 @@ def _pol_to_cart(pol_data, idx_cart):
     add_at_64(cart_data, idx_cart, pol_data)
     return cart_data / weights
 
+def _features_to_chgrid(features, features_labels, time, radar_list):
+    """
+    Creates a pyart grid object from a features array
+
+    Parameters
+    ----------
+    features : ndarray
+        2D numpy array containing the input features for the rainforest algorithm
+    time : datetime
+        Start time of the scan
+    quality : dictionary
+        Containing all radars with corresponding timestamps that are missing
+        
+
+    Returns
+    -------
+    A pyart Grid object
+    """
+
+
+    grid = make_empty_grid([1, NBINS_X, NBINS_Y], [[0,0],
+                                           [1000 * np.min(X_QPE_CENTERS),
+                                            1000 * np.max(X_QPE_CENTERS)],
+                                           [1000 * np.min(Y_QPE_CENTERS),
+                                            1000 * np.max(Y_QPE_CENTERS)]])
+
+
+    time_start = time - datetime.timedelta(seconds = 5 * 60)
+    grid.time['units'] = 'seconds since {:s}'.format(
+                    datetime.datetime.strftime(time_start,
+                                               '%Y-%m-%dT%H:%M:%SZ'))
+    grid.time['data'] = np.arange(0, 5 *60)
+    grid.origin_latitude['data'] = 46.9524
+    grid.origin_longitude['data'] = 7.43958333
+    grid.projection = proj4_to_dict("+proj=somerc +lat_0=46.95240555555556 "+\
+        "+lon_0=7.439583333333333 +k_0=1 +x_0=600000 +y_0=200000"+\
+            " +ellps=bessel +towgs84=674.4,15.1,405.3,0,0,0,0 +units=m +no_defs")
+    
+    for i in range(features.shape[1]):
+        data = {}
+        data['data'] = np.reshape(features[:,i], (NBINS_X, NBINS_Y))
+        data['nodata'] = np.nan
+        data['units'] = 'UNKNOWN'
+        data['long_name'] = features_labels[i]
+        data['coordinates'] = 'elevation azimuth range'
+        data['product'] = b'RF_FEATURE'
+        data['prodname'] = b'RF_FEATURE'
+        data['nodata'] = np.nan
+        data['_FillValue'] = np.nan
+
+        grid.fields[features_labels[i]] = data
+    
+    grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
+    grid.metadata['version'] = b'H5rad 2.3'
+    # Add missing radar information
+    quality = 'ADLPW'
+    if len(radar_list) != 0:
+        rad_list = list(radar_list.keys())
+        qual_new = quality
+        for rad in rad_list:
+            qual_new = qual_new.replace(rad, '-')
+        quality = qual_new
+    grid.metadata['radar'] = quality.encode()
+
+    return grid
 
 def _qpe_to_chgrid(qpe, time, radar_list, precision=2):
     """
@@ -97,7 +183,7 @@ def _qpe_to_chgrid(qpe, time, radar_list, precision=2):
     precision : int
         Precision to use when storing the QPE data in the grid, default is 2
         (0.01)
-    quality : dictionnary
+    quality : dictionary
         Containing all radars with corresponding timestamps that are missing
         
 
@@ -436,6 +522,13 @@ class QPEProcessor(object):
                 filepath += '.h5'
                 write_odim_grid_h5(filepath, grid)
 
+    def save_features(self, features, features_labels, t, filepath):
+        # grid = _features_to_chgrid(features, features_labels, t, 
+        #     radar_list=self.missing_files)
+        # filepath += '.h5'
+        # write_odim_grid_h5(filepath, grid)
+        np.save(filepath, features)
+        
     def compute(self, output_folder, t0, t1, timestep = 5,
                 basename = 'RFO%y%j%H%MVH', test_mode = False):
         """
@@ -487,6 +580,8 @@ class QPEProcessor(object):
             logger.info('====')
             logger.info('Processing time '+str(t))
             
+            tstr = datetime.datetime.strftime(t, basename)
+
             # Get lead time file in RT mode
             if i == 0 and self.rt:
                 for k in self.models.keys():
@@ -654,7 +749,8 @@ class QPEProcessor(object):
 
                         for var in datasweep.keys():
                             # Because add.at does not support nan we replace by zero
-                            datasweep[var][invalid] = 0
+                            if var not in ['VISIB', 'ISO0_HEIGHT', 'HEIGHT']:
+                                datasweep[var][invalid] = np.nan
 
                         """Part three - convert to Cartesian"""
                         # get cart index of all polar gates for this sweep
@@ -662,23 +758,25 @@ class QPEProcessor(object):
                                                         == sweep-1] # 0-indexed
                         
                         # Convert from Swiss-coordinates to array index
+                        # wod: 9.02.2022: after careful examination and tests with
+                        # random fields it seems that the second index must be incremented by 1
+                        # for it to work
                         idx_ch = np.array((len(X_QPE_CENTERS)  -
                                         (lut_elev[:,4] - np.min(X_QPE_CENTERS)),
-                                        lut_elev[:,3] -  np.min(Y_QPE_CENTERS))).astype(int)
+                                        lut_elev[:,3] -  np.min(Y_QPE_CENTERS) + 1)).astype(int)
 
                         idx_ch = idx_ch.astype(int)
                         idx_polar = [lut_elev[:,1], lut_elev[:,2]]
                   
                         # Compute VISIB at a given sweep/radar integrated over QPE grid
                         # This is used for visibility weighting in the vert integration
-                        visib_radsweep  = _pol_to_cart((datasweep['VISIB'][idx_polar[0], idx_polar[1]]),
-                                            idx_ch) 
+                        visib_radsweep  = _pol_to_cart((datasweep['VISIB'][idx_polar[0], idx_polar[1]]), idx_ch) 
+                        
                         # Compute validity of ZH at a given sweep/radar integrated over QPE grid
                         # This is used to compute radar fraction, it will be 1 only if at least one ZH is defined at a given
                         # QPE grid for this sweep/radar
-                        isvalidzh_radsweep = _pol_to_cart(np.isfinite(ZH[idx_polar[0], idx_polar[1]]).astype(np.float64),
-                                            idx_ch) 
-
+                        isvalidzh_radsweep = (_pol_to_cart_valid(np.isfinite(ZH[idx_polar[0], idx_polar[1]]).astype(np.int),
+                                            idx_ch)).astype(int)
                         for weight in rf_features_cart.keys():
                             beta, visibweighting = weight
                             # Compute altitude weighting
@@ -701,14 +799,16 @@ class QPEProcessor(object):
                                         # Compute variable integrated over QPE grid for rad/sweep
                                         var_radsweep = _pol_to_cart(datasweep[var][idx_polar[0], idx_polar[1]],
                                             idx_ch) 
+
                                 # Do a weighted update of the rf_features_cart array
                                 rf_features_cart[weight][var] = np.nansum(np.dstack((rf_features_cart[weight][var], 
-                                    var_radsweep * W * (isvalidzh_radsweep == 1))),2)
+                                    var_radsweep * W * isvalidzh_radsweep)),2)
                             # Do a weighted update of the sum of vertical weights, only where radar measures are available (ZH)
                             weights_cart[weight] = np.nansum(np.dstack((weights_cart[weight], 
-                                W * (isvalidzh_radsweep == 1))),2)
+                                W * isvalidzh_radsweep)),2)
 
                     except:
+                        raise
                         logger.error('Could not compute sweep {:d}'.format(sweep))
                         pass
 
@@ -738,6 +838,13 @@ class QPEProcessor(object):
                     # Save files in a temporary format
                     np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
                                 '_xprev', X)
+
+                if self.config['SAVE_FEATURES']:
+                    filepath = output_folder + '/' + k +'_FEATURES/'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)
+                    logger.info('Input features to RainForest written to ' + filepath+tstr)
+                    self.save_features(Xcomb, model.variables, t, filepath+tstr)
 
                 # Remove axis with only zeros
                 Xcomb[np.isnan(Xcomb)] = 0
@@ -802,14 +909,13 @@ class QPEProcessor(object):
                         logger.error("Pysteps is not available, no qpe disaggregation will be performed!")
                     qpe_ac = _disaggregate(comp)
                     
-                    tstr = datetime.datetime.strftime(t, basename)
+                    
                     filepath = output_folder + '/' + k +'_AC/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
                     self.save_output(qpe_ac, t, filepath + tstr)
 
                 """Part six - Save main output"""
-                tstr = datetime.datetime.strftime(t, basename)
                 filepath = output_folder + '/' + k
                 if not os.path.exists(filepath):
                     os.mkdir(filepath)                
@@ -822,20 +928,17 @@ class QPEProcessor(object):
                     # O: outlier removal
                     # G: Gaussian smoothing
                     
-                    tstr = datetime.datetime.strftime(t, basename)
                     filepath = output_folder + '/' + k +'_T0O0G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
                     self.save_output(qpe_no_temp, t, filepath+tstr)                    
                     
-                    tstr = datetime.datetime.strftime(t, basename)
                     filepath = output_folder + '/' + k +'_T1O0G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
                     self.save_output(qpe_no_pp, t, filepath+tstr)
                     
                     # With outlier removal (O1), but without Gaussian smoothing (G0)
-                    tstr = datetime.datetime.strftime(t, basename)
                     filepath = output_folder + '/' + k +'_T1O1G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
@@ -843,7 +946,6 @@ class QPEProcessor(object):
                     self.save_output(qpe_temp, t, filepath+tstr)
                     
                     # Without outlier removal (O0), but without Gaussian smoothing (G1)
-                    tstr = datetime.datetime.strftime(t, basename)
                     filepath = output_folder + '/' + k +'_T1O0G1/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)

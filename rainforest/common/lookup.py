@@ -416,9 +416,12 @@ def calc_lookup(lookup_type, radar = None):
                 lut_elev = lut_cart[lut_cart[:,0] == sweep-1] # 0-indexed
                                     
                 # Convert from Swiss-coordinates to array index
+                # wod: 9.02.2022: after careful examination and tests with
+                # random fields it seems that the second index must be incremented by 1
+                # for it to work
                 idx_ch = np.vstack((len(X_QPE_CENTERS)  -
                                 (lut_elev[:,4] - np.min(X_QPE_CENTERS)),
-                                lut_elev[:,3] -  np.min(Y_QPE_CENTERS))).T
+                                lut_elev[:,3] -  np.min(Y_QPE_CENTERS) + 1)).T
 
                 idx_ch = idx_ch.astype(int)
                 idx_polar = [lut_elev[:,1], lut_elev[:,2]]

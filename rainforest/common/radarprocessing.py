@@ -70,6 +70,7 @@ class Radar(object):
                 rename_fields(radinstance)
                 visib_sweep = np.ma.array(visib[sweep].astype(np.float32), 
                                           mask = np.isnan(visib[sweep]))
+
                 zh = radinstance.get_field(0,'ZH')
                 visib_sweep = visib_sweep[0:len(zh),:]
                 radinstance.add_field('VISIB',{'data': visib_sweep})
