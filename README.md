@@ -7,7 +7,7 @@ A python library to access and update the gauge/station database of MDR and comp
 
 Please see https://rainforest.readthedocs.io/en/latest/index.html  for further information
 
-Installation
+**Installation**
 
 ``` pip install rainforest-mch ```
 
