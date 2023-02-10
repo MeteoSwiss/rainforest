@@ -6,7 +6,13 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
-
+  workflow_dispatch:
+      inputs:
+        debug_enabled:
+          type: boolean
+          description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+          required: false
+          default: false
 jobs:
   unit_tests:
     name: Unit Tests (${{ matrix.python-version }}, ${{ matrix.os }})
@@ -16,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ "ubuntu-latest" ]
-        python-version: [  "3.8", "3.9"]
+        python-version: ["3.8", "3.9"]
       max-parallel: 6
 
     defaults:
@@ -25,6 +31,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: dev
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
@@ -43,6 +51,7 @@ jobs:
         env:
            AWS_KEY: ${{ secrets.AWS_KEY }}
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
+        working-directory: /tmp/
         run: |
           python -c "import rainforest; print(rainforest.__file__)" 
       - name: Run tests
@@ -51,3 +60,7 @@ jobs:
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
         working-directory: ${{github.workspace}}
         run: pytest tests_ci
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+

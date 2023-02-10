@@ -19,6 +19,7 @@ GAUSSIAN_SIGMA: 0.5
 ADVECTION_CORRECTION: 0
 # Save outputs and cleanup
 SAVE_NON_POSTPROCESSED_DATA : 0 # 0 for no, 1 for yes
+SAVE_FEATURES : 0 # 0 for no, 1 for yes
 DATA_FORMAT: 'float' # either 'float' or 'DN'
 FILE_FORMAT: 'ODIM' # either 'ODIM' (hdf5) or 'gif'
 CLEANUP: 'delete_all' #if CLEANUP='delete_all', remove all the unzipped files within the temp folder
