@@ -216,6 +216,7 @@ def calc_lookup(lookup_type, radar = None):
                     # x and y are reversed (following the Swiss convention),
                     # therefore, the station cell number needs to be 
                     # defined as follows:
+
                     x_llc_sta = int(np.ceil(x_sta/constants.CART_GRID_SIZE))
                     y_llc_sta = int(y_sta/constants.CART_GRID_SIZE)
                     
@@ -463,8 +464,7 @@ def calc_lookup(lookup_type, radar = None):
             # For y the columns in the Cartesian lookup tables are upper bounds
             # e.g. x = 182, means that radar pixels are between 181 and 182            
             x_llc_sta = int(np.ceil(x_sta / constants.CART_GRID_SIZE))
-            
-          
+        
             for i in range(-offset_y, offset_y + 1):
                 for j in range(-offset_x, offset_x + 1):
                     x_llc = x_llc_sta + j
