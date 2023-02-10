@@ -216,8 +216,9 @@ def calc_lookup(lookup_type, radar = None):
                     # x and y are reversed (following the Swiss convention),
                     # therefore, the station cell number needs to be 
                     # defined as follows:
-                    x_llc_sta = np.int(np.ceil(x_sta/constants.CART_GRID_SIZE))
-                    y_llc_sta = np.int(y_sta/constants.CART_GRID_SIZE)
+
+                    x_llc_sta = int(np.ceil(x_sta/constants.CART_GRID_SIZE))
+                    y_llc_sta = int(y_sta/constants.CART_GRID_SIZE)
                     
                     # Distance from all gates to gauge
                     idx = lut_cart[np.logical_and(lut_cart[:,0] == sweep_idx,
@@ -416,9 +417,12 @@ def calc_lookup(lookup_type, radar = None):
                 lut_elev = lut_cart[lut_cart[:,0] == sweep-1] # 0-indexed
                                     
                 # Convert from Swiss-coordinates to array index
+                # wod: 9.02.2022: after careful examination and tests with
+                # random fields it seems that the second index must be incremented by 1
+                # for it to work
                 idx_ch = np.vstack((len(X_QPE_CENTERS)  -
                                 (lut_elev[:,4] - np.min(X_QPE_CENTERS)),
-                                lut_elev[:,3] -  np.min(Y_QPE_CENTERS))).T
+                                lut_elev[:,3] -  np.min(Y_QPE_CENTERS) + 1)).T
 
                 idx_ch = idx_ch.astype(int)
                 idx_polar = [lut_elev[:,1], lut_elev[:,2]]
@@ -456,12 +460,11 @@ def calc_lookup(lookup_type, radar = None):
             
             # For x the columns in the Cartesian lookup tables are lower bounds
             # e.g. x = 563, means that radar pixels are between 563 and 564
-            y_llc_sta = np.int(y_sta / constants.CART_GRID_SIZE)
+            y_llc_sta = int(y_sta / constants.CART_GRID_SIZE)
             # For y the columns in the Cartesian lookup tables are upper bounds
             # e.g. x = 182, means that radar pixels are between 181 and 182            
-            x_llc_sta = np.int(np.ceil(x_sta / constants.CART_GRID_SIZE))
-            
-          
+            x_llc_sta = int(np.ceil(x_sta / constants.CART_GRID_SIZE))
+        
             for i in range(-offset_y, offset_y + 1):
                 for j in range(-offset_x, offset_x + 1):
                     x_llc = x_llc_sta + j
