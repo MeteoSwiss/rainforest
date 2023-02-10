@@ -7,6 +7,11 @@ A python library to access and update the gauge/station database of MDR and comp
 
 Please see https://rainforest.readthedocs.io/en/latest/index.html  for further information
 
+Installation
+
+``` pip install rainforest-mch ```
+
+
 Daniel Wolfensberger, Rebecca Gugerli, MeteoSwiss-MDRS - EPFL
 February 2023
 
