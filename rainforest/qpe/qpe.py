@@ -224,6 +224,7 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
     data['_FillValue'] = np.nan
 
     grid.fields['radar_estimated_rain_rate'] = data
+    grid.fields['radar_estimated_rain_rate']['prodname'] = 'CHRFO'
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
     grid.metadata['version'] = b'H5rad 2.3'
     # Add missing radar information
@@ -524,13 +525,15 @@ class QPEProcessor(object):
                     logger.error('Invalid file format with data format float, using ODIM HDF5 output instead')
                 grid = _qpe_to_chgrid(qpe, t, missing_files=self.missing_files)
                 filepath += '.h5'
-                write_odim_grid_h5(filepath, grid, time_ref = 'end', undefined_value = -9999)
+                write_odim_grid_h5(filepath, grid, time_ref = 'end', undefined_value = 0,
+                    odim_convention = 'ODIM_H5/V2_3')
 
     def save_features(self, features, features_labels, t, filepath):
         grid = _features_to_chgrid(features, features_labels, t, 
              missing_files=self.missing_files)
         filepath += '.h5'
-        write_odim_grid_h5(filepath, grid, time_ref = 'end', undefined_value = -9999)
+        write_odim_grid_h5(filepath, grid, time_ref = 'end', undefined_value = 0,
+            odim_convention = 'ODIM_H5/V2_3')
 
         
     def compute(self, output_folder, t0, t1, timestep = 5,
