@@ -539,22 +539,27 @@ class RFTraining(object):
         ###############################################################################
         features_VERT_AGG = {}
         regressors = {}
-        for model in modelnames:
+        for im, model in enumerate(modelnames):
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))            
           
-            vweights = 10**(config[model]['VERT_AGG']['BETA'] *
-                                (radartab['HEIGHT']/1000.)) # vert. weights
-            features_VERT_AGG[model] = vert_aggregation(radartab[features_dic[model]], 
-                                 vweights, grp_vertical,
-                                 config[model]['VERT_AGG']['VISIB_WEIGHTING'],
-                                 radartab['VISIB_mean'])
-                  
+            if (im > 0) and (config[model]['VERT_AGG']['BETA'] == config[modelnames[im-1]]['VERT_AGG']['BETA']) \
+                    and (config[model]['VERT_AGG']['VISIB_WEIGHTING'] == config[modelnames[im-1]]['VERT_AGG']['VISIB_WEIGHTING']):
+                logging.info('Model {} has same vertical aggregation settings as {}, hence just copy aggregated 2D fields'.format(model, modelnames[im-1]))
+                features_VERT_AGG[model] = features_VERT_AGG[modelnames[im-1]].copy()
+            else:
+                vweights = 10**(config[model]['VERT_AGG']['BETA'] *
+                                    (radartab['HEIGHT']/1000.)) # vert. weights
+                features_VERT_AGG[model] = vert_aggregation(radartab[features_dic[model]], 
+                                    vweights, grp_vertical,
+                                    config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                                    radartab['VISIB_mean'])
+
             regressors[model] = RandomForestRegressorBC(degree = 1, 
-                          bctype = config[model]['BIAS_CORR'],
-                          beta = config[model]['VERT_AGG']['BETA'],
-                          variables = features_dic[model],
-                          visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
-                          **config[model]['RANDOMFOREST_REGRESSOR'])
+                        bctype = config[model]['BIAS_CORR'],
+                        beta = config[model]['VERT_AGG']['BETA'],
+                        variables = features_dic[model],
+                        visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                        **config[model]['RANDOMFOREST_REGRESSOR'])
         
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
@@ -627,7 +632,7 @@ class RFTraining(object):
                 rmse_ref_60 = perfscores(R_pred_60, R_test_60, bounds=None)['all']['RMSE']
 
                 for feat in features_VERT_AGG[model].keys():
-                    logging.info('Shuffling feature: '.format(feat))
+                    logging.info('Shuffling feature: {}'.format(feat))
                     # Shuffle input feature on test fraction, keep others untouched
                     x_test = features_VERT_AGG[model][test].copy()
                     x_test[feat] = np.random.permutation(x_test[feat].values)

@@ -104,7 +104,7 @@ def _pol_to_cart(pol_data, idx_cart):
     add_at_64(cart_data, idx_cart, pol_data)
     return cart_data / weights
 
-def _features_to_chgrid(features, features_labels, time, radar_list):
+def _features_to_chgrid(features, features_labels, time, missing_files):
     """
     Creates a pyart grid object from a features array
 
@@ -112,9 +112,11 @@ def _features_to_chgrid(features, features_labels, time, radar_list):
     ----------
     features : ndarray
         2D numpy array containing the input features for the rainforest algorithm
+    features_labels : list
+        names of all features
     time : datetime
         Start time of the scan
-    quality : dictionary
+    missing_files : dict
         Containing all radars with corresponding timestamps that are missing
         
 
@@ -154,23 +156,24 @@ def _features_to_chgrid(features, features_labels, time, radar_list):
         data['nodata'] = np.nan
         data['_FillValue'] = np.nan
 
-        grid.fields[features_labels[i]] = data
+        grid.fields['RF_' + features_labels[i]] = data
     
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
     grid.metadata['version'] = b'H5rad 2.3'
     # Add missing radar information
     quality = 'ADLPW'
-    if len(radar_list) != 0:
-        rad_list = list(radar_list.keys())
+    if len(missing_files) != 0:
+        rad_list = list(missing_files.keys())
         qual_new = quality
         for rad in rad_list:
             qual_new = qual_new.replace(rad, '-')
         quality = qual_new
     grid.metadata['radar'] = quality.encode()
+    grid.metadata['nodes'] = 'WMO:06661,WMO:06699,WMO:06768,WMO:06726,WMO:06776'
 
     return grid
 
-def _qpe_to_chgrid(qpe, time, radar_list, precision=2):
+def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
     """
     Creates a pyart grid object from a QPE array
 
@@ -180,11 +183,11 @@ def _qpe_to_chgrid(qpe, time, radar_list, precision=2):
         2D numpy array containing the QPE data in the Swiss QPE grid
     time : datetime
         Start time of the scan
+    missing_files : dict
+        Containing all radars with corresponding timestamps that are missing
     precision : int
         Precision to use when storing the QPE data in the grid, default is 2
         (0.01)
-    quality : dictionary
-        Containing all radars with corresponding timestamps that are missing
         
 
     Returns
@@ -221,18 +224,20 @@ def _qpe_to_chgrid(qpe, time, radar_list, precision=2):
     data['_FillValue'] = np.nan
 
     grid.fields['radar_estimated_rain_rate'] = data
+    grid.fields['radar_estimated_rain_rate']['prodname'] = 'CHRFO'
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
     grid.metadata['version'] = b'H5rad 2.3'
     # Add missing radar information
     quality = 'ADLPW'
-    if len(radar_list) != 0:
-        rad_list = list(radar_list.keys())
+    if len(missing_files) != 0:
+        rad_list = list(missing_files.keys())
         qual_new = quality
         for rad in rad_list:
             qual_new = qual_new.replace(rad, '-')
         quality = qual_new
     grid.metadata['radar'] = quality.encode()
-
+    grid.metadata['nodes'] = 'WMO:06661,WMO:06699,WMO:06768,WMO:06726,WMO:06776'
+    
     return grid
 
 
@@ -518,16 +523,18 @@ class QPEProcessor(object):
             else:
                 if (self.config['FILE_FORMAT'] != 'ODIM'):
                     logger.error('Invalid file format with data format float, using ODIM HDF5 output instead')
-                grid = _qpe_to_chgrid(qpe, t, radar_list=self.missing_files)
+                grid = _qpe_to_chgrid(qpe, t, missing_files=self.missing_files)
                 filepath += '.h5'
-                write_odim_grid_h5(filepath, grid)
+                write_odim_grid_h5(filepath, grid, time_ref = 'end', undefined_value = 0,
+                    odim_convention = 'ODIM_H5/V2_3')
 
     def save_features(self, features, features_labels, t, filepath):
-        # grid = _features_to_chgrid(features, features_labels, t, 
-        #     radar_list=self.missing_files)
-        # filepath += '.h5'
-        # write_odim_grid_h5(filepath, grid)
-        np.save(filepath, features)
+        grid = _features_to_chgrid(features, features_labels, t, 
+             missing_files=self.missing_files)
+        filepath += '.h5'
+        write_odim_grid_h5(filepath, grid, time_ref = 'end', undefined_value = 0,
+            odim_convention = 'ODIM_H5/V2_3')
+
         
     def compute(self, output_folder, t0, t1, timestep = 5,
                 basename = 'RFO%y%j%H%MVH', test_mode = False):
