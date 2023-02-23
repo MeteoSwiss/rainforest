@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: dev
+          ref: master
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
