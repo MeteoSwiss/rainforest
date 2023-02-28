@@ -1,4 +1,4 @@
-name: Test rainforest dev
+name: Test rainforest master
 
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: dev
+          ref: master
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
