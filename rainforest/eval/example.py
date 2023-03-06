@@ -10,9 +10,9 @@ The performance assessment is based on QPE maps
 import os
 os.environ['RAINFOREST_DATAPATH'] = '/store/msrad/radar/rainforest/rainforest_data/'
 
-from compileMapEstimates import compileMapEstimates
-from calcPerfscores import *
-from plotPerfscores import *
+from ..eval.eval_get_estimates import compileMapEstimates
+from ..eval.eval_calculate import *
+from ..eval.eval_plot import *
 
 config_file = '/scratch/rgugerli/data4Rad4Alp/config_eval.yml'
 

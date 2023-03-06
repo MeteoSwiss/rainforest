@@ -22,10 +22,10 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 import logging
 logging.getLogger().setLevel(logging.INFO)
 
-from rainforest.common.retrieve_data import retrieve_prod
-from rainforest.common.utils import envyaml, get_qpe_files_multiple_dirs
-from rainforest.common.lookup import get_lookup
-from rainforest.common.io_data import read_cart
+from ..common.retrieve_data import retrieve_prod
+from ..common.utils import envyaml, get_qpe_files_multiple_dirs
+from ..common.lookup import get_lookup
+from ..common.io_data import read_cart
 
 
 def getGaugeObservations(gaugefolder, t0=None, t1=None, slf_stations=False):

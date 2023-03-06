@@ -20,8 +20,8 @@ logging.getLogger().setLevel(logging.INFO)
 
 from pysteps.verification.detcontscores import *
 
-from rainforest.common.utils import envyaml
-from rainforest.common.constants import METSTATIONS
+from ..common.utils import envyaml
+from ..common.constants import METSTATIONS
 
 #----------------------------------------------------------
 # PERFORMANCE SCORES

@@ -14,8 +14,8 @@ import pandas as pd
 import numpy as np
 
 from pathlib import Path
-from rainforest.common import constants
-from rainforest.common.utils import envyaml
+from ..common import constants
+from ..common.utils import envyaml
 
 import logging
 logging.getLogger().setLevel(logging.INFO)
