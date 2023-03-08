@@ -1,0 +1,17 @@
+# Please assure that within this folder, you have a subfolder /data/ with the subfolders for your models
+PATHS:
+  MAINFOLDER: /scratch/rgugerli/analysis/data4Rad4Alp/
+  QPEFOLDER: /scratch/rgugerli/analysis/data4Rad4Alp/data_20180611/
+  GAUGEFOLDER: /store/msrad/radar/radar_database_v2/gauge/
+# As REFERENCES, all MeteoSwiss Cartesian products can be used
+REFERENCES: ['RZC', 'CPCH']
+RF_MODELS: ['RFO', 'RFO_2016_19', 'RFO_AC', 'RFO_T0O0G0']
+TIME_START: '201806110000'
+TIME_END: '201806112355'
+# Performance stats
+PERFORMANCE:
+  REF_ESTIMATE: 'GAUGE'
+  TIMEAGGREGATION: ['10min','60min']
+  DOUBLECONDITIONAL: [0.1, 0.6]
+# Paths of compiled dataset
+
