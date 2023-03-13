@@ -307,7 +307,6 @@ def read_station_data(gauge_file):
     The cartesian data in a numpy array
         
     '''
-    
     idx_header = 0
     with open(gauge_file, encoding='latin-1') as ff:
         l = 1
@@ -315,28 +314,18 @@ def read_station_data(gauge_file):
             l = ff.readline()
             idx_header += 1
 
-    data = pd.read_csv(gauge_file, skiprows = idx_header )
-    
-    
-    data[:,-1][data[:,-1] > 300] = np.nan
-    idx = data[:,0]
-    dates = np.array([datetime.datetime(year = c[0], 
-                                month = c[1],
-                                day = c[2],
-                                hour = c[3],
-                                minute = c[4]) for c in data[:,1:6].astype(int)])
-    
-    unique_idx = np.unique(idx)
-    
+    data = pd.read_csv(gauge_file, skiprows = idx_header, delimiter = '\s+',
+    parse_dates = {'datetime': [1,2,3,4,5]},
+    date_parser=lambda x: pd.datetime.strptime(x, '%Y %m %d %H %M'))
+
     data_by_station = {}
-    all_abbrev = np.array(constants.STATIONS.Abbrev).astype(str)
-    all_idx = np.array(constants.STATIONS.ID)
+    all_abbrev = np.array(constants.METSTATIONS.Abbrev).astype(str)
+    all_idx = np.array(constants.METSTATIONS.ID)
+    unique_idx = np.unique(data['STA'])
     for k in unique_idx:
-       
         abbrev = all_abbrev[all_idx == k][0]
-        data_by_station[abbrev] = data[idx == k,-1] 
-        
-    return dates[idx == k], data_by_station
+        data_by_station[abbrev] = data[data['STA'] == k] 
+    return data_by_station
 
 
 def read_vpr(xml_file, radar = None):
