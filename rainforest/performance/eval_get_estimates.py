@@ -52,11 +52,12 @@ def getGaugeObservations(gaugefolder, t0=None, t1=None, slf_stations=False):
     gauge_all = gauge_all.compute().drop_duplicates()
     gauge_all = gauge_all.replace(-9999,np.nan)
 
+    # Assure that datetime object is in UTC
     if t0 != None :
-        gauge_all = gauge_all.loc[(gauge_all['TIMESTAMP']>= t0.timestamp()),
+        gauge_all = gauge_all.loc[(gauge_all['TIMESTAMP']>= t0.replace(tzinfo=datetime.timezone.utc).timestamp()),
                             ['STATION','TIMESTAMP','RRE150Z0']]
     if t1 != None :
-        gauge_all = gauge_all.loc[(gauge_all['TIMESTAMP']<= t1.timestamp()),
+        gauge_all = gauge_all.loc[(gauge_all['TIMESTAMP']<= t1.replace(tzinfo=datetime.timezone.utc).timestamp()),
                     ['STATION','TIMESTAMP','RRE150Z0']]
 
     # Remove SLF stations
@@ -68,7 +69,8 @@ def getGaugeObservations(gaugefolder, t0=None, t1=None, slf_stations=False):
         gauge_all = gauge_all.loc[~gauge_all['STATION'].isin(list_slf)]
 
     # Get datetime object for index
-    gauge_all['TIME'] = [datetime.datetime.utcfromtimestamp(ti) for ti in gauge_all['TIMESTAMP']]
+    gauge_all['TIME'] = [datetime.datetime.utcfromtimestamp(ti).replace(tzinfo=datetime.timezone.utc) 
+                                for ti in gauge_all['TIMESTAMP']]
     # Convert gauge accumulation to mm/h
     gauge_all['RRE150Z0'] = gauge_all['RRE150Z0'] * 6
 
@@ -147,7 +149,7 @@ class compileMapEstimates(object):
             logging.error('No starting time was defined, please check.')
         else:
             try:
-                self.tstart = datetime.datetime.strptime(config['TIME_START'], '%Y%m%d%H%M')
+                self.tstart = datetime.datetime.strptime(config['TIME_START'], '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc)
             except:
                  logging.error('Starting time is not valid, please check that the format corresponds to YYYYMMDDHHMM.')
 
@@ -155,7 +157,7 @@ class compileMapEstimates(object):
             logging.error('No ending time was defined, please check.')
         else:
             try:
-                self.tend = datetime.datetime.strptime(config['TIME_END'], '%Y%m%d%H%M')
+                self.tend = datetime.datetime.strptime(config['TIME_END'], '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc)
             except:
                  logging.error('Ending time is not valid, please check that the format corresponds to YYYYMMDDHHMM.')
 
@@ -228,7 +230,7 @@ class compileMapEstimates(object):
         if tagg_hourly:
             # Assure that hourly starts with 0 minutes
             tstart = datetime.datetime(self.tstart.year, self.tstart.month, 
-                                self.tstart.day, self.tstart.hour,0)
+                        self.tstart.day, self.tstart.hour,0).replace(tzinfo=datetime.timezone.utc)
             tstamps_60min = pd.date_range(start=tstart, end=self.tend, freq='H')
             time_res['60min'] = {'time_agg':60,'file_tol':4,'out':'60min'}
 
@@ -287,10 +289,13 @@ class compileMapEstimates(object):
                 if tstep in qpe_files10_filt.keys():
                     for f in qpe_files10_filt[tstep][m]:
                         data = read_cart(f)
+                        if len(np.shape(data)) == 3:
+                            data = data[0,:,:]
                         for j,s in enumerate(stations):
                             try:
                                 precip_qpe[m][i,j] += data[lut[s]['00'][0], lut[s]['00'][1]]
                             except:
+                                logging.info('Could not extract value for model {}, timestep {} and station {}'.format(m, tstep, s))
                                 continue    
                     precip_qpe[m][i] /= len(qpe_files10_filt[tstep][m])
                 else:
@@ -345,7 +350,8 @@ class compileMapEstimates(object):
                 precip_60min[model] = pd.DataFrame(columns = precip_qpe[model].columns, index=tstamps_60min)
                 for it in tstamps_60min:
                     if it > precip_qpe[model].index[0]:
-                        tstamps = pd.date_range(start=it-datetime.timedelta(minutes=50), end=it, freq='10min')
+                        tstamps = pd.date_range(start=it-datetime.timedelta(minutes=50), end=it, 
+                                        freq='10min', tz=datetime.timezone.utc)
                         for ss in precip_qpe[model].columns:
                             # This results in the precipitation sum during one hour, which is given in mm/h
                             if precip_qpe[model][ss][tstamps].count() > time_res['60min']['file_tol']:
