@@ -170,26 +170,26 @@ class calcPerfscores(object) :
         # except:
         #     logging.error('Config file is missing information, please check the default.')
 
+        # Getting precip amounts
+        self.precip = {}
+        if 'FILE_10MIN' in config.keys():
+            self.precip['10min'] = pickle.load(open(config['FILE_10MIN'],'rb'))
+        else:
+            logging.info('Filepath to 10min QPE compilation is missing')
+
+        if 'FILE_60MIN' in config.keys():
+            self.precip['60min'] = pickle.load(open(config['FILE_60MIN'],'rb'))
+        else: 
+            logging.info('Filepath to hourly QPE compilation is missing')
+
+        if len(self.precip) == 0:
+            logging.error('No filenames are given... ')
+            return
+
         if not read_only :
-            self.precip = {}
-            if 'FILE_10MIN' in config.keys():
-                self.precip['10min'] = pickle.load(open(config['FILE_10MIN'],'rb'))
-            else:
-                logging.info('Filepath to 10min QPE compilation is missing')
-
-            if 'FILE_60MIN' in config.keys():
-                self.precip['60min'] = pickle.load(open(config['FILE_60MIN'],'rb'))
-            else: 
-                logging.info('Filepath to hourly QPE compilation is missing')
-
-            if len(self.precip) == 0:
-                logging.error('No filenames are given... ')
-                return
-
             logging.info('Calculating performance scores')
             self.scores = self.calcScores(self.modellist, reference=self.reference,
                     timeagg=self.timeagg, doublecond=self.doublecond)
-
         else:
             logging.info('Getting previously calculated performance scores')
             self.scores = self.readScores(self.modellist, reference=self.reference,

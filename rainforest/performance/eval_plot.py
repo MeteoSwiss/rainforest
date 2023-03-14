@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-    Rebecca Gugerli, EPFL-MeteoSwiss, March 2022
-    
-    Script to plot the performance scores
-    To calculate these, please run the scirpt 03_perfscores_calc.py first
-    
+"""    
+    Functions to plot the performance scores on a Swiss map
+    Rebecca Gugerli, EPFL-MeteoSwiss, March 2023 
 """
 #%%
 import sys, os
