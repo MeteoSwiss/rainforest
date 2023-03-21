@@ -18,3 +18,4 @@ pysteps
 xlrd
 opencv-python
 pyproj
+doubt
