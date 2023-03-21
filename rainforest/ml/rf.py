@@ -18,12 +18,10 @@ import datetime
 from pathlib import Path
 from scipy.stats import rankdata
 
-from doubt import QuantileRegressionForest
-
 # Local imports
 from ..common import constants
 from ..ml.utils import vert_aggregation, split_event, split_years
-from ..ml.rfdefinitions import RandomForestRegressorBC
+from ..ml.rfdefinitions import RandomForestRegressorBC, QuantileRandomForestRegressorBC
 from ..common.utils import perfscores, envyaml
 from ..common.graphics import plot_crossval_stats
 
@@ -549,11 +547,17 @@ class RFTraining(object):
                           visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
                           **config[model]['RANDOMFOREST_REGRESSOR'])
             else:
-                reg = QuantileRegressionForest(**config[model]['RANDOMFOREST_REGRESSOR'])
-                reg.bctype = config[model]['BIAS_CORR']
-                reg.variables = features
-                reg.beta = config[model]['VERT_AGG']['BETA']
-                reg.visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING']
+                reg = QuantileRandomForestRegressorBC(degree = 1, 
+                          bctype = config[model]['BIAS_CORR'],
+                          variables = features,
+                          beta = config[model]['VERT_AGG']['BETA'],
+                          visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                          **config[model]['RANDOMFOREST_REGRESSOR'])
+                # reg = QuantileRegressionForest(**config[model]['RANDOMFOREST_REGRESSOR'])
+                # reg.bctype = config[model]['BIAS_CORR']
+                # reg.variables = features
+                # reg.beta = config[model]['VERT_AGG']['BETA']
+                # reg.visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING']
 
             logging.info('Fitting random forest model {:s}'.format(model))
 
