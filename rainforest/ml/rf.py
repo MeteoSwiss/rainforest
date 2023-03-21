@@ -21,11 +21,11 @@ from scipy.stats import rankdata
 from doubt import QuantileRegressionForest
 
 # Local imports
-from rainforest.common import constants
-from rainforest.ml.utils import vert_aggregation, split_event, split_years
-from rainforest.ml.rfdefinitions import RandomForestRegressorBC
-from rainforest.common.utils import perfscores, envyaml
-from rainforest.common.graphics import plot_crossval_stats
+from ..common import constants
+from ..ml.utils import vert_aggregation, split_event, split_years
+from ..ml.rfdefinitions import RandomForestRegressorBC
+from ..common.utils import perfscores, envyaml
+from ..common.graphics import plot_crossval_stats
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 FOLDER_MODELS = Path(os.environ['RAINFOREST_DATAPATH'], 'rf_models')
@@ -450,10 +450,9 @@ class RFTraining(object):
         ###############################################################################
         # Read and filter data
         ###############################################################################
-        gaugetab, radartab, grp_hourly, grp_vertical = \
+        gaugetab, radartab, _, grp_vertical = \
             readInputData(self.input_location, tstart, tend, 
                         datalist=['gauge', 'radar'])
-        del grp_hourly
 
         ###############################################################################
         # Compute vertical aggregation and initialize model
@@ -493,14 +492,6 @@ class RFTraining(object):
             invalid = np.logical_or(invalid,cond3)
             invalid = np.logical_or(invalid,cond3)
             invalid = np.array(invalid)
-
-            # Already done in read routine
-            # if tend != None:
-            #     tend_unix = (tend - datetime.datetime(1970,1,1) ).total_seconds()
-            #     invalid[gaugetab['TIMESTAMP'] > tend_unix] = 1
-            # if tstart != None:
-            #     tstart_unix = (tstart - datetime.datetime(1970,1,1) ).total_seconds()
-            #     invalid[gaugetab['TIMESTAMP'] < tstart_unix] = 1
 
             invalid[np.isnan(gaugetab['RRE150Z0'])] = 1
 
@@ -579,6 +570,57 @@ class RFTraining(object):
 
             del reg
 
+
+class RFModelEval(object):
+    '''
+    This is the main class that allows to preparate data for random forest
+    training, train random forests and perform cross-validation of trained models
+    '''
+    def __init__(self, db_location, input_location=None):
+        """
+        Initializes the class to analyse the model and perform standard ML 
+        evaluation on it
+        
+        Note that when calling this constructor the input data is only 
+        generated for the central pixel (NX = NY = 0 = loc of gauge), if you
+        want to regenerate the inputs for all neighbour pixels, please 
+        call the function self.prepare_input(only_center_pixel = False)
+        
+        Parameters
+        ----------
+        db_location : str
+            Location of the main directory of the database (with subfolders
+            'reference', 'gauge' and 'radar' on the filesystem)
+        input_location : str
+            Location of the prepared input data, if this data cannot be found
+            in this folder, it will be computed here, default is a subfolder
+            called rf_input_data within db_location
+        force_regenerate_input : bool
+            if True the input parquet files will always be regenerated from
+            the database even if already present in the input_location folder
+        """
+        
+        if input_location == None:
+            input_location = str(Path(db_location, 'rf_input_data'))
+            
+        # Check if at least gauge.parquet, refer_x0y0.parquet and radar_x0y0.parquet
+        # are present
+        valid = True
+        if not os.path.exists(input_location):
+            valid = False
+            os.makedirs(input_location)
+        files = glob.glob(str(Path(input_location, '*')))
+        files = [os.path.basename(f) for f in files]
+        if ('gauge.parquet' not in files or 'reference_x0y0.parquet' not in files
+            or 'radar_x0y0.parquet' not in files):
+            valid = False
+        
+        self.input_location = input_location
+        self.db_location = db_location
+        
+        if not valid :
+            logging.info('Could not find valid input data from the folder {:s}'.format(input_location))
+
     def feature_selection(self, features_dic, featuresel_configfile, 
                         output_folder, K=5, tstart=None, tend=None):
         """
@@ -606,71 +648,14 @@ class RFTraining(object):
         config = envyaml(featuresel_configfile)
         modelnames = list(features_dic.keys())
 
-        #######################################################################
-        # Read data
-        #######################################################################
-        logging.info('Reading input data from {}'.format(self.input_location))
-        radartab = pd.read_parquet(str(Path(self.input_location, 'radar_x0y0.parquet')))
-        gaugetab = pd.read_parquet(str(Path(self.input_location, 'gauge.parquet')))
-        grp = pickle.load(open(str(Path(self.input_location, 'grouping_idx_x0y0.p')),'rb'))
-        grp_vertical = grp['grp_vertical']
-        grp_hourly = grp['grp_hourly']
-
-        #######################################################################
-        # Filter time
-        #######################################################################
-        if tstart != None:
-            try:
-                tstart = datetime.datetime.strptime(tstart,
-                        '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc).timestamp()
-            except:
-                tstart = gaugetab['TIMESTAMP'].min()
-                logging.info('The format of tstart was wrong, taking the earliest date')
-        if tend != None:
-            try:
-                tend = datetime.datetime.strptime(tend,
-                        '%Y%m%d%H%M').replace(tzinfo=datetime.timezone.utc).timestamp()
-            except:
-                tend = gaugetab['TIMESTAMP'].max()
-                logging.info('The format of tend was wrong, taking the earliest date')
-
-        timevalid = gaugetab['TIMESTAMP'].copy().astype(bool)
-        vertvalid = radartab['TIMESTAMP'].copy().astype(bool)
-
-        if (tstart != None):
-            timevalid[(gaugetab['TIMESTAMP'] < tstart)] = False
-            vertvalid[(radartab['TIMESTAMP'] < tstart)] = False
-        if (tend != None):
-            timevalid[(gaugetab['TIMESTAMP'] > tend)] = False
-            vertvalid[(radartab['TIMESTAMP'] > tend)] = False
-
-        gaugetab = gaugetab[timevalid]
-        grp_hourly = grp_hourly[timevalid]
-        radartab = radartab[vertvalid]
-        grp_vertical = grp_vertical[vertvalid]
 
         ###############################################################################
-        # Compute additional data if needed
+        # Read data, filter time and get linear reflectivity units
         ###############################################################################
-        # currently the only supported additional features is zh (refl in linear units)
-        # and DIST_TO_RAD{A-D-L-W-P} (dist to individual radars)
-        # Get list of unique features names
-        features = np.unique([item for sub in list(features_dic.values())
-                            for item in sub])
-        for f in features:
-            if 'zh' in f:
-                logging.info('Computing derived variable {:s}'.format(f))
-                radartab[f] = 10**(0.1 * radartab[f.replace('zh','ZH')])
-            elif 'zv' in f:
-                logging.info('Computing derived variable {:s}'.format(f))
-                radartab[f] = 10**(0.1 * radartab[f.replace('zv','ZV')])        
-            if 'DIST_TO_RAD' in f:
-                info_radar = constants.RADARS
-                vals = np.unique(radartab['RADAR'])
-                for val in vals:
-                    dist = np.sqrt((radartab['X'] - info_radar['X'][val])**2+
-                           (radartab['Y'] - info_radar['Y'][val])**2) / 1000.
-                    radartab['DIST_TO_RAD' + str(val)] = dist
+        gaugetab, radartab, _, grp_hourly, grp_vertical = \
+            readInputData(self.input_location, tstart, tend)
+
+        radartab, features = processFeatures(features_dic, radartab)
 
         ###############################################################################
         # Compute vertical aggregation
@@ -702,11 +687,6 @@ class RFTraining(object):
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
                        axis = 1)
-
-        # if (tstart != None):
-        #     valid[(gaugetab['TIMESTAMP'] < tstart)] = False
-        # if (tend != None):
-        #     valid[(gaugetab['TIMESTAMP'] > tend)] = False
 
         test_not_ok = False
         for iv, val in enumerate(radartab['s-tstamp'].groupby(grp_vertical).first()):
@@ -875,29 +855,36 @@ class RFTraining(object):
 
 
         ###############################################################################
-        # Read and filter data
+        # Read and filter data with time constraints
         ###############################################################################
         gaugetab, radartab, refertab, grp_hourly, grp_vertical = \
             readInputData(self.input_location, tstart, tend, 
                         datalist=['gauge', 'radar', 'refer'])
 
+        radartab, _ = processFeatures(features_dic, radartab)
         ###############################################################################
         # Compute vertical aggregation and initialize model
         ###############################################################################
-        radartab, _ = processFeatures(features_dic, radartab)
 
         features_VERT_AGG = {}
         regressors = {}
-        for model in modelnames:
+        for im, model in enumerate(modelnames):
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))            
           
-            vweights = 10**(config[model]['VERT_AGG']['BETA'] *
-                                (radartab['HEIGHT']/1000.)) # vert. weights
-            features_VERT_AGG[model] = vert_aggregation(radartab[features_dic[model]], 
-                                 vweights, grp_vertical,
-                                 config[model]['VERT_AGG']['VISIB_WEIGHTING'],
-                                 radartab['VISIB_mean'])
+            # Save computational time if the input data is the same within the model
+            if (im > 0) and (config[model]['VERT_AGG']['BETA'] == config[modelnames[im-1]]['VERT_AGG']['BETA']) \
+                    and (config[model]['VERT_AGG']['VISIB_WEIGHTING'] == config[modelnames[im-1]]['VERT_AGG']['VISIB_WEIGHTING']):
+                logging.info('Model {} has same vertical aggregation settings as {}, hence just copy aggregated 2D fields'.format(model, modelnames[im-1]))
+                features_VERT_AGG[model] = features_VERT_AGG[modelnames[im-1]].copy()
+            else:
+                vweights = 10**(config[model]['VERT_AGG']['BETA'] *
+                                    (radartab['HEIGHT']/1000.)) # vert. weights
+                features_VERT_AGG[model] = vert_aggregation(radartab[features_dic[model]], 
+                                    vweights, grp_vertical,
+                                    config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                                    radartab['VISIB_mean'])
             
+            # Use either the classical RainForest model or the new one
             if len(config[model]['QUANTILES']) == 0:
                 regressors[model] = RandomForestRegressorBC(degree = 1, 
                           bctype = config[model]['BIAS_CORR'],
@@ -944,24 +931,6 @@ class RFTraining(object):
         else:
             all_scores, all_stats, all_station_scores, all_station_stats = \
                     prepareScoreDic(modelnames, station_scores)
-
-        # all_scores = {'10min':{},'60min':{}}
-        # all_stats = {'10min':{},'60min':{}}
-        
-        # if station_scores == True:
-        #     all_station_scores = {'10min': {}, '60min': {}}
-        #     all_station_stats = {'10min': {}, '60min': {}}
-
-        # for tagg in ['10min', '60min']:
-        #     for model in modelnames:
-        #         all_scores[tagg][model] = {'train': {'solid':[],'liquid':[],'all':[]},
-        #                                 'test': {'solid':[],'liquid':[],'all':[]}}
-        #         all_stats[tagg][model] = {'train': {'solid':{},'liquid':{},'all':{}},
-        #                                 'test': {'solid':{},'liquid':{},'all':{}}}
-            
-        #         if station_scores == True:
-        #             all_station_scores[tagg][model] = {'solid':{},'liquid':{},'all':{}}
-        #             all_station_stats[tagg][model] = {'solid':{},'liquid':{},'all':{}}
             
         ###############################################################################
         # MAIN LOOP: CROSS VALIDATION
@@ -977,30 +946,6 @@ class RFTraining(object):
                                 datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].min()),
                                 datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].max()),
                                 gaugetab['TIMESTAMP'][test].count()/ gaugetab['TIMESTAMP'].count()*100))
-
-            # Get reference values
-            # R_test_60 = np.squeeze(np.array(pd.DataFrame(R[test])
-            #                 .groupby(grp_hourly[test]).mean()))
-    
-            # R_train_60 = np.squeeze(np.array(pd.DataFrame(R[train])
-            #                 .groupby(grp_hourly[train]).mean()))
-            
-            # T_test_60 = np.squeeze(np.array(pd.DataFrame(T[test])
-            #                 .groupby(grp_hourly[test]).mean()))
-            
-            # T_train_60 = np.squeeze(np.array(pd.DataFrame(T[train])
-            #                 .groupby(grp_hourly[train]).mean()))
-            
-            
-            # liq_10_train = T[train] >= constants.THRESHOLD_SOLID
-            # sol_10_train = T[train] < constants.THRESHOLD_SOLID
-            # liq_60_train = T_train_60 >= constants.THRESHOLD_SOLID
-            # sol_60_train = T_train_60 < constants.THRESHOLD_SOLID
-    
-            # liq_10_test = T[test] >= constants.THRESHOLD_SOLID
-            # sol_10_test = T[test] < constants.THRESHOLD_SOLID
-            # liq_60_test = T_test_60 >= constants.THRESHOLD_SOLID
-            # sol_60_test = T_test_60 < constants.THRESHOLD_SOLID
             
             idxTemp = getTempIDX(T, grp_hourly, test, train)
 
@@ -1060,26 +1005,6 @@ class RFTraining(object):
                 all_scores = calcScore(all_scores, obs=R[test], pred=R_pred_10,
                                 idxTemp = idxTemp, bounds= bounds10, 
                                 tagg = '10min', model=model, data_type='test')
-
-
-                # all_scores = calcScores(all_scores, obs, pred, idxTemp, bounds, 
-                #                     model=model, data_type='test')
-
-                # scores_solid = perfscores(R_pred_10[sol_10_test],
-                #                           R[test][sol_10_test],
-                #                           bounds = bounds10)
-               
-                # all_scores['10min'][model]['test']['solid'].append(scores_solid)
-                
-                # scores_liquid = perfscores(R_pred_10[liq_10_test],
-                #                                  R[test][liq_10_test],
-                #                                  bounds = bounds10)
-                # all_scores['10min'][model]['test']['liquid'].append(scores_liquid)
-                
-                # scores_all = perfscores(R_pred_10,
-                #                                  R[test],
-                #                                  bounds = bounds10)
-                # all_scores['10min'][model]['test']['all'].append(scores_all)
     
                 # 60 min
                 logging.info('at 60 min')
@@ -1089,22 +1014,6 @@ class RFTraining(object):
                 all_scores = calcScore(all_scores, obs=R_obs_test_60, pred=R_pred_60,
                                 idxTemp = idxTemp, bounds= bounds60, 
                                 tagg = '60min', model=model, data_type='test')
-
-                # scores_solid = perfscores(R_pred_60[sol_60_test],
-                #                                  R_test_60[sol_60_test],
-                #                                  bounds = bounds60)
-                # all_scores['60min'][model]['test']['solid'].append(scores_solid)
-                            
-                
-                # scores_liquid = perfscores(R_pred_60[liq_60_test],
-                #                                  R_test_60[liq_60_test],
-                #                                  bounds = bounds60)
-                # all_scores['60min'][model]['test']['liquid'].append(scores_liquid)
-                
-                # scores_all = perfscores(R_pred_60,
-                #                                  R_test_60,
-                #                                  bounds = bounds60)
-                # all_scores['60min'][model]['test']['all'].append(scores_all)
                 
                 if station_scores == True:
                     logging.info('Calculating station performances for model {}'.format(model)) 
@@ -1185,45 +1094,7 @@ class RFTraining(object):
 
                 all_scores = calcScore(all_scores, obs=R_obs_train_60, pred=R_pred_60,
                                 idxTemp = idxTemp, bounds= bounds60, 
-                                tagg = '60min', model=model, data_type='train')   
-
-                # scores_solid = perfscores(R_pred_10[sol_10_train],
-                #                                  R[train][sol_10_train],
-                #                                  bounds = bounds10)
-                # all_scores['10min'][model]['train']['solid'].append(scores_solid)
-                
-                # scores_liquid = perfscores(R_pred_10[liq_10_train],
-                #                                  R[train][liq_10_train],
-                #                                  bounds = bounds10)
-                
-                # all_scores['10min'][model]['train']['liquid'].append(scores_liquid)
-                
-                # scores_all = perfscores(R_pred_10,
-                #                                  R[train],
-                #                                  bounds = bounds10)
-                # all_scores['10min'][model]['train']['all'].append(scores_all)
-                
-                
-                # R_pred_60 = np.squeeze(np.array(pd.DataFrame(R_pred_10)
-                #                     .groupby(grp_hourly[train]).mean()))
-                
-                # # 60 min
-                # logging.info('at 60 min')
-                # # Evaluate model 10 min
-    
-                # scores_solid = perfscores(R_pred_60[sol_60_train],
-                #                         R_train_60[sol_60_train],
-                #                         bounds = bounds60)
-                # all_scores['60min'][model]['train']['solid'].append(scores_solid)
-                
-                # scores_liquid = perfscores(R_pred_60[liq_60_train],
-                #                         R_train_60[liq_60_train],
-                #                          bounds = bounds60)
-                # all_scores['60min'][model]['train']['liquid'].append(scores_liquid)
-                
-                # scores_all = perfscores(R_pred_60,R_train_60,
-                #                         bounds = bounds60)
-                # all_scores['60min'][model]['train']['all'].append(scores_all)
+                                tagg = '60min', model=model, data_type='train')
 
 
         # Compute statistics after the 5-fold cross validation
