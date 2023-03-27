@@ -804,11 +804,14 @@ class RFModelEval(object):
                 data_pred[model] = regressors[model].predict(\
                     features_VERT_AGG[model][regressors[model].variables])
 
-            if model in ensemble :
-                for tree in range(regressors[model].n_estimators):
-                    data_pred['{}_E{}'.format(model, tree)] = \
-                        regressors[model].estimators_[tree].predict(\
+            if (model in ensemble) & ('Qu' not in model) :
+                pred_ens = regressors[model].predict_ens(\
                         features_VERT_AGG[model][regressors[model].variables])
+                for tree in range(regressors[model].n_estimators):
+                    data_pred['{}_E{}'.format(model, tree)] =  pred_ens[:,tree]
+                    # data_pred['{}_E{}'.format(model, tree)] = \
+                    #     regressors[model].estimators_[tree].predict(\
+                    #     features_VERT_AGG[model][regressors[model].variables])
 
         ###############################################################################
         # Save output

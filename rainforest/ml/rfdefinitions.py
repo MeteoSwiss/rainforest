@@ -185,7 +185,54 @@ class RandomForestRegressorBC(RandomForestRegressor):
         out = func(pred)
         out[out < 0] = 0
         return round_func(out)
-    
+
+    def predict_ens(self, X, round_func = None, bc = True):
+        """
+        Predict regression target for X.
+        The predicted regression target of an input sample is computed as the
+        mean predicted regression targets of the trees in the forest.
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
+        round_func : lambda function
+            Optional function to apply to outputs (for example to discretize them
+            using MCH lookup tables). If not provided f(x) = x will be applied
+            (i.e. no function)
+        bc : bool
+            if True the bias correction function will be applied
+            
+        Returns
+        -------
+        pred : array (n_samples,n_trees)
+            The predicted values.
+        """
+
+        if round_func == None:
+            round_func = lambda x: x
+            
+        func = lambda x: x
+        if bc:
+            if self.bctype in ['cdf','raw']:
+                func = lambda x : np.polyval(self.p,x)
+            elif self.bctype == 'spline':
+                func = lambda x : self.p(x)
+        
+        pred = np.empty(shape=[X.shape[0], self.n_estimators]) * np.nan
+
+        for tree in range(self.n_estimators):
+            pred_tree = self.estimators_[tree].predict(X)  
+        
+            out = func(pred_tree)
+            out[out < 0] = 0
+
+            pred[:,tree] = round_func(out)
+
+        return pred
+
+
 ##################
 
 class QuantileRandomForestRegressorBC(QuantileRegressionForest):
