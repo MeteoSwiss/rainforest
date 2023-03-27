@@ -11,6 +11,7 @@
 import pandas as pd
 import numpy as np
 import pickle
+from typing import List
 
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -26,7 +27,9 @@ from ..common.constants import METSTATIONS
 #----------------------------------------------------------
 # PERFORMANCE SCORES
 #-----------------------------------------------------------
-def calcScoresStations(precip_ref, precip_est, threshold=[0.1,0.1]):
+def calcScoresStations(precip_ref : pd.DataFrame,
+                      precip_est : pd.DataFrame,
+                      threshold: List[float] = [0.1,0.1]) -> pd.DataFrame:
     """
     Computes the following scores for a given reference and estimation
         Contingency table: true_pos,'true_neg','false_pos','false_neg'
@@ -36,8 +39,8 @@ def calcScoresStations(precip_ref, precip_est, threshold=[0.1,0.1]):
         Bias (in dB, see Germann et al. (2006)logBias
         Number of observations: n_values
         Number of observations with double conditional bias: n_events_db
-        Total sum of precipitation at reference sum_gauge_db
-        Total sum of precipitation at estimate: sum_qpe_db
+        Total sum of precipitation at reference sum_ref_db
+        Total sum of precipitation at estimate: sum_pred_db
 
         A double conditional bias affects RMSE, Corr_p, scatter, logbias, 
                                             n_events_db, sum_qpe_db, sum_gauge_db
@@ -51,50 +54,63 @@ def calcScoresStations(precip_ref, precip_est, threshold=[0.1,0.1]):
         DataFrame object: Dataframe with stations as indices and scores as columns
     """
 
-    if type(threshold) != list:
-        th_ref = threshold
-        th_est = th_ref
-    else:
-        th_ref = threshold[0]
-        th_est = threshold[1]
+    th_ref, th_est = threshold if isinstance(threshold, list) else [threshold] * 2
 
-    perfscores = pd.DataFrame(columns=['true_pos','true_neg','false_pos','false_neg',
-                                    'RMSE','corr_p','scatter','logBias', 'n_values', 'n_events_db','sum_gauge_db','sum_qpe_db'], 
-                            index=precip_ref.columns.unique())
+    perf_scores = pd.DataFrame(columns=['true_pos','true_neg','false_pos','false_neg',
+                                'RMSE','corr_p','scatter','logBias', 'n_values', 
+                                'n_events_db','sum_ref_db','sum_pred_db'], 
+                                index=precip_ref.columns.unique())
 
     stations = METSTATIONS.copy()
     stations.index = stations['Abbrev']
-    perfscores['X'] = stations['X']
-    perfscores['Y'] = stations['Y']
-    perfscores['Z'] = stations['Z']
+    perf_scores['X'] = stations['X']
+    perf_scores['Y'] = stations['Y']
+    perf_scores['Z'] = stations['Z']    
 
-    for ss in precip_ref.columns.unique():
-        perfscores.loc[perfscores.index == ss, 'n_values'] = precip_ref[ss].count()
-        perfscores.loc[perfscores.index == ss,'true_pos'] = precip_ref.loc[(precip_ref[ss] >= th_ref) & (precip_est[ss] >= th_est), ss].count()
-        perfscores.loc[perfscores.index == ss,'true_neg'] = precip_ref.loc[(precip_ref[ss] < th_ref) & (precip_est[ss] < th_est), ss].count()
-        perfscores.loc[perfscores.index == ss,'false_pos'] = precip_ref.loc[(precip_ref[ss] < th_ref) & (precip_est[ss] >= th_est), ss].count()
-        perfscores.loc[perfscores.index == ss,'false_neg'] = precip_ref.loc[(precip_ref[ss] >= th_ref) & (precip_est[ss] < th_est), ss].count()
+    for station_id in precip_ref.columns.unique():
 
-        doublecond = precip_ref.loc[(precip_ref[ss] >= th_ref) & (precip_est[ss] >= th_est)].index
-        perfscores.loc[perfscores.index == ss,'n_events_db'] = len(doublecond)
-        perfscores.loc[perfscores.index == ss,'sum_gauge_db'] = precip_ref[ss][doublecond].sum()
-        perfscores.loc[perfscores.index == ss,'sum_qpe_db'] = precip_est[ss][doublecond].sum()
+        # Calculate number of events
+        n_values = precip_ref[station_id].count()
+        perf_scores.at[station_id, 'n_values'] = n_values
 
-        if (precip_est[ss][doublecond].sum() > 0) & (precip_ref[ss][doublecond].sum() > 0):
-            perfscores.loc[perfscores.index == ss,'logBias'] = np.round(10*np.log10(precip_est[ss][doublecond].sum()/precip_ref[ss][doublecond].sum()),decimals=4)
+        # Calculate contingency tables
+        true_pos = ((precip_ref[station_id] >= th_ref) & (precip_est[station_id] >= th_est)).sum()
+        false_neg = ((precip_ref[station_id] < th_ref) & (precip_est[station_id] < th_est)).sum()
+        false_pos = ((precip_ref[station_id] < th_ref) & (precip_est[station_id] >= th_est)).sum()
+        true_neg = ((precip_ref[station_id] >= th_ref) & (precip_est[station_id] < th_est)).sum()
+
+        perf_scores.at[station_id, 'true_pos'] = true_pos
+        perf_scores.at[station_id, 'true_neg'] = true_neg
+        perf_scores.at[station_id, 'false_pos'] = false_pos
+        perf_scores.at[station_id, 'false_neg'] = false_neg
+
+        double_cond = precip_ref[station_id][(precip_ref[station_id] >= th_ref) & (precip_est[station_id] >= th_est)]
+
+        n_events_db = double_cond.count()
+        sum_ref_db = double_cond.sum()
+        sum_pred_db = precip_est[station_id][double_cond.index].sum()
+
+        perf_scores.at[station_id, 'n_events_db'] = n_events_db
+        perf_scores.at[station_id, 'sum_ref_db'] = sum_ref_db
+        perf_scores.at[station_id, 'sum_pred_db'] = sum_pred_db
+ 
+        if (sum_ref_db > 0) & (sum_pred_db > 0):
+            perf_scores.at[station_id,'logBias'] = \
+                np.round(10*np.log10(sum_pred_db/sum_ref_db),decimals=4)
         else:
-            logging.info('No measurements for station {}'.format(ss))
+            logging.info('No measurements for station {}'.format(station_id))
             continue
         try:
-            scores = det_cont_fct(precip_est[ss][doublecond].to_numpy(dtype=float), precip_ref[ss][doublecond].to_numpy(dtype=float),
+            scores = det_cont_fct(precip_est[station_id][double_cond.index].to_numpy(dtype=float),
+                                    precip_ref[station_id][double_cond.index].to_numpy(dtype=float),
                                     scores=['RMSE','corr_p','scatter'])
-            perfscores.loc[perfscores.index == ss,'RMSE'] = np.round(scores['RMSE'],decimals=4)
-            perfscores.loc[perfscores.index == ss,'corr_p'] = np.round(scores['corr_p'],decimals=4)
-            perfscores.loc[perfscores.index == ss,'scatter']= np.round(scores['scatter'],decimals=4)
+            perf_scores.at[station_id,'RMSE'] = np.round(scores['RMSE'],decimals=4)
+            perf_scores.at[station_id,'corr_p'] = np.round(scores['corr_p'],decimals=4)
+            perf_scores.at[station_id, 'scatter']= np.round(scores['scatter'],decimals=4)
         except:
-            logging.info('Could not calculate scores for station {}'.format(ss))
+            logging.info('Could not calculate scores for station {}'.format(station_id))
 
-    return perfscores
+    return perf_scores
 
 def calcScoresSwitzerland(precip_ref, precip_pred, threshold=[0.1,0.1]):
     
