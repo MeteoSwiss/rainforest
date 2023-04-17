@@ -181,7 +181,10 @@ def plotModelMapsSubplots(perfscores, modellist, score='BIAS', config_figures=No
                 ycolname = 'Y-coord'
 
         # Set figure sizes
-        if len(modellist) <= 4 :
+        if len(modellist) == 1:
+                plt.figure(figsize=(11.7,11.7))
+                figShape = (1,1)                
+        elif len(modellist) <= 4 :
                 plt.figure(figsize=(11.7,11.7))
                 figShape = (2,2)
         else:
@@ -205,7 +208,7 @@ def plotModelMapsSubplots(perfscores, modellist, score='BIAS', config_figures=No
                         title='{} {}'.format(figsetup[loc]['lab'], figsetup[loc]['tit']))
                 ax1.add_artist(leg1)
 
-                ax1, map1 = add_map_to_plot(ax1,
+                ax1, _ = add_map_to_plot(ax1,
                                 perfscores[model][ycolname],
                                 perfscores[model][xcolname],
                                 perfscores[model][scoreSetup['colname']],
