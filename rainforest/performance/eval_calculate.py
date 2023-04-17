@@ -203,6 +203,14 @@ class calcPerfscores(object) :
             return
 
         if not read_only :
+            if ('SAVE_TIMESERIES' in config['PERFORMANCE']):
+                if len(list(config['PERFORMANCE']['SAVE_TIMESERIES'])) != 0:
+                    logging.info('Saving timeseries as csv')
+                    mlist = self.modellist + ['GAUGE']
+                    self.saveTimeSeries_csv(self.mainfolder+'/results/',
+                        modellist=mlist, timeagg=self.timeagg, 
+                        stations=list(config['PERFORMANCE']['SAVE_TIMESERIES']))
+
             logging.info('Calculating performance scores')
             self.scores = self.calcScores(self.modellist, reference=self.reference,
                     timeagg=self.timeagg, doublecond=self.doublecond)
@@ -211,6 +219,24 @@ class calcPerfscores(object) :
             self.scores = self.readScores(self.modellist, reference=self.reference,
                                     timeagg=self.timeagg, doublecond=self.doublecond)
 
+    def saveTimeSeries_csv(self, pathOut, modellist=['GAUGE','RFO'],
+                        timeagg=['10min', '60min'], stations=['all']):
+
+        for model in modellist:
+            for tagg in timeagg:
+                if stations[0] == 'all':
+                    filename = 'timeseries_{}_{}_{}_all_stations.csv'.format(model, 
+                                    self.datestring, tagg)
+                    stat_ids = self.precip[tagg][model].columns
+                else:
+                    filename = 'timeseries_{}_{}_{}_selected_stations.csv'.format(model, 
+                                    self.datestring, tagg)
+                    stat_ids = stations
+
+                logging.info('Saving timeseries: {}'.format(pathOut+filename))
+                self.precip[tagg][model][stat_ids].to_csv(pathOut+filename, sep=';')
+
+        return
 
     def readScores(self, modellist, reference='GAUGE',
                     timeagg=['10min', '60min'], 
@@ -278,6 +304,6 @@ class calcPerfscores(object) :
                     scores[tagg][ith][model] = calcScoresStations(self.precip[tagg][reference], 
                                         self.precip[tagg][model], threshold=ith)
                     # Save file
-                    scores[tagg][ith][model].to_csv(self.mainfolder+'/results/{}'.format(filename))
+                    scores[tagg][ith][model].to_csv(self.mainfolder+'/results/{}'.format(filename), sep=';')
 
         return scores
