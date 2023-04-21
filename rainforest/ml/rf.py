@@ -79,8 +79,12 @@ def processFeatures(features_dic, radartab):
     # currently the only supported additional features is zh (refl in linear units)
     # and DIST_TO_RAD{A-D-L-W-P} (dist to individual radars)
     # Get list of unique features names
-    features = np.unique([item for sub in list(features_dic.values())
-                        for item in sub])
+    if type(features_dic) == dict :
+        features = np.unique([item for sub in list(features_dic.values())
+                            for item in sub])
+    else:
+        features = features_dic
+        
     for f in features:
         if 'zh' in f:
             logger.info('Computing derived variable {:s}'.format(f))
@@ -408,7 +412,102 @@ class RFTraining(object):
                     gauge.to_parquet(str(Path(self.input_location, 'gauge.parquet')),
                                  compression = 'gzip', index = False)
         
+    def prepare_input_vert_agg(self, aggregation_params, features=None, 
+                        tstart = None, tend = None,
+                        output_folder = None):
+        """
+            Calculates the vertical aggregation of the input features dic and saves
+            it to a file to run tests faster
+
+        Parameters
+        ----------
+        aggregation_params : dict
+            Dict with two keywords: beta and visib_weighting 
+            If not given, the default is used: {'beta' : -0.5 , 'visib_weighting: True}
+        features : list
+            A list with features that will be aggregated to the ground,
+            e.g., ['RADAR', 'zh_VISIB_mean',
+            'zv_VISIB_mean','KDP_mean','RHOHV_mean','T', 'HEIGHT','VISIB_mean']}
+        tstart : str
+            the starting time of the training time interval, default is to start
+            at the beginning of the time interval covered by the database
+        tend : str
+            the end time of the training time interval, default is to end
+            at the end of the time interval covered by the database   
+        output_folder : str
+            Location where to store the trained models in pickle format,
+            if not provided it will store them in the standard location 
+            str(Path(db_location, 'rf_input_data'))
+        """
+        
+        if output_folder == None:
+            output_folder =  self.input_location
             
+        if aggregation_params == None:
+            vert_agg_params = {'beta' : -0.5, 'visib_weighting' : 1}
+        else:
+            vert_agg_params = aggregation_params
+  
+        ###############################################################################
+        # Read and filter data
+        ###############################################################################
+        _, radartab, _, grp_vertical = \
+            readInputData(self.input_location, tstart, tend, 
+                        datalist=['gauge', 'radar'])
+
+        if features == None:
+            features = radartab.columns
+
+        ###############################################################################
+        # Compute vertical aggregation and initialize model
+        ###############################################################################
+        radartab, features = processFeatures(features, radartab)
+                    
+        ###############################################################################
+        # Compute data filter for each model
+        ###############################################################################
+        beta = vert_agg_params['beta']
+        visib_weigh = vert_agg_params['visib_weighting']
+
+        vweights = 10**(beta * (radartab['HEIGHT']/1000.)) # vert. weights
+
+        ###############################################################################
+        # Prepare training dataset
+        ###############################################################################        
+        logger.info('Performing vertical aggregation of input features')                
+        features_VERT_AGG = vert_aggregation(radartab[features], 
+                                vweights, grp_vertical,visib_weigh,
+                                radartab['VISIB_mean'])
+                    
+        ###############################################################################
+        # Fit
+        ###############################################################################
+        # create name of variables used in the model
+        features = []
+        for f in features_VERT_AGG.columns:
+            if '_max' in f:
+                f = f.replace('_max','')
+            elif '_min' in f:
+                f = f.replace('_min','')
+            elif '_mean' in f:
+                f = f.replace('_mean','')
+            features.append(f)
+
+        features_VERT_AGG['TIMESTAMP'] = radartab['TIMESTAMP'].groupby(grp_vertical).first()
+        features_VERT_AGG['STATION'] = radartab['STATION'].groupby(grp_vertical).first()
+
+        features_VERT_AGG.to_parquet(str(Path(self.input_location, 
+                'feat_vert_agg_BETA_{:1.1f}_VisibWeigh_{:d}.parquet'.format(beta,visib_weigh))),
+                compression = 'gzip', index = False)
+
+        filename = str(Path(self.input_location, \
+                    'feat_vert_agg_BETA_{:1.1f}_VisibWeigh_{:d}_README.txt'.\
+                    format(beta,visib_weigh)))
+        with open(filename, 'w') as f:
+                f.write('Colnames\n'+ (';').join(list(features_VERT_AGG.columns)) + '\n')
+                f.write('Names in model\n' + (';').join(features) + '\n')
+
+
     def fit_models(self, config_file, features_dic, tstart = None, tend = None,
                    output_folder = None):
         """
