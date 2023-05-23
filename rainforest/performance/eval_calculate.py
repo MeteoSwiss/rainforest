@@ -56,7 +56,7 @@ def calcScoresStations(precip_ref : pd.DataFrame,
 
     th_ref, th_est = threshold if isinstance(threshold, list) else [threshold] * 2
 
-    perf_scores = pd.DataFrame(columns=['true_pos','true_neg','false_pos','false_neg',
+    perf_scores = pd.DataFrame(columns=['YESref_YESpred','NOref_NOpred','NOref_YESpred','YESref_NOpred',
                                 'RMSE','corr_p','scatter','logBias', 'n_values', 
                                 'n_events_db','sum_ref_db','sum_pred_db'], 
                                 index=precip_ref.columns.unique())
@@ -74,15 +74,10 @@ def calcScoresStations(precip_ref : pd.DataFrame,
         perf_scores.at[station_id, 'n_values'] = n_values
 
         # Calculate contingency tables
-        true_pos = ((precip_ref[station_id] >= th_ref) & (precip_est[station_id] >= th_est)).sum()
-        false_neg = ((precip_ref[station_id] < th_ref) & (precip_est[station_id] < th_est)).sum()
-        false_pos = ((precip_ref[station_id] < th_ref) & (precip_est[station_id] >= th_est)).sum()
-        true_neg = ((precip_ref[station_id] >= th_ref) & (precip_est[station_id] < th_est)).sum()
-
-        perf_scores.at[station_id, 'true_pos'] = true_pos
-        perf_scores.at[station_id, 'true_neg'] = true_neg
-        perf_scores.at[station_id, 'false_pos'] = false_pos
-        perf_scores.at[station_id, 'false_neg'] = false_neg
+        perf_scores.at[station_id, 'YESref_YESpred'] = ((precip_ref[station_id] >= th_ref) & (precip_est[station_id] >= th_est)).sum()
+        perf_scores.at[station_id, 'NOref_NOpred'] = ((precip_ref[station_id] < th_ref) & (precip_est[station_id] < th_est)).sum()
+        perf_scores.at[station_id, 'NOref_YESpred'] = ((precip_ref[station_id] < th_ref) & (precip_est[station_id] >= th_est)).sum()
+        perf_scores.at[station_id, 'YESref_NOpred'] = ((precip_ref[station_id] >= th_ref) & (precip_est[station_id] < th_est)).sum()
 
         double_cond = precip_ref[station_id][(precip_ref[station_id] >= th_ref) & (precip_est[station_id] >= th_est)]
 
@@ -121,13 +116,17 @@ def calcScoresSwitzerland(precip_ref, precip_pred, threshold=[0.1,0.1]):
         th_ref = threshold[0]
         th_est = threshold[1]
 
-    perfscores = pd.Series(index=['true_pos','true_neg','false_pos','false_neg',
-                                'RMSE','corr_p','scatter','logBias', 'n_true', 'n_events_db'])
-    perfscores['n_true'] = len(precip_ref[~np.isnan(precip_ref)])
-    perfscores['true_pos'] = len(np.where((precip_ref >= th_ref) & (precip_pred >= th_est))[0])
-    perfscores['true_neg'] = len(np.where((precip_ref < th_ref) & (precip_pred < th_est))[0])
-    perfscores['false_pos'] = len(np.where((precip_ref < th_ref) & (precip_pred >= th_est))[0])
-    perfscores['false_neg'] = len(np.where((precip_ref >= th_ref) & (precip_pred < th_est))[0])
+    perfscores = pd.Series(index=['YESref_YESpred','NOref_NOpred','NOref_YESpred','YESref_NOpred',
+                                'RMSE','corr_p','scatter','logBias', 
+                                'n_events',  'n_events_db',
+                                'sum_ref', 'sum_pred', 'sum_ref_db', 'sum_pred_db'])
+
+    perfscores['n_events'] = len(precip_ref)
+
+    perfscores['YESref_YESpred'] = len(np.where((precip_ref >= th_ref) & (precip_pred >= th_est))[0])
+    perfscores['NOref_NOpred'] = len(np.where((precip_ref < th_ref) & (precip_pred < th_est))[0])
+    perfscores['NOref_YESpred'] = len(np.where((precip_ref < th_ref) & (precip_pred >= th_est))[0])
+    perfscores['YESref_NOpred'] = len(np.where((precip_ref >= th_ref) & (precip_pred < th_est))[0])
 
     doublecond = (precip_ref>= th_ref) & (precip_pred>= th_est)
     perfscores['n_events_db'] = len(np.where(doublecond)[0])
@@ -138,6 +137,11 @@ def calcScoresSwitzerland(precip_ref, precip_pred, threshold=[0.1,0.1]):
     perfscores['corr_p'] = np.round(scores['corr_p'],decimals=4)
     perfscores['scatter'] = np.round(scores['scatter'],decimals=4)
     perfscores['logBias'] = np.round(10*np.log10(precip_pred[doublecond].sum()/precip_ref[doublecond].sum()),decimals=4)
+
+    perfscores['sum_ref'] = np.round(precip_ref.sum(), decimals=2)
+    perfscores['sum_pred'] = np.round(precip_pred.sum(), decimals=2)
+    perfscores['sum_ref_db'] = np.round(precip_ref[doublecond].sum(), decimals=2)
+    perfscores['sum_pred_db'] = np.round(precip_pred[doublecond].sum(), decimals=2)
 
     return perfscores
 
@@ -261,7 +265,7 @@ class calcPerfscores(object) :
             for ith in doublecond :
                 scores[tagg][ith] = {}
                 for model in modellist :
-                    filename = 'perfscores_{}_{}_doublecond_{}_{}_{}.csv'.format(self.datestring, tagg,
+                    filename = 'scores_{}_{}_dcond{}_{}_{}.csv'.format(self.datestring, tagg,
                                      str(ith).replace('.','_'), reference, model)
                     try:
                         scores[tagg][ith][model] = pd.read_csv(
@@ -292,18 +296,36 @@ class calcPerfscores(object) :
         """
 
         scores = {}
+        scores_CH = {}
+
         for tagg in timeagg :
             scores[tagg] = {}
+            scores_CH[tagg] = {}
+            
             for ith in doublecond :
                 scores[tagg][ith] = {}
+                scores_CH[tagg][ith] = pd.DataFrame()
+                
                 for model in modellist :
-                    filename = 'perfscores_{}_{}_doublecond_{}_{}_{}.csv'.format(self.datestring, tagg,
-                                     str(ith).replace('.','_'), reference, model)
                     # Calculate score
-                    logging.info('Calculating scores for {}'.format(filename))
+                    logging.info('Calculating scores for {}'.format(model))
                     scores[tagg][ith][model] = calcScoresStations(self.precip[tagg][reference], 
                                         self.precip[tagg][model], threshold=ith)
                     # Save file
+                    filename = 'scores_{}_{}_dcond_{}_{}_{}.csv'.format(self.datestring, tagg,
+                                     str(ith).replace('.','_'), reference, model)
                     scores[tagg][ith][model].to_csv(self.mainfolder+'/results/{}'.format(filename), sep=';')
+
+                    # Switzerland
+                    ref = np.array(self.precip[tagg][reference].values.ravel(), dtype=float)
+                    pred = np.array(self.precip[tagg][model].values.ravel(), dtype=float)
+                    valid = (~np.isnan(ref)) & (~np.isnan(pred))
+                    score_values = calcScoresSwitzerland(ref[valid], pred[valid], threshold=ith)
+                    score_values.name = model
+                    scores_CH[tagg][ith] = scores_CH[tagg][ith].append(score_values)
+                # Save file
+                filename = 'scoresCH_{}_{}_dcond_{}.csv'.format(self.datestring, tagg,
+                                str(ith).replace('.','_'))
+                scores_CH[tagg][ith].to_csv(self.mainfolder+'/results/{}'.format(filename), sep=';')
 
         return scores
