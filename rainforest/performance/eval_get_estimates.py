@@ -76,6 +76,35 @@ def getGaugeObservations(gaugefolder, t0=None, t1=None, slf_stations=False):
 
     return gauge_all
 
+def get_QPE_filelist(qpefolder, time_conditions, modellist):
+
+    # Get all qpe files
+    tmp = get_qpe_files_multiple_dirs(qpefolder, 
+                        time_agg=time_conditions['time_agg'],
+                        list_models = modellist)
+
+    # Get only timesteps where at least 2 files are available during 10 min period
+    qpe_files10 = copy.deepcopy(tmp)
+    for k in tmp.keys():
+        for m in tmp[k].keys():
+            if 'T0' not in m: # if a RF model without temporal aggregation is included
+                if len(tmp[k][m]) < time_conditions['file_tol']:
+                    del qpe_files10[k][m]
+            else:
+                for it, time in enumerate(tmp[k][m]):
+                    if time.split('/')[-1][11:12] != '0':
+                        del qpe_files10[k][m][it]
+                
+    nmodels = np.array([len(d) for d in qpe_files10.values()])
+
+    # Get only timesteps where all qpe models are available
+    qpe_files10_filt = {}
+    for i, k in enumerate(qpe_files10.keys()):
+        if nmodels[i] == max(nmodels):
+            qpe_files10_filt[k] = qpe_files10[k]
+
+    return qpe_files10_filt
+
 class compileMapEstimates(object):
 
     def __init__(self,config_file, overwrite=False, tagg_hourly = True, 
@@ -189,14 +218,19 @@ class compileMapEstimates(object):
         if self.references:
             self.ref_files = {}
             for ref in self.references:
-
+                path = self.qpefolder+'{}'.format(ref)
                 if not os.path.exists(path) or (len(os.listdir(path)) == 0):
                     logging.info('Extracting {} files from archive'.format(ref))
-                    if ref.startswith('CPC'):
+                    if (ref == 'CPC') or (ref == 'CPCH'):
                         path = self.qpefolder
                         self.ref_files[ref] = retrieve_prod(path, self.tstart, 
                                                                     self.tend, ref, 
                                                                     pattern = '*5.801.gif')
+                    elif (ref == 'CPC60'):
+                        path = self.qpefolder
+                        self.ref_files[ref] = retrieve_prod(path, self.tstart, 
+                                                                    self.tend, ref, 
+                                                                    pattern = '*60.801.gif')                        
                     else:
                         path = self.qpefolder+'{}'.format(ref)
                         self.ref_files[ref] = retrieve_prod(path + '/', self.tstart, 
@@ -224,14 +258,23 @@ class compileMapEstimates(object):
 
         # Get full time span
         time_res = {}
-        tstamps_10min = pd.date_range(start=self.tstart, end=self.tend, freq='10min')
+        tstamps_10min = pd.date_range(start=self.tstart, end=self.tend, 
+                                    freq='10min',tz=datetime.timezone.utc)
         time_res['10min'] = {'time_agg':10,'file_tol':2,'out':'10min'}
+
+        if 'CPC60' in self.modellist:
+            cpc60 = True
+            self.modellist.remove('CPC60')
+            tagg_hourly = True
+        else:
+            cpc60 = False
 
         if tagg_hourly:
             # Assure that hourly starts with 0 minutes
             tstart = datetime.datetime(self.tstart.year, self.tstart.month, 
                         self.tstart.day, self.tstart.hour,0).replace(tzinfo=datetime.timezone.utc)
-            tstamps_60min = pd.date_range(start=tstart, end=self.tend, freq='H')
+            tstamps_60min = pd.date_range(start=tstart, end=self.tend, 
+                                    freq='H', tz=datetime.timezone.utc)
             time_res['60min'] = {'time_agg':60,'file_tol':4,'out':'60min'}
 
         # Lookup table for coordinates between stations and Cartesian grid
@@ -251,30 +294,33 @@ class compileMapEstimates(object):
         if 'RFO_DB' in list_models:
             list_models.remove('RFO_DB')
 
-        # Get all qpe files
-        tmp = get_qpe_files_multiple_dirs(self.qpefolder, 
-                            time_agg=time_res['10min']['time_agg'],
-                            list_models = list_models)
+        # # Get all qpe files
+        # tmp = get_qpe_files_multiple_dirs(self.qpefolder, 
+        #                     time_agg=time_res['10min']['time_agg'],
+        #                     list_models = list_models)
 
-        # Get only timesteps where at least 2 files are available during 10 min period
-        qpe_files10 = copy.deepcopy(tmp)
-        for k in tmp.keys():
-            for m in tmp[k].keys():
-                if 'T0' not in m: # if a RF model without temporal aggregation is included
-                    if len(tmp[k][m]) < time_res['10min']['file_tol']:
-                        del qpe_files10[k][m]
-                else:
-                    for it, time in enumerate(tmp[k][m]):
-                        if time.split('/')[-1][11:12] != '0':
-                            del qpe_files10[k][m][it]
+        # # Get only timesteps where at least 2 files are available during 10 min period
+        # qpe_files10 = copy.deepcopy(tmp)
+        # for k in tmp.keys():
+        #     for m in tmp[k].keys():
+        #         if 'T0' not in m: # if a RF model without temporal aggregation is included
+        #             if len(tmp[k][m]) < time_res['10min']['file_tol']:
+        #                 del qpe_files10[k][m]
+        #         else:
+        #             for it, time in enumerate(tmp[k][m]):
+        #                 if time.split('/')[-1][11:12] != '0':
+        #                     del qpe_files10[k][m][it]
                     
-        nmodels = np.array([len(d) for d in qpe_files10.values()])
+        # nmodels = np.array([len(d) for d in qpe_files10.values()])
 
-        # Get only timesteps where all qpe models are available
-        qpe_files10_filt = {}
-        for i, k in enumerate(qpe_files10.keys()):
-            if nmodels[i] == max(nmodels):
-                qpe_files10_filt[k] = qpe_files10[k]
+        # # Get only timesteps where all qpe models are available
+        # qpe_files10_filt = {}
+        # for i, k in enumerate(qpe_files10.keys()):
+        #     if nmodels[i] == max(nmodels):
+        #         qpe_files10_filt[k] = qpe_files10[k]
+
+        qpe_files10_filt = get_QPE_filelist(self.qpefolder, time_res['10min'],
+                                         list_models)
 
         precip_qpe = {}
         for m in list_models:
@@ -289,8 +335,8 @@ class compileMapEstimates(object):
                 if tstep in qpe_files10_filt.keys():
                     for f in qpe_files10_filt[tstep][m]:
                         data = read_cart(f)
-                        if len(np.shape(data)) == 3:
-                            data = data[0,:,:]
+                        # if len(np.shape(data)) == 3:
+                        #     data = np.flipud(data[0,:,:])
                         for j,s in enumerate(stations):
                             try:
                                 precip_qpe[m][i,j] += data[lut[s]['00'][0], lut[s]['00'][1]]
@@ -302,12 +348,12 @@ class compileMapEstimates(object):
                     precip_qpe[m][i] = np.nan
 
         # Add GAUGE DATA
-        precip_qpe['GAUGE'] = pd.DataFrame(index = tstamps_10min)
+        precip_qpe['GAUGE'] = pd.DataFrame(columns=stations, index=tstamps_10min)
         # Compile data into frame with timestamp as index and stations as columns
         for ss in stations:
             col = gauge_all.loc[gauge_all['STATION'] == ss, 'RRE150Z0'].to_frame(name=ss)
-            col.index = gauge_all.loc[(gauge_all['STATION'] == ss),'TIME']
-            precip_qpe['GAUGE'] = precip_qpe['GAUGE'].join(col)
+            col.set_index(gauge_all.loc[(gauge_all['STATION'] == ss),'TIME'], inplace=True)
+            precip_qpe['GAUGE'][ss] = col
 
         for m in list_models:
             precip_qpe[m] = pd.DataFrame(precip_qpe[m], index=tstamps_10min, columns=precip_qpe['GAUGE'].columns)
@@ -357,9 +403,14 @@ class compileMapEstimates(object):
                             if precip_qpe[model][ss][tstamps].count() > time_res['60min']['file_tol']:
                                 precip_60min[model][ss][it] = precip_qpe[model][ss][tstamps].mean()
 
+            if cpc60 : 
+                pass
+                # TODO 
+                precip_60min['CPC60'] = self._get_cpc60(tstamps_60min)
+
             # Save output
             #-----------------------------------------------------------
-            if save_output and tagg_hourly :
+            if save_output :
                 pathOut = self.qpefolder
                 save_file_60 = pathOut+'all_data_60min_{}_{}.p'.format(datetime.datetime.strftime(self.tstart, '%Y%m%d%H%M'),
                                                         datetime.datetime.strftime(self.tend, '%Y%m%d%H%M'))
