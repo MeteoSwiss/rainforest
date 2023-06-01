@@ -219,7 +219,6 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
     data['long_name'] = 'Rainforest estimated rain rate'
     data['coordinates'] = 'elevation azimuth range'
     data['product'] = b'RR'
-    data['prodname'] = b'CHRFQ'
     data['nodata'] = np.nan
     data['_FillValue'] = np.nan
 
