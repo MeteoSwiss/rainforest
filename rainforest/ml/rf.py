@@ -87,7 +87,7 @@ def processFeatures(features_dic, radartab):
         
     for f in features:
         if 'zh' in f:
-            logger.info('Computing derived variable {:s}'.format(f))
+            logger.info('Converting reflectivity {:s} from log [dBZ] to linear [mm^6 m^-3]'.format(f))
             try:
                 radartab[str(f)] = 10**(0.1 * radartab[f.replace('zh','ZH')+'_mean'].copy())
             except:
@@ -1076,7 +1076,7 @@ class RFModelEval(object):
                               bounds10 = [0,2,10,100], bounds60 = [0,2,10,100],
                               cross_val_type='years', K=5, years=None,
                               tstart=None, tend=None, station_scores=False,
-                              save_model=False):
+                              save_model=False, save_output=False):
         """
         Does an intercomparison (cross-validation) of different RF models and
         reference products (RZC, CPC, ...) and plots the performance plots
@@ -1142,7 +1142,7 @@ class RFModelEval(object):
   
         if (cross_val_type == 'years') and (years == None):
             logger.info('Cross validation years defined, but not specified, years from 2016-2021 used')
-            K = list(range(2016,2022,1))
+            K = list(range(2016,2023,1))
         elif (cross_val_type == 'years') and (years != None):
             K = years
 
@@ -1234,7 +1234,7 @@ class RFModelEval(object):
         ###############################################################################
         # MAIN LOOP: CROSS VALIDATION
         ###############################################################################
-        for k in K:
+        for ik, k in enumerate(K):
             logger.info('Run {:d}/{:d}-{:d} of cross-validation'.format(k,np.nanmin(K),np.nanmax(K)))
 
             test = idx_testtrain == k
@@ -1321,7 +1321,7 @@ class RFModelEval(object):
                                     .groupby(grp_hourly[test]).first())
 
                     df = pd.DataFrame(columns=gaugetab['STATION'].unique(),      
-                                        index = all_scores['60min'][model]['test']['all'][k]['all'].keys())
+                                        index = all_scores['60min'][model]['test']['all'][ik]['all'].keys())
 
                     # Fast fix
                     liq_10_test = idxTemp['10min']['test']['liquid']
@@ -1370,6 +1370,33 @@ class RFModelEval(object):
                             all_station_scores['60min'][model]['solid'][k][sta] = scores_solid_60
                         except:
                             logger.info('No performance score for solid precip for {}'.format(sta))
+
+                # Save output of training and testing data
+                if save_output:
+                    if model not in reference_products:
+                        data = features_VERT_AGG[model][test].copy()
+                        data[model] = R_pred_10.copy()
+                    else: 
+                        data = pd.DataFrame(pd.Series(R_pred_10, name=model))
+                    
+                    data['gauge'] = R[test].copy()
+                    data['TIMESTAMP'] = gaugetab['TIMESTAMP'][test]
+                    data['STATION'] = gaugetab['STATION'][test]
+
+                    out_name = str(Path(output_folder, 'data_{}_test_10min_CVfold_{}.csv'.format(model,k)))
+                    data.to_csv(out_name, index=False)
+                    logger.info('Saving data to {:s}'.format(out_name))
+
+                    data_60 = pd.DataFrame({'gauge': R_obs_test_60, model: R_pred_60})
+                    data_60['STATION'] = np.array(gaugetab['STATION'][test]
+                                                .groupby(grp_hourly[test]).first())
+                    data_60['TIMESTAMP'] = np.array(gaugetab['TIMESTAMP'][test]
+                                                .groupby(grp_hourly[test]).max())
+                    data_60['n_counts'] = np.squeeze(np.array(pd.DataFrame(R[test])
+                                                .groupby(grp_hourly[test]).count()))
+                    out_name = str(Path(output_folder, 'data_{}_test_60min_CVfold_{}.csv'.format(model,k)))
+                    data_60.to_csv(out_name, index=False)
+                    logger.info('Saving data to {:s}'.format(out_name))
 
                 # train
                 logger.info('Evaluating train error')
@@ -1441,11 +1468,9 @@ class RFModelEval(object):
                                                                                           perfs[score].std().rename('std')],
                                                                                          axis=1)
 
-
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
-        plot_crossval_stats(all_stats, output_folder)
         name_file = str(Path(output_folder, 'all_scores.p'))
         pickle.dump(all_scores, open(name_file, 'wb'))
         name_file = str(Path(output_folder, 'all_scores_stats.p'))
@@ -1456,7 +1481,8 @@ class RFModelEval(object):
             pickle.dump(all_station_scores, open(name_file, 'wb'))
             name_file = str(Path(output_folder, 'all_station_stats.p'))
             pickle.dump(all_station_stats, open(name_file, 'wb'))
-        
+
+        plot_crossval_stats(all_stats, output_folder)
         
         logger.info('Finished script and saved all scores to {}'.format(output_folder))
         return all_scores, all_stats
