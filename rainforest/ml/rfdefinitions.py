@@ -84,7 +84,8 @@ class RandomForestRegressorBC(RandomForestRegressor):
                  n_jobs=None,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 max_samples=None):
         super().__init__(n_estimators = n_estimators,
                          criterion = criterion,
                          max_depth = max_depth,
@@ -99,7 +100,8 @@ class RandomForestRegressorBC(RandomForestRegressor):
                          n_jobs = n_jobs,
                          random_state = random_state,
                          verbose = verbose,
-                         warm_start = warm_start)
+                         warm_start = warm_start, 
+                         max_samples=None)
         
         self.degree = degree
         self.bctype = bctype
