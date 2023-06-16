@@ -20,6 +20,7 @@ import glob
 from pathlib import Path
 import os
 
+import h5py
 
 from pathlib import Path
 from scipy.ndimage import gaussian_filter
