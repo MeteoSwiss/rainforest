@@ -24,6 +24,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from pyart.aux_io import read_metranet
 from pyart.aux_io import read_cartesian_metranet
+from pyart.aux_io.rad4alp_gif_reader import read_gif
 from pyart.util import join_radar
 from matplotlib import colors
 from PIL import Image
@@ -187,6 +188,8 @@ def read_cart(cart_file):
     elif extension == '.h5':
          odim_dummy = read_odim_grid_h5(cart_file)
          data = odim_dummy.fields[list(odim_dummy.fields.keys())[0]]['data']
+         if len(np.shape(data)) == 3:
+             data = np.flipud(np.squeeze(data))
     elif 'RFQ' in cart_file:
         # Get from filesize if it is DN or float
          size = os.path.getsize(cart_file)
@@ -260,6 +263,8 @@ def read_gif(gif_file):
     '''
     Reads a Cartesian radar file in gif format
     
+    TODO: Replace with function rad4alp_gif_readers.py from pyart
+
     Parameters
     ----------
     gif_file: str 
@@ -270,25 +275,21 @@ def read_gif(gif_file):
     The cartesian data in a numpy array
         
     '''
-    
-    scale  = constants.SCALE_RGB
-    colors = np.array([hex_to_rgb(c) for c in scale['colors']])
-    values = scale['values']
-    
-    img = imread(gif_file).astype(np.uint64)
-    if len(img.shape) == 3:
-        colors_bin = colors[:,0]*255**2 + colors[:,1]*255 + colors[:,2]
-        img_bin = img[:,:,0]*255**2 + img[:,:,1]*255 + img[:,:,2]
-    
-        precip = np.empty((img.shape[0],img.shape[1]))
-        precip[:] = -99
-        for i in range(len(colors_bin)):
-            precip[img_bin == colors_bin[i]] = values[i]
-    elif len(img.shape) == 2:
-        precip = values[img]
-    precip[precip <0] = np.nan
-    return precip
-    
+
+    # Read file
+    rgba_data = imread(gif_file, format='gif')
+
+
+    # Convert rgba values to rainfall intensities
+    scale = np.ma.masked_all(256)
+    ind = np.arange(256.)+1
+    scale[2:251] = np.ma.power(
+            np.ma.power(10., (ind[1:250]-71.5)/20.)/316., 0.6666667)
+
+    ind_vals = 255-rgba_data[:, :, 1]
+    data = scale[ind_vals]
+
+    return data
     
 def read_station_data(gauge_file):
     
