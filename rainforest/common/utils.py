@@ -638,7 +638,7 @@ def get_qpe_files(input_folder, t0 = None, t1 = None, time_agg = None,
         for f in files:
             try:
                 t = str(re.match('.*[a-zA-Z]([0-9]{9}).*',f)[1])
-                t = datetime.datetime.strptime(t,'%y%j%H%M')
+                t = datetime.datetime.strptime(t,'%y%j%H%M').replace(tzinfo=datetime.timezone.utc)
                 if time_agg != None:
                     t = nearest_time(t, time_agg)
                     
@@ -720,7 +720,7 @@ def get_qpe_files_multiple_dirs(input_folder, t0 = None, t1 = None, time_agg = N
         for f in file_list[model]:
             try:
                 t = str(re.match('.*[a-zA-Z]([0-9]{9}).*',f)[1])
-                t = datetime.datetime.strptime(t,'%y%j%H%M')
+                t = datetime.datetime.strptime(t,'%y%j%H%M').replace(tzinfo=datetime.timezone.utc)
                 if time_agg != None:
                     t = nearest_time(t, time_agg)
                     

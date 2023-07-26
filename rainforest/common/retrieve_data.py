@@ -622,7 +622,8 @@ def _retrieve_prod_daily(folder_out, start_time, end_time, product_name,
     content_zip = np.array(content_zip)
         
     times_zip = np.array([datetime.datetime.strptime(c[3:12],
-                          '%y%j%H%M') for c in content_zip])
+                          '%y%j%H%M').replace(tzinfo=datetime.timezone.utc) 
+                          for c in content_zip])
   
     # Get a list of all files to retrieve
     conditions = np.array([np.logical_and(t >= start_time, t <= end_time)
