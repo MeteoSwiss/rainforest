@@ -326,37 +326,6 @@ AVG_METHODS[2] = lambda x, axis: np.nansum(x, axis = axis)
 
 
 WARNING_RAM = 512 # megabytes
-SLURM_HEADER_R = '''#!/bin/sh
-#SBATCH -N 1     # nodes requested
-#SBATCH -c 1      # cores requested
-#SBATCH -t 12:0:00  # time requested in hour:minute:second
-#SBATCH --partition=postproc
-#SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --output="db_gauges_%A.out"
-#SBATCH --error="db_gauges_%A.err"
-#SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
-
-export MODULEPATH="/store/msclim/share/modulefiles/modules/all:${MODULEPATH}"
-module load /store/msclim/share/modulefiles/modules/all/cat/tsa-R3.5.2
-
-export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/
-
-source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh
-conda activate rainforest_RandPython
-'''
-
-
-SLURM_HEADER_PY = '''#!/bin/sh
-#SBATCH -N 1     # nodes requested
-#SBATCH -c 1      # cores requested
-#SBATCH --mem-per-cpu 64g # memory in mbytes  
-#SBATCH -t 23:59:59  # time requested in hour:minute:second
-#SBATCH --partition=postproc
-#SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
-#SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
-'''
 
 # Default (not indicated) is np.float32
 COL_TYPES = {'TIMESTAMP':np.int32, 

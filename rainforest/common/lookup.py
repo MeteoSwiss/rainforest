@@ -84,8 +84,6 @@ from .constants import cosmo_coords_folder
 from .constants import radar_samples_folder
 from .constants import rfmodels_folder
 
-LOOKUP_FOLDER = Path(os.environ['RAINFOREST_DATAPATH'], 'references', 'lookup_data')
-
 def get_lookup(lookup_type, radar = None):
     """Read a lookup table from the /data/lookup_data folder
 
@@ -180,7 +178,7 @@ def calc_lookup(lookup_type, radar = None):
         offset_y = int((neighb_y-1)/2)
             
         for r in radar:
-            lut_name =  Path(LOOKUP_FOLDER, 'lut_station_to_rad{:s}.p'.format(r))
+            lut_name =  Path(lut_folder, 'lut_station_to_rad{:s}.p'.format(r))
             logging.info('Creating lookup table {:s}'.format(str(lut_name)))
             try:
                 lut_cart = get_lookup('qpegrid_to_rad', radar)
@@ -345,7 +343,7 @@ def calc_lookup(lookup_type, radar = None):
 
         for r in radar:
             lut = {}
-            lut_name =  Path(LOOKUP_FOLDER, 'lut_' + lookup_type+'{:s}.p'.format(r))
+            lut_name =  Path(lut_folder, 'lut_' + lookup_type+'{:s}.p'.format(r))
             logging.info('Creating lookup table {:s}'.format(str(lut_name)))
             try:
                 lut_coords = get_lookup('cartcoords_rad', radar)
@@ -393,7 +391,7 @@ def calc_lookup(lookup_type, radar = None):
 
     elif lookup_type == 'qpegrid_to_height_rad':
         for r in radar:
-            lut_name =  Path(LOOKUP_FOLDER, 'lut_' + lookup_type+'{:s}.p'.format(r))
+            lut_name =  Path(lut_folder, 'lut_' + lookup_type+'{:s}.p'.format(r))
 
             try:
                 lut_cart = get_lookup('qpegrid_to_rad', r)
@@ -478,7 +476,7 @@ def calc_lookup(lookup_type, radar = None):
                     if len( idx):
                         lut[station][key] = idx
         
-        lut_name = Path(LOOKUP_FOLDER, 'lut_station_to_qpegrid.p')
+        lut_name = Path(lut_folder, 'lut_station_to_qpegrid.p')
         lut_names.append(str(lut_name))
         lut_objects.append(lut)
 
@@ -491,7 +489,7 @@ def calc_lookup(lookup_type, radar = None):
         
         for r in radar:
             lut = {}
-            lut_name =  Path(LOOKUP_FOLDER, 'lut_' + lookup_type+'{:s}.p'.format(r))
+            lut_name =  Path(lut_folder, 'lut_' + lookup_type+'{:s}.p'.format(r))
             logging.info('Creating lookup table {:s}'.format(str(lut_name)))
             files = sorted(glob.glob(str(Path(folder_radar_samples, 
                                               'M{:s}{:s}*'.format(res, r)))))
@@ -546,7 +544,7 @@ def calc_lookup(lookup_type, radar = None):
         ''' Currently it just uses the csv files of Marco Boscacci and 
         converts them to pickle to be consistent with the other luts'''
         for r in radar:
-            lut_name =  Path(LOOKUP_FOLDER, 'lut_' + lookup_type+'{:s}.p'.format(r))
+            lut_name =  Path(lut_folder, 'lut_' + lookup_type+'{:s}.p'.format(r))
             lut_boscacci = Path(lut_boscacci, 'lut_PL{:s}.csv'.format(r))
             lut_boscacci = ObjStorage.check_file(lut_boscacci)
             lut = np.array(pd.read_csv(str(lut_boscacci)))

@@ -154,7 +154,7 @@ QPE menu
     current_query = None
     while(code != 'e'):
         try:
-            code = prompt('Enter command (i for info), use ctrl+c to return to main menu anytime ',
+            code = prompt('Enter command (i for info), use ctrl+c to return to main menu anytime, use e to exit program ',
                           style = style_prompt)
             ########
             # Info
