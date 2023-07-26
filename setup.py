@@ -51,6 +51,7 @@ s = setup(name        = "rainforest_mch",
                            'qpe_evaluation = rainforest.qpe.qpe_evaluation:main',
                            'db_populate = rainforest.database.db_populate:main',
                            'rf_train = rainforest.ml.rf_train:main',
-                           'interact_cloud = rainforest.common.interact_cloud:main']},
+                           'interact_cloud = rainforest.common.interact_cloud:main',
+                           'jretrievedwh = rainforest.common.jretrievedwh:main']},
     ext_modules = cythonize(extension_addat)
         )

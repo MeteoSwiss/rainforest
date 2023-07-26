@@ -361,13 +361,13 @@ class Database(object):
         
         # Get current folder
         cwd = os.path.dirname(os.path.realpath(__file__))
-        
         for i, stations in enumerate(stations_sub):
             fname = tmp_folder + '/getdata_station_{:d}.job'.format(i)
             file = open(fname,'w')
             logging.info('Writing task file {:s}'.format(fname))
-            file.write(constants.SLURM_HEADER_R)
-            file.write('Rscript {:s}/retrieve_dwh_data.r "{:s}" "{:s}" {:f} "{:s}" "{:s}" {:s} {:d} {:d}'.format(
+            file.write(self.config['SLURM_HEADER'].format('gauge','gauge','GAUGE'))
+            file.write(self.config['PYTHON_HEADER'])
+            file.write('python {:s}/retrieve_dwh_data.py "{:s}" "{:s}" {:f} "{:s}" "{:s}" {:s} {:d} {:d}'.format(
                        cwd,
                        t0,
                        t1,
@@ -592,23 +592,15 @@ class Database(object):
         jobmax = config_r['MAX_SIMULTANEOUS_JOBS']
         tf = tmp_folder + 'task_file_reference_${SLURM_ARRAY_TASK_ID}'
         
-        slurm_header = '#SBATCH --output="db_ref_%A_%a.out"\n'+ \
-                       '#SBATCH --error="db_ref_%A_%a.err"\n' + \
-                       '#SBATCH --job-name=DB_REF\n'
-
-        slurm_python_setup = "source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh\n" + \
-                            "conda activate {}\n\n".format(self.config['CONDA_ENV_NAME']) + \
-                            "export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/\n\n"
 
         # If only one task file is created:
         if len(task_files) == 1:
             fname = tmp_folder + '/getdata_reference_0.job'
             file = open(fname,'w')
-            file.write(constants.SLURM_HEADER_PY)
-            file.write(slurm_header)
+            file.write(self.config['SLURM_HEADER'].format('ref','ref','REF'))
             file.write('#SBATCH --array=0\n\n')
+            file.write(self.config['PYTHON_HEADER'])
             # The following two lines are necessary to use the right environment
-            file.write(slurm_python_setup)
             file.write('python {:s}/retrieve_reference_data.py -c {:s} -t {:s} -o {:s} \n'.format(
                        cwd,
                        self.config_file,
@@ -626,10 +618,9 @@ class Database(object):
                     iend = i+nfperjob
                 fname = tmp_folder + '/getdata_reference_{:d}_{:d}.job'.format(i,iend)
                 file = open(fname,'w')
-                file.write(constants.SLURM_HEADER_PY)
-                file.write(slurm_header)
+                file.write(self.config['SLURM_HEADER'].format('ref','ref','REF'))
                 file.write('#SBATCH --array={:d}-{:d}%{:d}\n\n'.format(i,iend,jobmax))
-                file.write(slurm_python_setup)
+                file.write(self.config['PYTHON_HEADER'])
                 file.write('python {:s}/retrieve_reference_data.py -c {:s} -t {:s} -o {:s} \n'.format(
                         cwd,
                         self.config_file,
@@ -858,18 +849,13 @@ class Database(object):
                        '#SBATCH --error="db_radar_%A_%a.err"\n' + \
                        '#SBATCH --job-name=DB_RADAR\n'
 
-        slurm_python_setup = "source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh\n" + \
-                            "conda activate {}\n\n".format(self.config['CONDA_ENV_NAME']) + \
-                            "export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/\n\n"
-
         # If only one task file is created:
         if len(task_files) == 1:
             fname = tmp_folder + '/getdata_radar_0.job'
             file = open(fname,'w')
-            file.write(constants.SLURM_HEADER_PY)
-            file.write(slurm_header)
+            file.write(self.config['SLURM_HEADER'].format('rad','rad','RAD'))
             file.write('#SBATCH --array=0\n\n')
-            file.write(slurm_python_setup)
+            file.write(self.config['PYTHON_HEADER'])
             file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} \n'.format(
                        cwd,
                        self.config_file,
@@ -887,10 +873,9 @@ class Database(object):
                     iend = i+nfperjob
                 fname = tmp_folder + '/getdata_radar_{:d}_{:d}.job'.format(i,iend)
                 file = open(fname,'w')
-                file.write(constants.SLURM_HEADER_PY)
-                file.write(slurm_header)
+                file.write(self.config['SLURM_HEADER'].format('rad','rad','RAD'))
                 file.write('#SBATCH --array={:d}-{:d}%{:d}\n\n'.format(i,iend,jobmax))
-                file.write(slurm_python_setup)
+                file.write(self.config['PYTHON_HEADER'])
                 file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} \n'.format(
                         cwd,
                         self.config_file,
