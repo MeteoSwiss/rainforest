@@ -1,8 +1,26 @@
 NO_DATA_FILL: -9999
 TMP_FOLDER: '/scratch/${USER}/temp/'
-CONDA_ENV_NAME: 'rainforest_database'
+SLURM_HEADER: |
+    #!/bin/sh
+    #SBATCH -N 1     # nodes requested
+    #SBATCH -c 1      # cores requested
+    #SBATCH --mem-per-cpu 64g # memory in mbytes
+    #SBATCH -t 23:59:59  # time requested in hour:minute:second
+    #SBATCH --partition=postproc
+    #SBATCH --exclude=tsa-pp020,tsa-pp019,tsa-pp018
+    #SBATCH --mail-type=END,FAIL
+    #SBATCH --mail-user=rebecca.gugerli@meteoswiss.ch
+    #SBATCH --output='db_{:s}_%A_%a.out'
+    #SBATCH --error='db_{:s}_%A_%a.err'
+    #SBATCH --job-name=DB_{:s}
+
+PYTHON_HEADER: | 
+    source /scratch/rgugerli/miniconda3/etc/profile.d/conda.sh
+    conda activate rainforest_database
+    export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/
+
 GAUGE_RETRIEVAL:
-    VARIABLES : ['tre200s0','prestas0','ure200s0','rre150z0','dkl010z0','fkl010z0','rre150z0_adj']
+    VARIABLES : ['tre200s0','prestas0','ure200s0','''rre150z0''','dkl010z0','fkl010z0','rre150z0_adj']
     STATIONS : 'all'
     MIN_R_HOURLY : 0.01
     MAX_NB_SLURM_JOBS: 6
