@@ -492,6 +492,12 @@ def retrieve_prod(folder_out, start_time, end_time, product_name,
     if not os.path.exists(folder_out):
         os.makedirs(folder_out)
     
+    # Check if times are aware or naive
+    if start_time.tzinfo is None:
+        start_time.replace(tzinfo=datetime.timezone.utc)
+    if end_time.tzinfo is None:
+        end_time.replace(tzinfo=datetime.timezone.utc)    
+
     dt = datetime.timedelta(minutes = 5)
     delta = end_time - start_time
     if delta.total_seconds()== 0:
@@ -513,12 +519,13 @@ def retrieve_prod(folder_out, start_time, end_time, product_name,
             start_time = t0
         else:
             start_time = datetime.datetime(year = d.year, month = d.month,
-                                           day = d.day)
+                                           day = d.day, tzinfo=datetime.timezone.utc)
         if i == len(dates) - 1:
             end_time = t1
         else:
             end_time = datetime.datetime(year = d.year, month = d.month,
-                                           day = d.day, hour = 23, minute = 59)
+                                           day = d.day, hour = 23, minute = 59,
+                                           tzinfo=datetime.timezone.utc)
         files = _retrieve_prod_daily(folder_out, start_time, end_time,
                                      product_name, pattern, pattern_type,
                                      sweeps)
