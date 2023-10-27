@@ -8,6 +8,7 @@
 
 import os, sys
 from time import time
+from typing import Dict
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 import pandas as pd
@@ -37,11 +38,11 @@ size=12
 params = {'legend.fontsize': size,
           'legend.title_fontsize': size,
           'figure.figsize': (8,8),
-          'axes.labelsize': size,
+          'axes.labelsize': size*0.8,
           'axes.titlesize': size,
           'xtick.labelsize': size*0.8,
           'ytick.labelsize': size*0.8,
-          'axes.titlepad': 25}
+          'axes.titlepad': 20}
 plt.rcParams.update(params)
 
 
@@ -88,6 +89,14 @@ def add_swiss_contours_qpe_map(ax):
         x = [i[0]/1000. for i in shape.shape.points[:]]
         y = [i[1]/1000. for i in shape.shape.points[:]]
         ax.plot(x,y,'k',linewidth=1.2)
+
+        ax.set_ylabel('Swiss (CH1903) S-N coordinate [km]')
+        ax.set_xlabel('Swiss (CH1903) W-E cooridnate [km]')
+
+        props = {"rotation" : 90, 
+                "verticalalignment": 'center'}
+        plt.setp(ax.get_yticklabels(), **props)
+
     return ax
 
 
@@ -106,6 +115,30 @@ def add_map_to_plot(ax, y, x, c, scoreDic):
 
         return ax, map
 
+def getFigShapeLocIdx(n_subplots : int):
+
+        if n_subplots == 1:
+                figSize=(8,8)
+                figShape = (1,1)
+
+        elif n_subplots == 2 :
+                figSize=(11.7,8)
+                figShape = (1,2)
+
+        elif n_subplots == 3 :
+                figSize=(11.7*1.3,8)
+                figShape = (1,3)
+
+        elif n_subplots == 4 :
+                figSize=(11.7,11.7)
+                figShape = (2,2)
+
+        else:
+                figSize=(16.5,11.7)
+                figShape = (2,3)
+
+        return figSize, figShape
+
 def compileSubplotSetup(modellist, modelfullnames) :
         """
 
@@ -123,20 +156,24 @@ def compileSubplotSetup(modellist, modelfullnames) :
         # if modelnames == None:
         #         modelnames = getFullNamesSampleModels()
 
-        if len(modellist) <= 4 :
+        if len(modellist) == 1:
+                setup={}
+                setup[(0,0)] = {'lab': ''}
+
+        elif len(modellist) == 3: 
+                setup = {}
+                setup[(0,0)] = {'lab' : '(a)'}
+                setup[(0,1)] = {'lab' : '(b)'}
+                setup[(0,2)] = {'lab' : '(c)'}
+
+        elif len(modellist) == 4 :
                 setup = {}
                 setup[(0,0)] = {'lab' : '(a)'}
                 setup[(0,1)] = {'lab' : '(b)'}
                 setup[(1,0)] = {'lab' : '(c)'}
                 setup[(1,1)] = {'lab' : '(d)'}
-                for im, model in enumerate(modellist) :
-                        setup[list(setup.keys())[im]]['model'] = model
-                        if model in modelfullnames.keys() :
-                                setup[list(setup.keys())[im]]['tit'] = modelfullnames[model]
-                        else: 
-                                setup[list(setup.keys())[im]]['tit'] = model
 
-        if len(modellist) > 4 :
+        else :
                 setup = {}
                 setup[(0,0)] = {'lab' : '(a)'}
                 setup[(0,1)] = {'lab' : '(b)'}
@@ -144,12 +181,13 @@ def compileSubplotSetup(modellist, modelfullnames) :
                 setup[(1,0)] = {'lab' : '(d)'}
                 setup[(1,1)] = {'lab' : '(e)'}
                 setup[(1,2)] = {'lab' : '(f)'}
-                for im, model in enumerate(modellist) :
-                        setup[list(setup.keys())[im]]['model'] = model
-                        if model in modelfullnames.keys() :
-                                setup[list(setup.keys())[im]]['tit'] = modelfullnames[model]
-                        else: 
-                                setup[list(setup.keys())[im]]['tit'] = model
+
+        for im, model in enumerate(modellist) :
+                setup[list(setup.keys())[im]]['model'] = model
+                if model in modelfullnames.keys() :
+                        setup[list(setup.keys())[im]]['tit'] = modelfullnames[model]
+                else: 
+                        setup[list(setup.keys())[im]]['tit'] = model
         return setup
 
 def plotModelMapsSubplots(perfscores, modellist, score='BIAS', config_figures=None, 
@@ -199,16 +237,8 @@ def plotModelMapsSubplots(perfscores, modellist, score='BIAS', config_figures=No
                 xcolname = 'X-coord'
                 ycolname = 'Y-coord'
 
-        # Set figure sizes
-        if len(modellist) == 1:
-                plt.figure(figsize=(11.7,11.7))
-                figShape = (1,1)                
-        elif len(modellist) <= 4 :
-                plt.figure(figsize=(11.7,11.7))
-                figShape = (2,2)
-        else:
-                plt.figure(figsize=(16.5,11.7))
-                figShape = (2,3)
+        figSize, figShape = getFigShapeLocIdx(len(modellist))
+        plt.figure(figsize=figSize)
 
         for loc in figsetup:
                 if loc == (0,0):
@@ -251,6 +281,7 @@ class plotQPEMaps(object):
                 Args:
                         config_file (str): Path to a configuration file
                 """
+                dir_path = os.path.dirname(__file__)
 
                 try:
                         config = envyaml(config_file)
@@ -374,7 +405,7 @@ class plotQPEMaps(object):
 
                 # # CBAR
                 divider = make_axes_locatable(ax)
-                cax = divider.append_axes("bottom", size="5%", pad=0.3)
+                cax = divider.append_axes("bottom", size="5%", pad=0.45)
                 cb = plt.colorbar(im, cax=cax, orientation='horizontal')
                 cb.set_label(collabel)
                 cb.ax.tick_params(labelsize=8)
@@ -385,8 +416,14 @@ class plotQPEMaps(object):
                 return ax
 
         def plotQPEMapsSubplots(self, modellist, time_aggregation='10min', t0=None, t1=None, 
-                                output_file=True, filename=None, movie=False):
+                                output_file=True, filename=None, movie=False,
+                                zoom=False, zoom_extent=None,
+                                plot_points=False, plot_points_dic=None):
                 """
+
+                zoom_extent = list[xlim1, xlim2, ylim1, ylim2] ; CH1903/LV03 coordinates
+                plot_points_dic = Dict{'station1': [x,y],
+                                        'station2': [x,y]}
 
                 """
 
@@ -394,6 +431,15 @@ class plotQPEMaps(object):
                 if output_file and filename == None:
                         logging.error('An output file was wished, but no name is given. Cannot save figure.')
                         output_file = False
+
+                # Check if zoom_extent is given when zoom is defined
+                if zoom and zoom_extent == None:
+                        logging.error('A zoom was defined, but no extent given. Not zooming')
+                        zoom = False
+
+                if plot_points and plot_points_dic == None:
+                        logging.error('The option plot_points given, but no coordinate dictionary defined')
+                        plot_points = False                                
 
                 # Get date-range
                 if t0 == None:
@@ -428,24 +474,18 @@ class plotQPEMaps(object):
                 #---------------
                 # Get full names of models
                 figsetup = compileSubplotSetup(modellist, self.setup['MODELFULLNAMES'])
-
-                # Set figure sizes
-                if len(modellist) == 1:
-                        plt.figure(figsize=(8,8))
-                        figShape = (1,1)                
-                elif len(modellist) <= 4 :
-                        plt.figure(figsize=(11.7,11.7))
-                        figShape = (2,2)
-                else:
-                        plt.figure(figsize=(16.5,11.7))
-                        figShape = (2,3)
+                figSize, figShape = getFigShapeLocIdx(len(modellist))
 
                 if movie == True:
                         framenames = []
 
                 # Plotting all realizations for each timestamp
                 #----------------------------------------------
+                logging.info('All images are saved here: {}'.format(self.qpemapfolder))
                 for i, tstep in enumerate(time_res['tstamps'][1::]):
+
+                        plt.figure(figsize=figSize)
+
                         for im, model in enumerate(modellist):
                                 
                                 # Initiate figure
@@ -467,8 +507,10 @@ class plotQPEMaps(object):
                                         data = read_cart(qpe_files10_filt[tstep][model][0])
                                 elif len(qpe_files10_filt[tstep][model]) > 1:
                                         for f in qpe_files10_filt[tstep][model]:
-                                                data_dummy = read_cart(f).copy()
-                                                data += data_dummy.copy()
+                                                if f  ==  qpe_files10_filt[tstep][model][0]:
+                                                        data = read_cart(f).copy()
+                                                else:
+                                                        data += read_cart(f).copy()
                                         data = data / len(qpe_files10_filt[tstep][model])
                                 else:
                                         logging.info('No timestep for this file')
@@ -477,10 +519,23 @@ class plotQPEMaps(object):
 
                                 ax1 = self.plot_qpe(ax1, data)
                                 lab, tit = figsetup[loc]['lab'], figsetup[loc]['tit']
-                                leg1 = ax1.legend([],[], framealpha=0, loc='upper left', 
-                                        title=f'{lab} {tit}')
+                                leg1 = ax1.legend([],[], loc='upper left', 
+                                        title=f'{lab} {tit}',alignment='center', borderpad=0.1, framealpha=0.8,
+                                        labelspacing=0, handleheight=0.)
                                 ax1.add_artist(leg1)
                                 ax1.set_title(datetime.datetime.strftime(tstep,'%d %b %Y %H:%M UTC'))
+
+                                if zoom :
+                                        ax1.set_xlim([zoom_extent[0], zoom_extent[1]])
+                                        ax1.set_ylim([zoom_extent[2], zoom_extent[3]])
+
+                                if plot_points :
+                                        for station in plot_points_dic.keys():
+                                                ax1.plot(plot_points_dic[station][0], plot_points_dic[station][1],
+                                                        marker='o', color='black')
+                                                ax1.annotate(station, 
+                                                        xy=(plot_points_dic[station][0], plot_points_dic[station][1]),
+                                                        xytext=(plot_points_dic[station][0], plot_points_dic[station][1]))
                                 
                                 if loc == (0,0):
                                         ax0 = ax1
@@ -489,9 +544,16 @@ class plotQPEMaps(object):
 
                         modellabel = [m + '_' for m in modellist]
 
-                        fname = 'QPEmap_{}{}.png'.format(''.join(modellabel),
-                                datetime.datetime.strftime(tstep,'%Y%m%d%H%M'))
+                        if zoom :
+                                fname = 'QPEmap_zoom_{}{}.png'.format(''.join(modellabel),
+                                        datetime.datetime.strftime(tstep,'%Y%m%d%H%M'))
+                        else:
+                                fname = 'QPEmap_{}{}.png'.format(''.join(modellabel),
+                                        datetime.datetime.strftime(tstep,'%Y%m%d%H%M'))
+
+                        logging.info('Saving image to {}'.format(fname))
                         plt.savefig(self.qpemapfolder+fname, bbox_inches='tight')
+                        plt.close('all')
 
                         if movie :
                                 framenames.append(fname)
@@ -503,8 +565,13 @@ class plotQPEMaps(object):
                                 new_frame = Image.open(self.qpemapfolder+i)
                                 frames.append(new_frame)
                         # Save into a GIF file that loops forever
-                        frames[0].save(self.qpemapfolder+'QPEmap_{}_{}.gif'.format(\
-                                ti_res['tstamps'][0].strftime('%Y%m%d'),ti_res['tstamps'][-1].strftime('%Y%m%d')),
+                        timestring = '{}_{}'.format(time_res['tstamps'][0].strftime('%Y%m%d%H'),time_res['tstamps'][-1].strftime('%Y%m%d%H'))
+                        if zoom : 
+                                fname = 'QPEmap_zoom_{}.gif'.format(timestring)
+                        else:
+                                fname = 'QPEmap_{}.gif'.format(timestring)
+                                
+                        frames[0].save(self.qpemapfolder+fname,
                                 format='GIF',
                                 append_images=frames[1:],
                                 save_all=True,
