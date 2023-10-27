@@ -186,7 +186,7 @@ def read_cart(cart_file):
     if extension == '.gif' or 'CPC' in cart_file:
         data = read_gif(cart_file)
     elif extension == '.h5':
-         odim_dummy = read_odim_grid_h5(cart_file)
+         odim_dummy = read_odim_grid_h5(cart_file, undetect=np.nan, nodata=np.nan)
          data = odim_dummy.fields[list(odim_dummy.fields.keys())[0]]['data']
          if len(np.shape(data)) == 3:
              data = np.flipud(np.squeeze(data))
