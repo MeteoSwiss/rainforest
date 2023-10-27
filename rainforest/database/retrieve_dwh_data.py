@@ -6,6 +6,8 @@ from datetime import datetime
 from dateutil.parser import parse
 from pytz import utc
 
+import logging
+
 from rainforest.common.jretrievedwh import jretrievedwh_to_pandas
 from rainforest.common.object_storage import ObjectStorage
 ObjStorage = ObjectStorage()
@@ -66,12 +68,14 @@ for station in stations:
                 if variable == 'fkl010z0':
                     CE = False
                     data['rre150z0_adj'] = missing_value
-                    print(f"Transfer function not applicable for {station}")
+                    logging.info(f"Transfer function not applicable for {station}")
+                if variable == 'rre150z0':
+                    CE = False
 
         if CE:
             data['rre150z0_adj'] = data['rre150z0']
             try:
-                print(f"Adjustment of gauge measurement {station}")
+                logging.info(f"Adjustment of gauge measurement {station}")
                 # Add Kochendorfer Equation (see https://hess.copernicus.org/articles/21/3525/2017/hess-21-3525-2017.pdf)
                 wind = data['fkl010z0']
                 wind[wind > 9] = 9.
@@ -92,8 +96,8 @@ for station in stations:
                 data.loc[index_solid, 'rre150z0_adj'] = data.loc[index_solid, 'rre150z0'] / CEsolid_KD4[index_solid]
                 data['rre150z0_adj'] = np.round(data['rre150z0_adj'], decimals=3)
             except Exception as e:
-                print(e)
-                print(f"Catch efficiency failed for {station}")
+                logging.info(e)
+                logging.info(f"Catch efficiency failed for {station}")
         else:
             data['rre150z0_adj'] = missing_value
 
@@ -130,6 +134,6 @@ for station in stations:
         zdata_wet = append_to_file(name_out, zdata_wet, overwrite)
         zdata_wet.to_csv(name_out, sep=',', compression='gzip', index=False)
     except Exception as e:
-        print(e)
-        print(f"Data not available for {station}")
+        logging.info(e)
+        logging.info(f"Data not available for {station}")
 
