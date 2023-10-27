@@ -212,7 +212,13 @@ class compileMapEstimates(object):
         for model in self.modellist:
             path = self.qpefolder+'{}'.format(model)
             if len(os.listdir(path)) == 0 :
-                logging.error('No QPE maps available for {}, please check path or produce QPE maps'.format(model))
+                try:
+                    path = self.qpefolder+'{}'.format(model)
+                    self.ref_files[ref] = retrieve_prod(path + '/', self.tstart, 
+                                                                    self.tend, ref)
+                    logging.info('Model data: {} taken from file archive!'.format(model))
+                except:
+                    logging.error('No QPE maps available for {}, please check path or produce QPE maps'.format(model))
 
         # Check for reference data
         if self.references:
