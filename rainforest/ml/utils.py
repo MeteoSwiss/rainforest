@@ -11,7 +11,7 @@ import logging
 import datetime
 
 # Local imports
-from ..common.utils import chunks
+from ..common.utils import chunks, check_random_state
 
 def vert_aggregation(radar_data, vert_weights, grp_vertical, 
                   visib_weight = True, visib = None):
@@ -68,7 +68,7 @@ def nesteddictvalues(d):
       yield v
       
 
-def split_event(timestamps, n = 5, threshold_hr = 12):
+def split_event(timestamps, n = 5, threshold_hr = 12, random_state=None):
     """
     Splits the dataset into n subsets by separating the observations into
     separate precipitation events and attributing these events randomly
@@ -84,6 +84,9 @@ def split_event(timestamps, n = 5, threshold_hr = 12):
         threshold in hours to distinguish precip events. Two timestamps are
         considered to belong to a different event if there is a least 
         threshold_hr hours of no observations (no rain) between them.
+    random_state: None or int
+        Reproducibility of event assignment
+
     
     Returns
     ---------
@@ -108,7 +111,8 @@ def split_event(timestamps, n = 5, threshold_hr = 12):
 
     maxlabel = labels[-1]
     allevents = np.arange(maxlabel)
-    np.random.shuffle(allevents) # randomize
+    random_instance = check_random_state(random_state)
+    random_instance.shuffle(allevents) # randomize
     
     # split events in n groups
     events_split = chunks(allevents, n)
