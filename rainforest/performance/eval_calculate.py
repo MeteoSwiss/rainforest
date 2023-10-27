@@ -107,6 +107,15 @@ def calcScoresStations(precip_ref : pd.DataFrame,
 
     return perf_scores
 
+def calcScoresSwitzerland_get_scorelist():
+
+    score_list = ['YESref_YESpred','NOref_NOpred','NOref_YESpred','YESref_NOpred',
+                    'RMSE','corr_p','scatter','logBias', 
+                    'n_events',  'n_events_db',
+                    'sum_ref', 'sum_pred', 'sum_ref_db', 'sum_pred_db']
+    
+    return score_list
+
 def calcScoresSwitzerland(precip_ref, precip_pred, threshold=[0.1,0.1]):
     
     if type(threshold) != list:
@@ -265,12 +274,12 @@ class calcPerfscores(object) :
             for ith in doublecond :
                 scores[tagg][ith] = {}
                 for model in modellist :
-                    filename = 'scores_{}_{}_dcond{}_{}_{}.csv'.format(self.datestring, tagg,
+                    filename = 'scores_{}_{}_dcond_{}_{}_{}.csv'.format(self.datestring, tagg,
                                      str(ith).replace('.','_'), reference, model)
                     try:
                         scores[tagg][ith][model] = pd.read_csv(
                                             self.mainfolder+'/results/{}'.format(filename), 
-                                            index_col=0)
+                                            index_col=0,  sep=';')
                     except:
                         logging.warning('The following performance scores are not available {}'.format(filename))
 
@@ -304,7 +313,7 @@ class calcPerfscores(object) :
             
             for ith in doublecond :
                 scores[tagg][ith] = {}
-                scores_CH[tagg][ith] = pd.DataFrame()
+                scores_CH[tagg][ith] = pd.DataFrame(index=calcScoresSwitzerland_get_scorelist())
                 
                 for model in modellist :
                     # Calculate score
@@ -322,7 +331,7 @@ class calcPerfscores(object) :
                     valid = (~np.isnan(ref)) & (~np.isnan(pred))
                     score_values = calcScoresSwitzerland(ref[valid], pred[valid], threshold=ith)
                     score_values.name = model
-                    scores_CH[tagg][ith] = scores_CH[tagg][ith].append(score_values)
+                    scores_CH[tagg][ith] = pd.concat([scores_CH[tagg][ith], score_values], axis=1)
                 # Save file
                 filename = 'scoresCH_{}_{}_dcond_{}.csv'.format(self.datestring, tagg,
                                 str(ith).replace('.','_'))
