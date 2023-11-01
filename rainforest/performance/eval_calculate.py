@@ -56,9 +56,11 @@ def calcScoresStations(precip_ref : pd.DataFrame,
 
     th_ref, th_est = threshold if isinstance(threshold, list) else [threshold] * 2
 
-    perf_scores = pd.DataFrame(columns=['YESref_YESpred','NOref_NOpred','NOref_YESpred','YESref_NOpred',
+    score_names = ['YESref_YESpred','NOref_NOpred','NOref_YESpred','YESref_NOpred',
                                 'RMSE','corr_p','scatter','logBias', 'n_values', 
-                                'n_events_db','sum_ref_db','sum_pred_db'], 
+                                'n_events_db','sum_ref_db','sum_pred_db']
+    score_db_names = ['n_events_db','sum_ref_db','sum_pred_db', 'RMSE','corr_p','scatter','logBias']
+    perf_scores = pd.DataFrame(columns=score_names,
                                 index=precip_ref.columns.unique())
 
     stations = METSTATIONS.copy()
@@ -94,6 +96,7 @@ def calcScoresStations(precip_ref : pd.DataFrame,
                 np.round(10*np.log10(sum_pred_db/sum_ref_db),decimals=4)
         else:
             logging.info('No measurements for station {}'.format(station_id))
+            perf_scores.loc[station_id, ['logBias','RMSE','corr_p','scatter']] = np.nan
             continue
         try:
             scores = det_cont_fct(precip_est[station_id][double_cond.index].to_numpy(dtype=float),
@@ -104,6 +107,7 @@ def calcScoresStations(precip_ref : pd.DataFrame,
             perf_scores.at[station_id, 'scatter']= np.round(scores['scatter'],decimals=4)
         except:
             logging.info('Could not calculate scores for station {}'.format(station_id))
+            perf_scores.loc[station_id, ['RMSE','corr_p','scatter']] = np.nan
 
     return perf_scores
 
