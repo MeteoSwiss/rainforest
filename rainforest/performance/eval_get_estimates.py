@@ -28,7 +28,8 @@ from ..common.lookup import get_lookup
 from ..common.io_data import read_cart
 
 
-def getGaugeObservations(gaugefolder, t0=None, t1=None, slf_stations=False):
+def getGaugeObservations(gaugefolder, t0=None, t1=None, slf_stations=False, 
+                        missing2nan=False):
     """_summary_
 
     Args:
@@ -50,7 +51,9 @@ def getGaugeObservations(gaugefolder, t0=None, t1=None, slf_stations=False):
                         dtype = {'TIMESTAMP':int,  'STATION': str})
 
     gauge_all = gauge_all.compute().drop_duplicates()
-    gauge_all = gauge_all.replace(-9999,np.nan)
+
+    if missing2nan:
+        gauge_all = gauge_all.replace(-9999,np.nan)
 
     # Assure that datetime object is in UTC
     if t0 != None :
@@ -212,7 +215,13 @@ class compileMapEstimates(object):
         for model in self.modellist:
             path = self.qpefolder+'{}'.format(model)
             if len(os.listdir(path)) == 0 :
-                logging.error('No QPE maps available for {}, please check path or produce QPE maps'.format(model))
+                try:
+                    path = self.qpefolder+'{}'.format(model)
+                    self.ref_files[ref] = retrieve_prod(path + '/', self.tstart, 
+                                                                    self.tend, ref)
+                    logging.info('Model data: {} taken from file archive!'.format(model))
+                except:
+                    logging.error('No QPE maps available for {}, please check path or produce QPE maps'.format(model))
 
         # Check for reference data
         if self.references:
@@ -285,7 +294,8 @@ class compileMapEstimates(object):
         #-----------------------------------
         logging.info('Get gauge observations')
         gauge_all = getGaugeObservations(gaugefolder=self.gaugefolder, 
-                        t0 = self.tstart, t1= self.tend, slf_stations = False)
+                        t0 = self.tstart, t1= self.tend, slf_stations = False,
+                        missing2nan=False)
         stations = np.unique(gauge_all['STATION'])
 
         # Get all model files
@@ -354,6 +364,8 @@ class compileMapEstimates(object):
             col = gauge_all.loc[gauge_all['STATION'] == ss, 'RRE150Z0'].to_frame(name=ss)
             col.set_index(gauge_all.loc[(gauge_all['STATION'] == ss),'TIME'], inplace=True)
             precip_qpe['GAUGE'][ss] = col
+            precip_qpe['GAUGE'][ss].fillna(0, inplace=True)
+            precip_qpe['GAUGE'][ss].loc[precip_qpe['GAUGE'][ss] < 0] = np.nan
 
         for m in list_models:
             precip_qpe[m] = pd.DataFrame(precip_qpe[m], index=tstamps_10min, columns=precip_qpe['GAUGE'].columns)

@@ -56,9 +56,11 @@ def calcScoresStations(precip_ref : pd.DataFrame,
 
     th_ref, th_est = threshold if isinstance(threshold, list) else [threshold] * 2
 
-    perf_scores = pd.DataFrame(columns=['YESref_YESpred','NOref_NOpred','NOref_YESpred','YESref_NOpred',
+    score_names = ['YESref_YESpred','NOref_NOpred','NOref_YESpred','YESref_NOpred',
                                 'RMSE','corr_p','scatter','logBias', 'n_values', 
-                                'n_events_db','sum_ref_db','sum_pred_db'], 
+                                'n_events_db','sum_ref_db','sum_pred_db']
+    score_db_names = ['n_events_db','sum_ref_db','sum_pred_db', 'RMSE','corr_p','scatter','logBias']
+    perf_scores = pd.DataFrame(columns=score_names,
                                 index=precip_ref.columns.unique())
 
     stations = METSTATIONS.copy()
@@ -94,6 +96,7 @@ def calcScoresStations(precip_ref : pd.DataFrame,
                 np.round(10*np.log10(sum_pred_db/sum_ref_db),decimals=4)
         else:
             logging.info('No measurements for station {}'.format(station_id))
+            perf_scores.loc[station_id, ['logBias','RMSE','corr_p','scatter']] = np.nan
             continue
         try:
             scores = det_cont_fct(precip_est[station_id][double_cond.index].to_numpy(dtype=float),
@@ -104,8 +107,18 @@ def calcScoresStations(precip_ref : pd.DataFrame,
             perf_scores.at[station_id, 'scatter']= np.round(scores['scatter'],decimals=4)
         except:
             logging.info('Could not calculate scores for station {}'.format(station_id))
+            perf_scores.loc[station_id, ['RMSE','corr_p','scatter']] = np.nan
 
     return perf_scores
+
+def calcScoresSwitzerland_get_scorelist():
+
+    score_list = ['YESref_YESpred','NOref_NOpred','NOref_YESpred','YESref_NOpred',
+                    'RMSE','corr_p','scatter','logBias', 
+                    'n_events',  'n_events_db',
+                    'sum_ref', 'sum_pred', 'sum_ref_db', 'sum_pred_db']
+    
+    return score_list
 
 def calcScoresSwitzerland(precip_ref, precip_pred, threshold=[0.1,0.1]):
     
@@ -265,12 +278,12 @@ class calcPerfscores(object) :
             for ith in doublecond :
                 scores[tagg][ith] = {}
                 for model in modellist :
-                    filename = 'scores_{}_{}_dcond{}_{}_{}.csv'.format(self.datestring, tagg,
+                    filename = 'scores_{}_{}_dcond_{}_{}_{}.csv'.format(self.datestring, tagg,
                                      str(ith).replace('.','_'), reference, model)
                     try:
                         scores[tagg][ith][model] = pd.read_csv(
                                             self.mainfolder+'/results/{}'.format(filename), 
-                                            index_col=0)
+                                            index_col=0,  sep=';')
                     except:
                         logging.warning('The following performance scores are not available {}'.format(filename))
 
@@ -304,7 +317,7 @@ class calcPerfscores(object) :
             
             for ith in doublecond :
                 scores[tagg][ith] = {}
-                scores_CH[tagg][ith] = pd.DataFrame()
+                scores_CH[tagg][ith] = pd.DataFrame(index=calcScoresSwitzerland_get_scorelist())
                 
                 for model in modellist :
                     # Calculate score
@@ -322,7 +335,7 @@ class calcPerfscores(object) :
                     valid = (~np.isnan(ref)) & (~np.isnan(pred))
                     score_values = calcScoresSwitzerland(ref[valid], pred[valid], threshold=ith)
                     score_values.name = model
-                    scores_CH[tagg][ith] = scores_CH[tagg][ith].append(score_values)
+                    scores_CH[tagg][ith] = pd.concat([scores_CH[tagg][ith], score_values], axis=1)
                 # Save file
                 filename = 'scoresCH_{}_{}_dcond_{}.csv'.format(self.datestring, tagg,
                                 str(ith).replace('.','_'))
