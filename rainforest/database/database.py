@@ -63,7 +63,7 @@ class DataFrameWithInfo(DataFrame):
          if self.__info == None:
              cols = self.columns
              rows = self.count()
-             times = self.select('timestamp').collect()
+             times = self.select('TIMESTAMP').collect()
              t0 = datetime.utcfromtimestamp(np.min(times))
              t1 = datetime.utcfromtimestamp(np.max(times))
              
