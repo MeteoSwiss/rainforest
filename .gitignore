@@ -1,3 +1,4 @@
+./rainforest/common/add_at.c
 *.pyc
 build/*
 dist/*

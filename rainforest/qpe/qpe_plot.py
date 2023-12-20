@@ -18,9 +18,9 @@ sys.path.append(dir_path)
 from optparse import OptionParser
 
 # Local imports
-from rainforest.common.graphics import qpe_plot
-from rainforest.common.io_data import read_cart
-from rainforest.common.utils import get_qpe_files
+from ..common.graphics import qpe_plot
+from ..common.io_data import read_cart
+from ..common.utils import get_qpe_files
 
 def main(): 
     parser = OptionParser()

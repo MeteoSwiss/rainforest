@@ -1,0 +1,26 @@
+SCORESETTING:
+  BIAS:
+    colname: 'logBias'
+    colormap: 'PiYG_r'
+    colorbarlabel: '10 $\cdot$ log. bias [dB]'
+    bounds: [-2, 2.2, 0.25]
+  SCATTER:
+    colname: 'scatter'
+    colormap: 'YlGn'
+    colorbarlabel: 'Scatter [dB]'
+    bounds:  [0.8, 3.6, 0.2]
+  NUMLIM: # To mark stations with at least this number of obs
+    STATUS: 1 # 0 turned off, 1 turned on
+    10min: 6
+    60min: 6
+MODELFULLNAMES:
+  CPCH: 'CombiPrecip (CPCH)'
+  RZC: 'PRECIP (RZC)'
+  RFO: 'RainForest (2016-2021)'
+  RFO_2016_19: 'RainForest (2016-2019)'
+  RFQ: 'RainForest (Tair, 2016-2019)'
+  RFO_AC: 'RainForest (2016-2021, advection corrected)'
+  RFO_T0O0G0: 'RainForest (2016-2021, no temp. disag.)'
+  RFO_T1O0G0: 'RainForest (2016-2021, no postprocessing)'
+  RFO_T1O0G1: 'RainForest (2016-2021, with Gauss. Smooth.)'
+  RFO_T1O1G0: 'RainForest (2016-2021, with Out. Rem.)'

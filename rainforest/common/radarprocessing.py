@@ -507,7 +507,7 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
         # Minutes are set to 0 below, here is only a notification
         logger.info('ISO0_HEIGHT: Temporal interpolation, timestamp {} set to HH:00'.format(time))
 
-    tstamp_hzt0 = datetime.datetime(time.year, time.month, time.day, time.hour,0)
+    tstamp_hzt0 = datetime.datetime(time.year, time.month, time.day, time.hour,0, tzinfo=datetime.timezone.utc)
     tstamp_hzt1 = tstamp_hzt0+ datetime.timedelta(hours=1)
 
     hzt = {}

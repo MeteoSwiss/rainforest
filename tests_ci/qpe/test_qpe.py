@@ -12,7 +12,6 @@ from rainforest.common.io_data import read_cart
 
 def test_qpe():
     cwd = os.path.dirname(os.getenv('PYTEST_CURRENT_TEST')) + '/'
-
     # Get RF model
     filename = {}
     filename['RF_dualpol'] = 'RF_dualpol_BETA_-0.5_BC_spline.p'
@@ -30,7 +29,7 @@ def test_qpe():
         
         models = {}
         models[model] = read_rf(filename[model])
-        
+        print(str(Path(cwd, 'test_config.yml')))        
         qpeproc = QPEProcessor(str(Path(cwd, 'test_config.yml')), models)
         qpeproc.compute(cwd, t0,t1, basename = '{}{}'.format(names[model], tstr), test_mode = True)
         qpe = read_cart(str(Path(cwd, model, datetime.datetime.strftime(t1, '{}{}.h5'.format(names[model], tstr)))))

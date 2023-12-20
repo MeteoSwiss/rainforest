@@ -21,7 +21,7 @@ import glob
 import yaml
 import  dask.dataframe as dd
 import re
-
+import numbers
 # Local imports
 from .logger import logger
 from .wgs84_ch1903 import GPSConverter
@@ -193,7 +193,7 @@ def timefromfilename(fname):
     """Returns the datetime of a file based on its name"""
     bname = os.path.basename(fname)
     tstr = bname[3:12]
-    time = datetime.datetime.strptime(tstr,'%y%j%H%M')
+    time = datetime.datetime.strptime(tstr,'%y%j%H%M').replace(tzinfo=datetime.timezone.utc)
     # If a forecast hour is taken from a future run:
     if (bname.startswith('HZT')) & (bname[-2::] != '00'):
         time = time + datetime.timedelta(hours=int(bname[-2::]))
@@ -638,7 +638,7 @@ def get_qpe_files(input_folder, t0 = None, t1 = None, time_agg = None,
         for f in files:
             try:
                 t = str(re.match('.*[a-zA-Z]([0-9]{9}).*',f)[1])
-                t = datetime.datetime.strptime(t,'%y%j%H%M')
+                t = datetime.datetime.strptime(t,'%y%j%H%M').replace(tzinfo=datetime.timezone.utc)
                 if time_agg != None:
                     t = nearest_time(t, time_agg)
                     
@@ -720,7 +720,7 @@ def get_qpe_files_multiple_dirs(input_folder, t0 = None, t1 = None, time_agg = N
         for f in file_list[model]:
             try:
                 t = str(re.match('.*[a-zA-Z]([0-9]{9}).*',f)[1])
-                t = datetime.datetime.strptime(t,'%y%j%H%M')
+                t = datetime.datetime.strptime(t,'%y%j%H%M').replace(tzinfo=datetime.timezone.utc)
                 if time_agg != None:
                     t = nearest_time(t, time_agg)
                     
@@ -741,3 +741,29 @@ def get_qpe_files_multiple_dirs(input_folder, t0 = None, t1 = None, time_agg = N
                 pass
             
     return all_files
+
+def check_random_state(seed):
+    """Turn seed into a np.random.RandomState instance.
+
+    Parameters
+    ----------
+    seed : None, int or instance of RandomState
+        If seed is None, return the RandomState singleton used by np.random.
+        If seed is an int, return a new RandomState instance seeded with seed.
+        If seed is already a RandomState instance, return it.
+        Otherwise raise ValueError.
+
+    Returns
+    -------
+    :class:`numpy:numpy.random.RandomState`
+        The random state object based on `seed` parameter.
+    """
+    if seed is None or seed is np.random:
+        return np.random.mtrand._rand
+    if isinstance(seed, numbers.Integral):
+        return np.random.RandomState(seed)
+    if isinstance(seed, np.random.RandomState):
+        return seed
+    raise ValueError(
+        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+    )
