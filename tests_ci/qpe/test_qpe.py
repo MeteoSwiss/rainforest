@@ -12,7 +12,6 @@ from rainforest.common.io_data import read_cart
 
 def test_qpe():
     cwd = os.path.dirname(os.getenv('PYTEST_CURRENT_TEST')) + '/'
-    print(cwd)
     # Get RF model
     filename = {}
     filename['RF_dualpol'] = 'RF_dualpol_BETA_-0.5_BC_spline.p'
@@ -41,5 +40,3 @@ def test_qpe():
         assert len(np.unique(qpe_field)) > 2
 
         shutil.rmtree(str(Path(cwd, model)))
-
-test_qpe()
