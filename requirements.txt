@@ -2,7 +2,7 @@ Cython
 numpy
 netCDF4
 prompt_toolkit
-scikit-learn
+scikit-learn==1.2.2
 scipy
 dask
 pandas
