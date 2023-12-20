@@ -444,7 +444,7 @@ def calc_lookup(lookup_type, radar = None):
         offset_x = int((neighb_x-1)/2)
         offset_y = int((neighb_y-1)/2)
         
-        df_stations = df_stations.append(constants.RADARS)
+        df_stations = df_stations._append(constants.RADARS, ignore_index=True)
         stations = df_stations['Abbrev']
     
         lut = {}
