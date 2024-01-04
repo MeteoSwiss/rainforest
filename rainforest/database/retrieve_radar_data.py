@@ -423,8 +423,8 @@ class Updater(object):
             
             logging.info('Processing timestep '+str(tstep))
             # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
-            tstart = datetime.datetime.utcfromtimestamp(float(tstep)) - datetime.timedelta(minutes=5)
-            tend= datetime.datetime.utcfromtimestamp(float(tstep))
+            tstart = datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc) - datetime.timedelta(minutes=5)
+            tend= datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc)
             
             stations_to_get = self.tasks[tstep]
             # Change to the timestep where the data is logged
