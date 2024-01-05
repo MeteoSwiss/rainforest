@@ -502,7 +502,8 @@ class Updater(object):
                         
                         status_file = rad_files['status'][tstamp]
 
-                        radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file)
+                        radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file,
+                                    temp_ref=self.temp_ref)
 
                         # Add ISO0_HEIGHT and height_over_iso0 to radar object
                         if (self.temp_ref == "ISO0_HEIGHT") or ("ISO0_HEIGHT" in self.other_variables):
