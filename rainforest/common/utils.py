@@ -520,7 +520,7 @@ def read_task_file(task_file):
             tasks_dic[int(line[0])] = line[1:]
     return tasks_dic
 
-def read_df(pattern, dbsystem = 'dask', sqlContext = None):
+def read_df(pattern, dbsystem='dask', sqlContext=None):
     """
     Reads a set of data contained in a folder as a spark or dask DataFrame
     
@@ -532,7 +532,7 @@ def read_df(pattern, dbsystem = 'dask', sqlContext = None):
     dbsystem : str
         Either "dask" if you want a Dask DataFrame or "spark" if you want a 
         spark dataframe
-    sqlContext : sqlContext instance
+    sqlContext : sqlContext instance, new: SparkSession instant
         sqlContext to use, required only if dbystem = 'spark'
         
     Returns
