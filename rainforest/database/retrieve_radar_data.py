@@ -423,8 +423,8 @@ class Updater(object):
             
             logging.info('Processing timestep '+str(tstep))
             # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
-            tstart = datetime.datetime.utcfromtimestamp(float(tstep)) - datetime.timedelta(minutes=5)
-            tend= datetime.datetime.utcfromtimestamp(float(tstep))
+            tstart = datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc) - datetime.timedelta(minutes=5)
+            tend= datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc)
             
             stations_to_get = self.tasks[tstep]
             # Change to the timestep where the data is logged
@@ -502,7 +502,8 @@ class Updater(object):
                         
                         status_file = rad_files['status'][tstamp]
 
-                        radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file)
+                        radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file,
+                                    temp_ref=self.temp_ref)
 
                         # Add ISO0_HEIGHT and height_over_iso0 to radar object
                         if (self.temp_ref == "ISO0_HEIGHT") or ("ISO0_HEIGHT" in self.other_variables):

@@ -11,7 +11,7 @@ with dask
 
 from pyspark import SparkConf
 from pyspark import SparkContext
-from pyspark.sql import SQLContext, DataFrame
+from pyspark.sql import SparkSession, DataFrame
 
 # This could benefit from some tweaks especially if the database becomes larger
 conf = SparkConf()
@@ -96,7 +96,7 @@ class Database(object):
             
         """
         sparkContext = SparkContext(conf = conf)
-        self.sqlContext = SQLContext(sparkContext)
+        self.sqlContext = SparkSession(sparkContext)
         self.tables = TableDict()
         self.summaries = {}
         if config_file:
@@ -888,7 +888,7 @@ class Database(object):
 
         for fn in job_files:
             logging.info('Submitting job {}'.format(fn))
-            #subprocess.call('sbatch {:s}'.format(fn), shell = True)
+            subprocess.call('sbatch {:s}'.format(fn), shell = True)
 
         
 def _compare_config(config1, config2, keys = None):

@@ -213,12 +213,14 @@ class compileMapEstimates(object):
 
         # Check if the RF-models are there
         for model in self.modellist:
+            self.model_files = {}
             path = self.qpefolder+'{}'.format(model)
-            if len(os.listdir(path)) == 0 :
+            if not os.path.exists(path) or (len(os.listdir(path)) == 0):
+                logging.info('Extracting {} files from archive'.format(model))
                 try:
                     path = self.qpefolder+'{}'.format(model)
-                    self.ref_files[ref] = retrieve_prod(path + '/', self.tstart, 
-                                                                    self.tend, ref)
+                    self.model_files[model] = retrieve_prod(path + '/', self.tstart, 
+                                                                    self.tend, model)
                     logging.info('Model data: {} taken from file archive!'.format(model))
                 except:
                     logging.error('No QPE maps available for {}, please check path or produce QPE maps'.format(model))
