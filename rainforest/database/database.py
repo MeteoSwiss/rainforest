@@ -677,7 +677,7 @@ class Database(object):
             raise ValueError("""Make sure you have a "RADAR_RETRIEVAL" section in 
                           your config file!""")
         
-        logging.info('Finding unique timesteps and corresponding stations')
+        logging.info('Load data... (may take a moment)')
         tab = self.tables[gauge_table_name].select(['STATION',
                         'TIMESTAMP']).toPandas()
         
@@ -693,8 +693,8 @@ class Database(object):
                 tstamp_start = int(t0.timestamp())
                 tstamp_end = int(t1.timestamp())
                 
-            tab = tab.loc[(tab['TIMESTAMP'] > tstamp_start) 
-                            & (tab['TIMESTAMP'] <= tstamp_end)]
+            tab = tab.loc[(tab['TIMESTAMP'].astype(int) > tstamp_start) 
+                            & (tab['TIMESTAMP'].astype(int) <= tstamp_end)]
             
         # Check existence of previous data
         try:
@@ -756,8 +756,9 @@ class Database(object):
         # Write metadata file
         mdata = copy.deepcopy(self.config)
         yaml.dump(mdata, open(mdata_path,'w'))
-        
-        unique_times, idx = np.unique(tab['TIMESTAMP'], return_inverse = True)
+
+        logging.info('Finding unique timesteps and corresponding stations')
+        unique_times, idx = np.unique(tab['TIMESTAMP'].astype(int), return_inverse = True)
         all_stations = tab['STATION']
         
         if not len(unique_times):
