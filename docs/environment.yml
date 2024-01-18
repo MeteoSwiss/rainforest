@@ -3,6 +3,16 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - sphinx<7.2
+  - pandoc
+  - ipython
+  - myst-nb
+  - pydata-sphinx-theme
+  - sphinx-gallery
+  - sphinx-design
+  - sphinx-copybutton
+  - nbsphinx
+  - pre_commit
   - Cython
   - numpy
   - netCDF4
@@ -22,3 +32,9 @@ dependencies:
   - pysteps
   - xlrd
   - pyproj
+  - pip
+  - pip:
+      - pooch
+      - versioneer
+      - ablog
+
