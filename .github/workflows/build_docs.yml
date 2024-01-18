@@ -42,6 +42,9 @@ jobs:
         run: |
           cd docs
           make html
+        env:
+          AWS_KEY: ${{ secrets.AWS_KEY }}
+          RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
       # Push the book's HTML to github-pages
       - name: GitHub Pages action
         uses: peaceiris/actions-gh-pages@v3.8.0
