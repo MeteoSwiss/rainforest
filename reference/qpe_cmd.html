@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QPE command-line tools &mdash; Rainforest QPE library  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="rainforest.qpe package" href="rainforest.qpe.html" />
+    <link rel="prev" title="QPE submodule" href="qpe.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rainforest QPE library
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#access-library">Access library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-database-up-to-date">Keeping database up-to-date</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-randomforest-model-up-to-date">Keeping randomForest model up-to-date</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="interface.html">Interface</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="qpe.html">QPE submodule</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">QPE command-line tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#qpe-compute"><em>qpe_compute</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qpe-plot"><em>qpe_plot</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qpe-evaluation"><em>qpe_evaluation</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.evaluation.evaluation"><code class="docutils literal notranslate"><span class="pre">evaluation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor"><code class="docutils literal notranslate"><span class="pre">QPEProcessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_compute">rainforest.qpe.qpe_compute module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.qpe_compute.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.qpe_evaluation.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.qpe_plot.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="db.html">Database submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="db_structure.html">Database structure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#gauge-table"><em>Gauge table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#reference-table"><em>Reference table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#radar-table"><em>Radar table</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="db_options.html">Database configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="db_cmd.html">Database command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_cmd.html#db-populate"><em>db_populate</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.database.html">rainforest.database package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.database.DataFrameWithInfo"><code class="docutils literal notranslate"><span class="pre">DataFrameWithInfo</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.database.Database"><code class="docutils literal notranslate"><span class="pre">Database</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.database.TableDict"><code class="docutils literal notranslate"><span class="pre">TableDict</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.db_populate.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.retrieve_radar_data.Updater"><code class="docutils literal notranslate"><span class="pre">Updater</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.retrieve_reference_data.Updater"><code class="docutils literal notranslate"><span class="pre">Updater</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml.html">ML submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_cmd.html">Machine-learning command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ml_cmd.html#rf-train"><em>rf_train</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf_train.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler"><code class="docutils literal notranslate"><span class="pre">MyCustomUnpickler</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.read_rf"><code class="docutils literal notranslate"><span class="pre">read_rf()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.nesteddictvalues"><code class="docutils literal notranslate"><span class="pre">nesteddictvalues()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.split_event"><code class="docutils literal notranslate"><span class="pre">split_event()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.split_years"><code class="docutils literal notranslate"><span class="pre">split_years()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.vert_aggregation"><code class="docutils literal notranslate"><span class="pre">vert_aggregation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="common.html">Common submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.io_data">rainforest.common.io_data module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_NWP_HZT_cart"><code class="docutils literal notranslate"><span class="pre">read_NWP_HZT_cart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_cart"><code class="docutils literal notranslate"><span class="pre">read_cart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_gif"><code class="docutils literal notranslate"><span class="pre">read_gif()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_polar"><code class="docutils literal notranslate"><span class="pre">read_polar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_station_data"><code class="docutils literal notranslate"><span class="pre">read_station_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_status"><code class="docutils literal notranslate"><span class="pre">read_status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_vpr"><code class="docutils literal notranslate"><span class="pre">read_vpr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_xls"><code class="docutils literal notranslate"><span class="pre">read_xls()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.save_gif"><code class="docutils literal notranslate"><span class="pre">save_gif()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.get_COSMO_T"><code class="docutils literal notranslate"><span class="pre">get_COSMO_T()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.get_COSMO_variables"><code class="docutils literal notranslate"><span class="pre">get_COSMO_variables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_AQC_XLS"><code class="docutils literal notranslate"><span class="pre">retrieve_AQC_XLS()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_CPCCV"><code class="docutils literal notranslate"><span class="pre">retrieve_CPCCV()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_hzt_RT"><code class="docutils literal notranslate"><span class="pre">retrieve_hzt_RT()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_hzt_prod"><code class="docutils literal notranslate"><span class="pre">retrieve_hzt_prod()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_prod"><code class="docutils literal notranslate"><span class="pre">retrieve_prod()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_prod_RT"><code class="docutils literal notranslate"><span class="pre">retrieve_prod_RT()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.HZT_cartesian_to_polar"><code class="docutils literal notranslate"><span class="pre">HZT_cartesian_to_polar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.HZT_hourly_to_5min"><code class="docutils literal notranslate"><span class="pre">HZT_hourly_to_5min()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar"><code class="docutils literal notranslate"><span class="pre">Radar</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.add_cosmo_data"><code class="docutils literal notranslate"><span class="pre">Radar.add_cosmo_data()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.add_height_over_iso0"><code class="docutils literal notranslate"><span class="pre">Radar.add_height_over_iso0()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.add_hzt_data"><code class="docutils literal notranslate"><span class="pre">Radar.add_hzt_data()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.compute_hydro"><code class="docutils literal notranslate"><span class="pre">Radar.compute_hydro()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.compute_kdp"><code class="docutils literal notranslate"><span class="pre">Radar.compute_kdp()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.compute_noise"><code class="docutils literal notranslate"><span class="pre">Radar.compute_noise()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.correct_attenuation"><code class="docutils literal notranslate"><span class="pre">Radar.correct_attenuation()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.correct_gate_altitude"><code class="docutils literal notranslate"><span class="pre">Radar.correct_gate_altitude()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.get_field"><code class="docutils literal notranslate"><span class="pre">Radar.get_field()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.snr_mask"><code class="docutils literal notranslate"><span class="pre">Radar.snr_mask()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.visib_mask"><code class="docutils literal notranslate"><span class="pre">Radar.visib_mask()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.hydroClass_single"><code class="docutils literal notranslate"><span class="pre">hydroClass_single()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.hydroClass_single_over_iso"><code class="docutils literal notranslate"><span class="pre">hydroClass_single_over_iso()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.constants">rainforest.common.constants module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.constants.MODE"><code class="docutils literal notranslate"><span class="pre">MODE()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.MidpointNormalize"><code class="docutils literal notranslate"><span class="pre">MidpointNormalize</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.QPE_cmap"><code class="docutils literal notranslate"><span class="pre">QPE_cmap</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.plot_crossval_stats"><code class="docutils literal notranslate"><span class="pre">plot_crossval_stats()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_plot"><code class="docutils literal notranslate"><span class="pre">qpe_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_scatterplot"><code class="docutils literal notranslate"><span class="pre">qpe_scatterplot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.score_plot"><code class="docutils literal notranslate"><span class="pre">score_plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.lookup">rainforest.common.lookup module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.lookup.calc_lookup"><code class="docutils literal notranslate"><span class="pre">calc_lookup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.lookup.get_lookup"><code class="docutils literal notranslate"><span class="pre">get_lookup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.utils">rainforest.common.utils module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.LV03toWGS84"><code class="docutils literal notranslate"><span class="pre">LV03toWGS84()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.aggregate_multi"><code class="docutils literal notranslate"><span class="pre">aggregate_multi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.check_random_state"><code class="docutils literal notranslate"><span class="pre">check_random_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.chunks"><code class="docutils literal notranslate"><span class="pre">chunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.dict_flatten"><code class="docutils literal notranslate"><span class="pre">dict_flatten()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.envyaml"><code class="docutils literal notranslate"><span class="pre">envyaml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.get_qpe_files"><code class="docutils literal notranslate"><span class="pre">get_qpe_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.get_qpe_files_multiple_dirs"><code class="docutils literal notranslate"><span class="pre">get_qpe_files_multiple_dirs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.hex_to_rgb"><code class="docutils literal notranslate"><span class="pre">hex_to_rgb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.idx_cart"><code class="docutils literal notranslate"><span class="pre">idx_cart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.nanadd_at"><code class="docutils literal notranslate"><span class="pre">nanadd_at()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.nearest_time"><code class="docutils literal notranslate"><span class="pre">nearest_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.nested_dict_gen"><code class="docutils literal notranslate"><span class="pre">nested_dict_gen()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.nested_dict_values"><code class="docutils literal notranslate"><span class="pre">nested_dict_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.perfscores"><code class="docutils literal notranslate"><span class="pre">perfscores()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.quantile"><code class="docutils literal notranslate"><span class="pre">quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.quantile_1D"><code class="docutils literal notranslate"><span class="pre">quantile_1D()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.read_df"><code class="docutils literal notranslate"><span class="pre">read_df()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.read_task_file"><code class="docutils literal notranslate"><span class="pre">read_task_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.rename_fields"><code class="docutils literal notranslate"><span class="pre">rename_fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.round_to_hour"><code class="docutils literal notranslate"><span class="pre">round_to_hour()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.split_by_time"><code class="docutils literal notranslate"><span class="pre">split_by_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.stack_uneven"><code class="docutils literal notranslate"><span class="pre">stack_uneven()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.sweepnumber_fromfile"><code class="docutils literal notranslate"><span class="pre">sweepnumber_fromfile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.timefromfilename"><code class="docutils literal notranslate"><span class="pre">timefromfilename()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.timestamp_from_datestr"><code class="docutils literal notranslate"><span class="pre">timestamp_from_datestr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.timestamp_from_datetime"><code class="docutils literal notranslate"><span class="pre">timestamp_from_datetime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.wgs84toCH1903"><code class="docutils literal notranslate"><span class="pre">wgs84toCH1903()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.wgs84_ch1903">rainforest.common.wgs84_ch1903 module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter"><code class="docutils literal notranslate"><span class="pre">GPSConverter</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSheight"><code class="docutils literal notranslate"><span class="pre">GPSConverter.CHtoWGSheight()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSlat"><code class="docutils literal notranslate"><span class="pre">GPSConverter.CHtoWGSlat()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSlng"><code class="docutils literal notranslate"><span class="pre">GPSConverter.CHtoWGSlng()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.LV03toWGS84"><code class="docutils literal notranslate"><span class="pre">GPSConverter.LV03toWGS84()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.WGS84toLV03"><code class="docutils literal notranslate"><span class="pre">GPSConverter.WGS84toLV03()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.WGStoCHh"><code class="docutils literal notranslate"><span class="pre">GPSConverter.WGStoCHh()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.WGStoCHx"><code class="docutils literal notranslate"><span class="pre">GPSConverter.WGStoCHx()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.WGStoCHy"><code class="docutils literal notranslate"><span class="pre">GPSConverter.WGStoCHy()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rainforest QPE library</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Reference</a></li>
+          <li class="breadcrumb-item"><a href="qpe.html">QPE submodule</a></li>
+      <li class="breadcrumb-item active">QPE command-line tools</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/qpe_cmd.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="qpe-command-line-tools">
+<h1>QPE command-line tools<a class="headerlink" href="#qpe-command-line-tools" title="Permalink to this heading"></a></h1>
+<p>The <em>QPE</em> submodule has three easy to use command-line tools</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#qpe-compute"><span class="std std-ref">qpe_compute</span></a></p></li>
+<li><p><a class="reference internal" href="#qpe-plot"><span class="std std-ref">qpe_plot</span></a></p></li>
+<li><p><a class="reference internal" href="#qpe-evaluation"><span class="std std-ref">qpe_evaluation</span></a></p></li>
+</ol>
+<section id="qpe-compute">
+<span id="id1"></span><h2><em>qpe_compute</em><a class="headerlink" href="#qpe-compute" title="Permalink to this heading"></a></h2>
+<p>Computes the QPE estimates using the randomForest algorithm for a given time interval outputting the results in the form of a standard <em>640 x 710</em> pixels Cartesian map. Currently the output is written in binary format without any metadata.</p>
+<p><strong>qpe_compute [options]</strong></p>
+<dl>
+<dt>Options:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>show this help message and exit</p>
+</dd>
+<dt><kbd><span class="option">-s <var>START</var></span>, <span class="option">--start=<var>START</var></span></kbd></dt>
+<dd><p>Specify the start time in the format YYYYddmmHHMM</p>
+</dd>
+<dt><kbd><span class="option">-e <var>END</var></span>, <span class="option">--end=<var>END</var></span></kbd></dt>
+<dd><p>Specify the end time in the format YYYYddmmHHMM</p>
+</dd>
+<dt><kbd><span class="option">-o <var>OUTPUT</var></span>, <span class="option">--output=<var>OUTPUT</var></span></kbd></dt>
+<dd><p>Path of the output folder, default is current folder</p>
+</dd>
+<dt><kbd><span class="option">-c <var>CONFIG</var></span>, <span class="option">--config=<var>CONFIG</var></span></kbd></dt>
+<dd><p>Path of the config file, the default will be
+<em>default_config.yml</em> in the qpe module</p>
+</dd>
+<dt><kbd><span class="option">-m <var>MODELS</var></span>, <span class="option">--models=<var>MODELS</var></span></kbd></dt>
+<dd><p>Specify which models you want to use in the form of a
+json line, the models must be in the folder
+/ml/rf_models/, for example
+‘{“RF_dualpol”:”dualpol_model_BC_raw.p”}’, please note
+the double and single quotes, which are required</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>The files will be written in the output folder, and a subfolder will be created for every model passed with the <em>-m</em> flag. For example ‘{“RF_dualpol”:”dualpol_model_BC_raw.p”,”RF_hpol”:”hpol_model_BC_raw.p”’, will create two subfolders <em>RF_dualpol</em> and <em>RF_hpol</em>.</p>
+<p>The configuration file must be written in <a class="reference external" href="https://fr.wikipedia.org/wiki/YAML/">YAML</a>, the default file has the following structure:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">TMP_FOLDER</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;/scratch/wolfensb/&#39;</span>
+<span class="nt">KDP_PARAMETERS</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">RMIN </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000.</span>
+<span class="w">    </span><span class="nt">RMAX </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50000.</span>
+<span class="w">    </span><span class="nt">RCELL </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000.</span>
+<span class="w">    </span><span class="nt">ZMIN </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20.</span>
+<span class="w">    </span><span class="nt">ZMAX </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40.</span>
+<span class="w">    </span><span class="nt">RWIND </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6000.</span>
+<span class="nt">SNR_THRESHOLD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="nt">ZH_THRESHOLD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
+<span class="nt">VISIB_CORR</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">MIN_VISIB</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">37</span>
+<span class="w">    </span><span class="nt">MAX_CORR</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">SWEEPS</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;all&#39;</span>
+<span class="nt">RADARS</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;all&#39;</span>
+<span class="c1"># Post-processing</span>
+<span class="nt">OUTLIER_REMOVAL</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">GAUSSIAN_SIGMA</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="nt">ADVECTION_CORRECTION</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="nt">FILE_FORMAT</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DN</span>
+</pre></div>
+</div>
+<p>The parameters are the following</p>
+<ul class="simple">
+<li><p><strong>TMP_FOLDER</strong> : A directory where to store intermediate files generated during the processing, this is not important and <em>/tmp/</em> can be used as well</p></li>
+<li><p><strong>KDP_PARAMETERS</strong> : set of parameters used in the computation of KDP using the moving least-square method.</p>
+<ul>
+<li><p><strong>RMIN</strong> : minimum range where to look for continuous precipitation, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py">pyart code</a></p></li>
+<li><p><strong>RMAX</strong> :  maximum range where to look for continuous precipitation, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py">pyart code</a></p></li>
+<li><p><strong>ZMIN</strong>  : minimum reflectivity to consider it a rain cell, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py">pyart code</a></p></li>
+<li><p><strong>ZMAX</strong>  : maximum reflectivity to consider it a rain cell, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py">pyart code</a></p></li>
+<li><p><strong>RWIND</strong> : size of the moving window in meters used in the PSIDP filtering and KDP estimation, see <a class="reference external" href="https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/retrieve/kdp_proc.py">pyart code</a></p></li>
+</ul>
+</li>
+<li><p><strong>SNR_THRESHOLD</strong> : minimum SNR in dB below which the radar data is masked</p></li>
+<li><p><strong>ZH_THRESHOLD</strong> : minimum ZH below which radar data is masked</p></li>
+<li><p><strong>VISIB_CORR</strong> : set of parameters for visibility correction</p>
+<ul>
+<li><p><strong>MIN_VISIB</strong> : minimum visibility below which the data is masked</p></li>
+<li><p><strong>MAX_CORR</strong> : maximum visibility correction for ZH (in linear)</p></li>
+</ul>
+</li>
+<li><p><strong>SWEEPS</strong> : which radar sweeps (elevations) to use, e.g. [1,2,3,4] for the 4 first, ‘all’ uses all 20 sweeps</p></li>
+<li><p><strong>RADARS</strong> : which radars to consider, e.g. [‘A’,’D’], ‘all’ uses all five radars</p></li>
+<li><p><strong>OUTLIER_REMOVAL</strong> : if set to 1, a local outlier filtering will be applied (e.g. remove values with z-scores in 3 x 3 window above +3 or below -3)</p></li>
+<li><p><strong>GAUSSIAN_SIGMA</strong> : size in pixels of the Gaussian smoothing that is applied on the QPE product, if set to 0 no smoothing is used</p></li>
+<li><p><strong>ADVECTION_CORRECTION</strong> : if set to 1, the QPE will be corrected for advection using <a class="reference external" href="https://journals.ametsoc.org/doi/pdf/10.1175/1520-0426%281999%29016%3C0198%3ARTRREP%3E2.0.CO%3B2">this method</a> with two consecutive timesteps</p></li>
+<li><p><strong>FILE_FORMAT</strong> : the format of output files, either ‘float’, in this case it will be saved in binary format in float, ‘DN’, binary format but after conversion to bytes using the lookup table in constants.py SCALE_CPC or ‘DN_gif’, in gif format using the lookup table in constants.py SCALE_RGB</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>When defining the  configuration file, it is highly advised to be consistent with the <a class="reference internal" href="db_options.html"><span class="doc">configuration file</span></a> used to update the database, since the machine learning model will be trained on this particular setup. If you are not sure how you should setup these parameters always use the default file in <em>/store/msrad/radar/rainforest/rainforest/qpe/default_config.yml</em>.</p>
+</div>
+<p><strong>Example</strong></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">qpe_compute -s 201806112000 -e 201806112200 -m &#39;{&quot;RF_dualpol&quot;:&quot;dualpol_model_BC_spline.p&quot;}&#39; -o /scratch/wolfensb/qpe_runs/20180611</span>
+</pre></div>
+</div>
+</section>
+<section id="qpe-plot">
+<span id="id6"></span><h2><em>qpe_plot</em><a class="headerlink" href="#qpe-plot" title="Permalink to this heading"></a></h2>
+<p>Plots a series of QPE realizations stored in different subfolders within a main folder (as given by <em>qpe_compute</em>), using a custom colorscale, where low precipitation intensities are displayed in linear scale and high precipitation intensities in logarithmic scale.</p>
+<p><strong>qpe_plot [options]</strong></p>
+<dl>
+<dt>Options:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>show this help message and exit</p>
+</dd>
+<dt><kbd><span class="option">-i <var>INPUT</var></span>, <span class="option">--inputfolder=<var>INPUT</var></span></kbd></dt>
+<dd><p>Path of the input folder</p>
+</dd>
+<dt><kbd><span class="option">-o <var>OUTPUT</var></span>, <span class="option">--outputfolder=<var>OUTPUT</var></span></kbd></dt>
+<dd><p>Path of the output folder</p>
+</dd>
+<dt><kbd><span class="option">-s <var>START</var></span>, <span class="option">--start=<var>START</var></span></kbd></dt>
+<dd><p>Specify the start time in the format YYYYddmmHHMM,
+optional: if not provided entire timerange in input
+folder will be plotted</p>
+</dd>
+<dt><kbd><span class="option">-e <var>END</var></span>, <span class="option">--end=<var>END</var></span></kbd></dt>
+<dd><p>Specify the end time in the format YYYYddmmHHMM,
+optional: if not provided entire timerange in input
+folder will be plotted</p>
+</dd>
+<dt><kbd><span class="option">-S <var>SHAPEFILE</var></span>, <span class="option">--shapefile=<var>SHAPEFILE</var></span></kbd></dt>
+<dd><p>Whether or not to overlay the shapefile of swiss
+borders, default is True</p>
+</dd>
+<dt><kbd><span class="option">-f <var>FIGSIZE</var></span>, <span class="option">--figsize=<var>FIGSIZE</var></span></kbd></dt>
+<dd><p>Size of figure width,height in inches, e.g. 5,10,
+default is automatically chosen depending on how many
+QPE fields are to be plotted</p>
+</dd>
+<dt><kbd><span class="option">-x <var>XLIM</var></span>, <span class="option">--xlim=<var>XLIM</var></span></kbd></dt>
+<dd><p>Limits in the west-east direction, in Swiss
+coordinates, e.g. 100,300, default is 400,900</p>
+</dd>
+<dt><kbd><span class="option">-c <var>CBAR</var></span>, <span class="option">--cbar=<var>CBAR</var></span></kbd></dt>
+<dd><p>Orientation of the colorbar, either ‘vertical’ or
+‘horizontal’, default is ‘horizontal’</p>
+</dd>
+<dt><kbd><span class="option">-y <var>YLIM</var></span>, <span class="option">--ylim=<var>YLIM</var></span></kbd></dt>
+<dd><p>Limits in the south-north direction, in Swiss
+coordinates, e.g. 500,700, default is 0,350</p>
+</dd>
+<dt><kbd><span class="option">-d <var>DISPLAY</var></span>, <span class="option">--display=<var>DISPLAY</var></span></kbd></dt>
+<dd><p>Specify how you want to display the QPE subplots as a
+comma separated string, e.g 2,1 will put them on 2
+rows, one column. Default is to put them in one row</p>
+</dd>
+<dt><kbd><span class="option">-t <var>TRANSITION</var></span>, <span class="option">--transition=<var>TRANSITION</var></span></kbd></dt>
+<dd><p>Precipitation intensity at which the colormap changes
+(purple for lower intensities, rainbow for larger
+intensities), default is 10</p>
+</dd>
+<dt><kbd><span class="option">-v <var>VMIN</var></span>, <span class="option">--vmin=<var>VMIN</var></span></kbd></dt>
+<dd><p>Minimum precip. intensity to display, default = 0.04</p>
+</dd>
+<dt><kbd><span class="option">-V <var>VMAX</var></span>, <span class="option">--vmax=<var>VMAX</var></span></kbd></dt>
+<dd><p>Maximum precip. intensity to display, default = 120</p>
+</dd>
+<dt><kbd><span class="option">-m <var>MODELS</var></span>, <span class="option">--models=<var>MODELS</var></span></kbd></dt>
+<dd><p>Specify which models (i.e. subfolders in the qpefolder
+you want to use, default is to use all available, must
+be comma separated and put into quotes, e.g.
+‘dualpol,hpol,RZC’</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p><strong>Example</strong></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">qpe_plot -i &#39;/scratch/wolfensb/qpe_runs/20190610/&#39;  -o &#39;/scratch/wolfensb/&#39; -V 50 -t 3 -d &#39;1,2&#39; -m &#39;RZC,CPC&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="qpe-evaluation">
+<span id="id7"></span><h2><em>qpe_evaluation</em><a class="headerlink" href="#qpe-evaluation" title="Permalink to this heading"></a></h2>
+<p>Plots a series of evaluation scores using gauge as reference for all QPE realizations stored in different subfolders within a main folder (as given by <em>qpe_compute</em>).</p>
+<a class="reference internal image-reference" href="../_images/scatterplots10_201906100010_201906110000.png"><img alt="alternate text" class="align-center" src="../_images/scatterplots10_201906100010_201906110000.png" style="width: 500px; height: 300px;" /></a>
+<a class="reference internal image-reference" href="../_images/scores_agg10_201906100010_201906110000.png"><img alt="alternate text" class="align-center" src="../_images/scores_agg10_201906100010_201906110000.png" style="width: 500px; height: 300px;" /></a>
+<p><strong>qpe_evaluation [options]</strong></p>
+<dl>
+<dt>Options:</dt><dd><dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>show this help message and exit</p>
+</dd>
+<dt><kbd><span class="option">-q <var>QPEFOLDER</var></span>, <span class="option">--qpefolder=<var>QPEFOLDER</var></span></kbd></dt>
+<dd><p>Path of the folder where QPE data is stored</p>
+</dd>
+<dt><kbd><span class="option">-g <var>GAUGEFOLDER</var></span>, <span class="option">--gaugepattern=<var>GAUGEFOLDER</var></span></kbd></dt>
+<dd><p>Path pattern (with wildcards) of the gauge data (from
+database) to be used, default =
+‘/store/msrad/radar/radar_database/gauge/<a href="#id8"><span class="problematic" id="id9">*</span></a>.csv.gz’,
+IMPORTANT you have to put this statement into quotes
+(due to wildcard)!</p>
+</dd>
+<dt><kbd><span class="option">-o <var>OUTPUT</var></span>, <span class="option">--output=<var>OUTPUT</var></span></kbd></dt>
+<dd><p>Path of the output folder</p>
+</dd>
+<dt><kbd><span class="option">-s <var>START</var></span>, <span class="option">--start=<var>START</var></span></kbd></dt>
+<dd><p>Specify the start time in the format YYYYddmmHHMM,
+optional: if not provided entire timerange in qpe
+folder will be used</p>
+</dd>
+<dt><kbd><span class="option">-e <var>END</var></span>, <span class="option">--end=<var>END</var></span></kbd></dt>
+<dd><p>Specify the end time in the format YYYYddmmHHMM,
+optional: if not provided entire timerange in qpe
+folder will be used</p>
+</dd>
+<dt><kbd><span class="option">-b <var>b10</var></span>, <span class="option">--b10=<var>b10</var></span></kbd></dt>
+<dd><p>Specify which precipitation ranges you want to use at
+the 10 min resolution,  as a comma separated string,
+e.g. 0,1,10,200 will separate the results, in the
+ranges [0,1),[1,10),[10,200(</p>
+</dd>
+<dt><kbd><span class="option">-B <var>END</var></span>, <span class="option">--b60=<var>END</var></span></kbd></dt>
+<dd><p>Specify which precipitation ranges you want to use at
+the 60 min resolution,  as a comma separated string,
+e.g. 0,1,10,200 will separate the results, in the
+ranges [0,2),[2,10),[10,200(</p>
+</dd>
+<dt><kbd><span class="option">-m <var>MODELS</var></span>, <span class="option">--models=<var>MODELS</var></span></kbd></dt>
+<dd><p>Specify which models (i.e. subfolders in the qpefolder
+you want to use, default is to use all available, must
+be comma separated and put into quotes, e.g.
+‘dualpol,hpol,RZC’</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p><strong>Example</strong></p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">qpe_evaluation -q /scratch/wolfensb/qpe_runs/20190806 -g &#39;/store/msrad/radar/radar_database/gauge/*.csv.gz&#39; -o /scratch/wolfensb/qpe_runs/plots_allstats -m &quot;RZC, CPC, RF_dualpol, RF_hpol, RF_vpol&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="qpe.html" class="btn btn-neutral float-left" title="QPE submodule" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rainforest.qpe.html" class="btn btn-neutral float-right" title="rainforest.qpe package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Daniel Wolfensherger, Rebecca Gugerli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

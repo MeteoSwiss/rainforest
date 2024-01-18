@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>rainforest &mdash; Rainforest QPE library  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Rainforest QPE library
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#access-library">Access library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-database-up-to-date">Keeping database up-to-date</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html#keeping-randomforest-model-up-to-date">Keeping randomForest model up-to-date</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interface.html">Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qpe.html">QPE submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="qpe_cmd.html">QPE command-line tools</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-compute"><em>qpe_compute</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-plot"><em>qpe_plot</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="qpe_cmd.html#qpe-evaluation"><em>qpe_evaluation</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.evaluation.evaluation"><code class="docutils literal notranslate"><span class="pre">evaluation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor"><code class="docutils literal notranslate"><span class="pre">QPEProcessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_compute">rainforest.qpe.qpe_compute module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.qpe_compute.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.qpe_evaluation.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.qpe.html#rainforest.qpe.qpe_plot.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="db.html">Database submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="db_structure.html">Database structure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#gauge-table"><em>Gauge table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#reference-table"><em>Reference table</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="db_structure.html#radar-table"><em>Radar table</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="db_options.html">Database configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="db_cmd.html">Database command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="db_cmd.html#db-populate"><em>db_populate</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.database.html">rainforest.database package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.database.DataFrameWithInfo"><code class="docutils literal notranslate"><span class="pre">DataFrameWithInfo</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.database.Database"><code class="docutils literal notranslate"><span class="pre">Database</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.database.TableDict"><code class="docutils literal notranslate"><span class="pre">TableDict</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.db_populate.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.retrieve_radar_data.Updater"><code class="docutils literal notranslate"><span class="pre">Updater</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.database.html#rainforest.database.retrieve_reference_data.Updater"><code class="docutils literal notranslate"><span class="pre">Updater</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ml.html">ML submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ml_cmd.html">Machine-learning command-line tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="ml_cmd.html#rf-train"><em>rf_train</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf_train.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler"><code class="docutils literal notranslate"><span class="pre">MyCustomUnpickler</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.read_rf"><code class="docutils literal notranslate"><span class="pre">read_rf()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.nesteddictvalues"><code class="docutils literal notranslate"><span class="pre">nesteddictvalues()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.split_event"><code class="docutils literal notranslate"><span class="pre">split_event()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.split_years"><code class="docutils literal notranslate"><span class="pre">split_years()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.vert_aggregation"><code class="docutils literal notranslate"><span class="pre">vert_aggregation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="common.html">Common submodule</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.io_data">rainforest.common.io_data module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_NWP_HZT_cart"><code class="docutils literal notranslate"><span class="pre">read_NWP_HZT_cart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_cart"><code class="docutils literal notranslate"><span class="pre">read_cart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_gif"><code class="docutils literal notranslate"><span class="pre">read_gif()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_polar"><code class="docutils literal notranslate"><span class="pre">read_polar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_station_data"><code class="docutils literal notranslate"><span class="pre">read_station_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_status"><code class="docutils literal notranslate"><span class="pre">read_status()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_vpr"><code class="docutils literal notranslate"><span class="pre">read_vpr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.read_xls"><code class="docutils literal notranslate"><span class="pre">read_xls()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.io_data.save_gif"><code class="docutils literal notranslate"><span class="pre">save_gif()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.retrieve_data">rainforest.common.retrieve_data module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.get_COSMO_T"><code class="docutils literal notranslate"><span class="pre">get_COSMO_T()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.get_COSMO_variables"><code class="docutils literal notranslate"><span class="pre">get_COSMO_variables()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_AQC_XLS"><code class="docutils literal notranslate"><span class="pre">retrieve_AQC_XLS()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_CPCCV"><code class="docutils literal notranslate"><span class="pre">retrieve_CPCCV()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_hzt_RT"><code class="docutils literal notranslate"><span class="pre">retrieve_hzt_RT()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_hzt_prod"><code class="docutils literal notranslate"><span class="pre">retrieve_hzt_prod()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_prod"><code class="docutils literal notranslate"><span class="pre">retrieve_prod()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.retrieve_data.retrieve_prod_RT"><code class="docutils literal notranslate"><span class="pre">retrieve_prod_RT()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.radarprocessing">rainforest.common.radarprocessing module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.HZT_cartesian_to_polar"><code class="docutils literal notranslate"><span class="pre">HZT_cartesian_to_polar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.HZT_hourly_to_5min"><code class="docutils literal notranslate"><span class="pre">HZT_hourly_to_5min()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar"><code class="docutils literal notranslate"><span class="pre">Radar</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.add_cosmo_data"><code class="docutils literal notranslate"><span class="pre">Radar.add_cosmo_data()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.add_height_over_iso0"><code class="docutils literal notranslate"><span class="pre">Radar.add_height_over_iso0()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.add_hzt_data"><code class="docutils literal notranslate"><span class="pre">Radar.add_hzt_data()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.compute_hydro"><code class="docutils literal notranslate"><span class="pre">Radar.compute_hydro()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.compute_kdp"><code class="docutils literal notranslate"><span class="pre">Radar.compute_kdp()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.compute_noise"><code class="docutils literal notranslate"><span class="pre">Radar.compute_noise()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.correct_attenuation"><code class="docutils literal notranslate"><span class="pre">Radar.correct_attenuation()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.correct_gate_altitude"><code class="docutils literal notranslate"><span class="pre">Radar.correct_gate_altitude()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.get_field"><code class="docutils literal notranslate"><span class="pre">Radar.get_field()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.snr_mask"><code class="docutils literal notranslate"><span class="pre">Radar.snr_mask()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.Radar.visib_mask"><code class="docutils literal notranslate"><span class="pre">Radar.visib_mask()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.hydroClass_single"><code class="docutils literal notranslate"><span class="pre">hydroClass_single()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.radarprocessing.hydroClass_single_over_iso"><code class="docutils literal notranslate"><span class="pre">hydroClass_single_over_iso()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.constants">rainforest.common.constants module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.constants.MODE"><code class="docutils literal notranslate"><span class="pre">MODE()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.MidpointNormalize"><code class="docutils literal notranslate"><span class="pre">MidpointNormalize</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.QPE_cmap"><code class="docutils literal notranslate"><span class="pre">QPE_cmap</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.plot_crossval_stats"><code class="docutils literal notranslate"><span class="pre">plot_crossval_stats()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_plot"><code class="docutils literal notranslate"><span class="pre">qpe_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_scatterplot"><code class="docutils literal notranslate"><span class="pre">qpe_scatterplot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.score_plot"><code class="docutils literal notranslate"><span class="pre">score_plot()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.lookup">rainforest.common.lookup module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.lookup.calc_lookup"><code class="docutils literal notranslate"><span class="pre">calc_lookup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.lookup.get_lookup"><code class="docutils literal notranslate"><span class="pre">get_lookup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.utils">rainforest.common.utils module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.LV03toWGS84"><code class="docutils literal notranslate"><span class="pre">LV03toWGS84()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.aggregate_multi"><code class="docutils literal notranslate"><span class="pre">aggregate_multi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.check_random_state"><code class="docutils literal notranslate"><span class="pre">check_random_state()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.chunks"><code class="docutils literal notranslate"><span class="pre">chunks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.dict_flatten"><code class="docutils literal notranslate"><span class="pre">dict_flatten()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.envyaml"><code class="docutils literal notranslate"><span class="pre">envyaml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.get_qpe_files"><code class="docutils literal notranslate"><span class="pre">get_qpe_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.get_qpe_files_multiple_dirs"><code class="docutils literal notranslate"><span class="pre">get_qpe_files_multiple_dirs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.hex_to_rgb"><code class="docutils literal notranslate"><span class="pre">hex_to_rgb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.idx_cart"><code class="docutils literal notranslate"><span class="pre">idx_cart()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.nanadd_at"><code class="docutils literal notranslate"><span class="pre">nanadd_at()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.nearest_time"><code class="docutils literal notranslate"><span class="pre">nearest_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.nested_dict_gen"><code class="docutils literal notranslate"><span class="pre">nested_dict_gen()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.nested_dict_values"><code class="docutils literal notranslate"><span class="pre">nested_dict_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.perfscores"><code class="docutils literal notranslate"><span class="pre">perfscores()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.quantile"><code class="docutils literal notranslate"><span class="pre">quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.quantile_1D"><code class="docutils literal notranslate"><span class="pre">quantile_1D()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.read_df"><code class="docutils literal notranslate"><span class="pre">read_df()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.read_task_file"><code class="docutils literal notranslate"><span class="pre">read_task_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.rename_fields"><code class="docutils literal notranslate"><span class="pre">rename_fields()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.round_to_hour"><code class="docutils literal notranslate"><span class="pre">round_to_hour()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.split_by_time"><code class="docutils literal notranslate"><span class="pre">split_by_time()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.stack_uneven"><code class="docutils literal notranslate"><span class="pre">stack_uneven()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.sweepnumber_fromfile"><code class="docutils literal notranslate"><span class="pre">sweepnumber_fromfile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.timefromfilename"><code class="docutils literal notranslate"><span class="pre">timefromfilename()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.timestamp_from_datestr"><code class="docutils literal notranslate"><span class="pre">timestamp_from_datestr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.timestamp_from_datetime"><code class="docutils literal notranslate"><span class="pre">timestamp_from_datetime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.utils.wgs84toCH1903"><code class="docutils literal notranslate"><span class="pre">wgs84toCH1903()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.wgs84_ch1903">rainforest.common.wgs84_ch1903 module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter"><code class="docutils literal notranslate"><span class="pre">GPSConverter</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSheight"><code class="docutils literal notranslate"><span class="pre">GPSConverter.CHtoWGSheight()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSlat"><code class="docutils literal notranslate"><span class="pre">GPSConverter.CHtoWGSlat()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSlng"><code class="docutils literal notranslate"><span class="pre">GPSConverter.CHtoWGSlng()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.LV03toWGS84"><code class="docutils literal notranslate"><span class="pre">GPSConverter.LV03toWGS84()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.WGS84toLV03"><code class="docutils literal notranslate"><span class="pre">GPSConverter.WGS84toLV03()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.WGStoCHh"><code class="docutils literal notranslate"><span class="pre">GPSConverter.WGStoCHh()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.WGStoCHx"><code class="docutils literal notranslate"><span class="pre">GPSConverter.WGStoCHx()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="common.html#rainforest.common.wgs84_ch1903.GPSConverter.WGStoCHy"><code class="docutils literal notranslate"><span class="pre">GPSConverter.WGStoCHy()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Rainforest QPE library</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">rainforest</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/reference/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="rainforest">
+<h1>rainforest<a class="headerlink" href="#rainforest" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="rainforest.html">rainforest package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rainforest.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.database.html">rainforest.database package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.database">rainforest.database.database module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.db_populate">rainforest.database.db_populate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_radar_data">rainforest.database.retrieve_radar_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#module-rainforest.database.retrieve_reference_data">rainforest.database.retrieve_reference_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.database.html#rainforest-database-retrieve-dwh-data-r-module">rainforest.database.retrieve_dwh_data R module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.qpe.html">rainforest.qpe package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.evaluation">rainforest.qpe.evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe">rainforest.qpe.qpe module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_compute">rainforest.qpe.qpe_compute module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_evaluation">rainforest.qpe.qpe_evaluation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.qpe.html#module-rainforest.qpe.qpe_plot">rainforest.qpe.qpe_plot module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rainforest.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rainforest.html#module-rainforest.interface">rainforest.interface module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.html#rainforest.interface.check_input"><code class="docutils literal notranslate"><span class="pre">check_input()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.html#rainforest.interface.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.html#rainforest.interface.prompt_check"><code class="docutils literal notranslate"><span class="pre">prompt_check()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rainforest.html#module-rainforest">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Daniel Wolfensherger, Rebecca Gugerli.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
