@@ -7,7 +7,7 @@ dependencies:
   - pandoc
   - ipython
   - myst-nb
-  - pydata-sphinx-theme
+  - sphinx_rtd_theme
   - sphinx-gallery
   - sphinx-design
   - sphinx-copybutton
