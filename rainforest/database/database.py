@@ -680,6 +680,8 @@ class Database(object):
         logging.info('Load data... (may take a moment)')
         tab = self.tables[gauge_table_name].select(['STATION',
                         'TIMESTAMP']).toPandas()
+
+        tab['TIMESTAMP'] = tab['TIMESTAMP'].astype(float).astype(int)
         
         if t0 != None and t1 != None and t1 > t0:
             logging.info('Limiting myself to time period {:s} - {:s}'.format(
@@ -693,8 +695,8 @@ class Database(object):
                 tstamp_start = int(t0.timestamp())
                 tstamp_end = int(t1.timestamp())
                 
-            tab = tab.loc[(tab['TIMESTAMP'].astype(int) > tstamp_start) 
-                            & (tab['TIMESTAMP'].astype(int) <= tstamp_end)]
+            tab = tab.loc[(tab['TIMESTAMP'] > tstamp_start) 
+                            & (tab['TIMESTAMP'] <= tstamp_end)]
             
         # Check existence of previous data
         try:
