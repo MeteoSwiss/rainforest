@@ -677,9 +677,11 @@ class Database(object):
             raise ValueError("""Make sure you have a "RADAR_RETRIEVAL" section in 
                           your config file!""")
         
-        logging.info('Finding unique timesteps and corresponding stations')
+        logging.info('Load data... (may take a moment)')
         tab = self.tables[gauge_table_name].select(['STATION',
                         'TIMESTAMP']).toPandas()
+
+        tab['TIMESTAMP'] = tab['TIMESTAMP'].astype(float).astype(int)
         
         if t0 != None and t1 != None and t1 > t0:
             logging.info('Limiting myself to time period {:s} - {:s}'.format(
@@ -756,8 +758,9 @@ class Database(object):
         # Write metadata file
         mdata = copy.deepcopy(self.config)
         yaml.dump(mdata, open(mdata_path,'w'))
-        
-        unique_times, idx = np.unique(tab['TIMESTAMP'], return_inverse = True)
+
+        logging.info('Finding unique timesteps and corresponding stations')
+        unique_times, idx = np.unique(tab['TIMESTAMP'].astype(int), return_inverse = True)
         all_stations = tab['STATION']
         
         if not len(unique_times):
