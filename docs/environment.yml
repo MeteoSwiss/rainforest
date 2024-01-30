@@ -1,0 +1,40 @@
+name: rainforest-docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - sphinx<7.2
+  - pandoc
+  - ipython
+  - myst-nb
+  - sphinx_rtd_theme
+  - sphinx-gallery
+  - sphinx-design
+  - sphinx-copybutton
+  - nbsphinx
+  - pre_commit
+  - Cython
+  - numpy
+  - netCDF4
+  - prompt_toolkit
+  - scikit-learn==1.2.2
+  - scipy
+  - dask
+  - pandas
+  - pyspark
+  - pyart_mch
+  - xmltodict
+  - pyshp
+  - imageio
+  - boto3
+  - pyarrow
+  - h5py
+  - pysteps
+  - xlrd
+  - pyproj
+  - pip
+  - pip:
+      - pooch
+      - versioneer
+      - ablog
+

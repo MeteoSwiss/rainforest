@@ -120,15 +120,8 @@ Y_QPE = np.linspace(255, 965, NBINS_Y + 1)
 X_QPE = np.linspace(480, -160,  NBINS_X + 1)
 Z_QPE = np.load(ObjStorage.check_file(str(Path(metadata_folder, 'z_qpegrid.npy'))))
 
-try: # when sphinx imports this module it crashes here because it considers numpy as mock module
-    Y_QPE_CENTERS = 0.5 * (Y_QPE[0:-1] + Y_QPE[1:])
-except:
-    Y_QPE_CENTERS = [1]
-
-try: # when sphinx imports this module it crashes here because it considers numpy as mock module
-    X_QPE_CENTERS = 0.5 * (X_QPE[0:-1] + X_QPE[1:])
-except:
-    X_QPE_CENTERS = [1]
+Y_QPE_CENTERS = 0.5 * (Y_QPE[0:-1] + Y_QPE[1:])
+X_QPE_CENTERS = 0.5 * (X_QPE[0:-1] + X_QPE[1:])
 
 MASK_NAN = np.load(ObjStorage.check_file(str(Path(metadata_folder, 'mask_nan.npy'))))
 
