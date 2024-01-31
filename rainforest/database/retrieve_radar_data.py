@@ -297,7 +297,7 @@ class Updater(object):
         for sweep in radar_object.sweeps:
             #  i is an index going from 0 to number of sweeps in file
             # sweep is the actual sweep number, anything from 1 to 20visibility_rad
-            logging.info('Sweep = ' + str(sweep))
+            # logging.info('Sweep = ' + str(sweep))
             
             for j, sta in enumerate(list_stations):
                 
@@ -643,7 +643,7 @@ class Updater(object):
                         # Read dask DataFrame and convert it to Pandas DataFrame
                         df_old = dd.read_parquet(name_old).compute()
                         # Merge the old and new one and drop duplicate rows
-                        df_join = df_old.append(df).drop_duplicates()
+                        df_join = df_old._append(df).drop_duplicates()
                         # Save the new file and delete the old one
                         df_join.to_parquet(name, compression = 'gzip', index = False)
                         os.remove(name_old)

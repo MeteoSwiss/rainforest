@@ -435,9 +435,7 @@ class Database(object):
             pass
     
      
-        logging.info('Finding unique timesteps and corresponding stations')
-        tab = self.tables[gauge_table_name].select(['STATION',
-                        'TIMESTAMP']).toPandas()
+        logging.info('Loading data... (may take a while)')
     
         if t0 != None and t1 != None and t1 > t0:
             logging.info('Limiting myself to time period {:s} - {:s}'.format(
@@ -451,8 +449,16 @@ class Database(object):
                 tstamp_start = int(t0.timestamp())
                 tstamp_end = int(t1.timestamp())
                 
-            tab = tab.loc[(tab['TIMESTAMP'] > tstamp_start) 
-                            & (tab['TIMESTAMP'] <= tstamp_end)]
+            tab = self.tables[gauge_table_name].filter(\
+                    (self.tables[gauge_table_name]['TIMESTAMP']>= tstamp_start) \
+                    & (self.tables[gauge_table_name]['TIMESTAMP']<= tstamp_end)\
+                    ).select(['STATION','TIMESTAMP']).toPandas()
+
+        else:
+            tab = self.tables[gauge_table_name].select(['STATION',
+                'TIMESTAMP']).toPandas()
+
+        tab['TIMESTAMP'] = tab['TIMESTAMP'].astype(float).astype(int)
 
         # Check existence of config file
         mdata_path = output_folder + '/.mdata.yml'
@@ -505,6 +511,7 @@ class Database(object):
         mdata = copy.deepcopy(self.config)
         yaml.dump(mdata, open(mdata_path,'w'))
 
+        logging.info('Finding unique timesteps and corresponding stations')
         unique_times, idx = np.unique(tab['TIMESTAMP'], return_inverse = True)
         
         if not len(unique_times):
