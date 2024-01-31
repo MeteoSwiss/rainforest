@@ -193,8 +193,8 @@ class Updater(object):
             logging.info('Processing timestep '+str(tstep))
             
             # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
-            tstart = datetime.datetime.utcfromtimestamp(float(tstep)) - datetime.timedelta(minutes=8)
-            tend= datetime.datetime.utcfromtimestamp(float(tstep))
+            tstart = datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc) - datetime.timedelta(minutes=8)
+            tend= datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc)
             
             stations_to_get = self.tasks[tstep]
             
@@ -470,7 +470,7 @@ class Updater(object):
                     # Read dask DataFrame and convert it to Pandas DataFrame
                     df_old = dd.read_parquet(name_old).compute()
                     # Merge the old and new one and drop duplicate rows
-                    df_join = df_old.append(df).drop_duplicates()
+                    df_join = df_old._append(df).drop_duplicates()
                     # Save the new file and delete the old one
                     df_join.to_parquet(name, compression = 'gzip', index = False)
                     os.remove(name_old)
