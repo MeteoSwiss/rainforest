@@ -16,5 +16,4 @@ pyarrow
 h5py
 pysteps
 xlrd
-opencv-python
 pyproj
