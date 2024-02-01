@@ -402,7 +402,6 @@ class QPEProcessor(object):
 
         if self.rt:
             tstep = t0
-            
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
             logger.info('Retrieving data for radar '+rad)
@@ -477,7 +476,6 @@ class QPEProcessor(object):
 
                 self.status_files[rad] = split_by_time(statfiles)
                 self.T_files[rad] = split_by_time(T_files)
-
             except:
                 logger.error('Failed to retrieve data for radar {:s}'.format(rad))
 
@@ -561,6 +559,10 @@ class QPEProcessor(object):
             false
 
         """
+
+        # Force utc tzinfo
+        t0 = t0.replace(tzinfo = datetime.timezone.utc)
+        t1 = t1.replace(tzinfo = datetime.timezone.utc)
 
         # Retrieve one timestamp before beginning for lead time
         tL = t0-datetime.timedelta(minutes=timestep)
@@ -706,7 +708,6 @@ class QPEProcessor(object):
                 #             logger.info('Removing timestep {:s} of radar {:s} - erroneous data'.format(str(t), rad))
                 # except:
                 #     logger.info('Could not read sweep info')     
-
 
                 # Delete files if config files requires
                 try:

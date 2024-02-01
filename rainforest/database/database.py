@@ -11,7 +11,7 @@ with dask
 
 from pyspark import SparkConf
 from pyspark import SparkContext
-from pyspark.sql import SQLContext, DataFrame
+from pyspark.sql import SparkSession, DataFrame
 
 # This could benefit from some tweaks especially if the database becomes larger
 conf = SparkConf()
@@ -63,7 +63,7 @@ class DataFrameWithInfo(DataFrame):
          if self.__info == None:
              cols = self.columns
              rows = self.count()
-             times = self.select('timestamp').collect()
+             times = self.select('TIMESTAMP').collect()
              t0 = datetime.utcfromtimestamp(np.min(times))
              t1 = datetime.utcfromtimestamp(np.max(times))
              
@@ -96,7 +96,7 @@ class Database(object):
             
         """
         sparkContext = SparkContext(conf = conf)
-        self.sqlContext = SQLContext(sparkContext)
+        self.sqlContext = SparkSession(sparkContext)
         self.tables = TableDict()
         self.summaries = {}
         if config_file:
@@ -435,9 +435,7 @@ class Database(object):
             pass
     
      
-        logging.info('Finding unique timesteps and corresponding stations')
-        tab = self.tables[gauge_table_name].select(['STATION',
-                        'TIMESTAMP']).toPandas()
+        logging.info('Loading data... (may take a while)')
     
         if t0 != None and t1 != None and t1 > t0:
             logging.info('Limiting myself to time period {:s} - {:s}'.format(
@@ -451,8 +449,16 @@ class Database(object):
                 tstamp_start = int(t0.timestamp())
                 tstamp_end = int(t1.timestamp())
                 
-            tab = tab.loc[(tab['TIMESTAMP'] > tstamp_start) 
-                            & (tab['TIMESTAMP'] <= tstamp_end)]
+            tab = self.tables[gauge_table_name].filter(\
+                    (self.tables[gauge_table_name]['TIMESTAMP']>= tstamp_start) \
+                    & (self.tables[gauge_table_name]['TIMESTAMP']<= tstamp_end)\
+                    ).select(['STATION','TIMESTAMP']).toPandas()
+
+        else:
+            tab = self.tables[gauge_table_name].select(['STATION',
+                'TIMESTAMP']).toPandas()
+
+        tab['TIMESTAMP'] = tab['TIMESTAMP'].astype(float).astype(int)
 
         # Check existence of config file
         mdata_path = output_folder + '/.mdata.yml'
@@ -505,6 +511,7 @@ class Database(object):
         mdata = copy.deepcopy(self.config)
         yaml.dump(mdata, open(mdata_path,'w'))
 
+        logging.info('Finding unique timesteps and corresponding stations')
         unique_times, idx = np.unique(tab['TIMESTAMP'], return_inverse = True)
         
         if not len(unique_times):
@@ -677,9 +684,11 @@ class Database(object):
             raise ValueError("""Make sure you have a "RADAR_RETRIEVAL" section in 
                           your config file!""")
         
-        logging.info('Finding unique timesteps and corresponding stations')
+        logging.info('Load data... (may take a moment)')
         tab = self.tables[gauge_table_name].select(['STATION',
                         'TIMESTAMP']).toPandas()
+
+        tab['TIMESTAMP'] = tab['TIMESTAMP'].astype(float).astype(int)
         
         if t0 != None and t1 != None and t1 > t0:
             logging.info('Limiting myself to time period {:s} - {:s}'.format(
@@ -756,8 +765,9 @@ class Database(object):
         # Write metadata file
         mdata = copy.deepcopy(self.config)
         yaml.dump(mdata, open(mdata_path,'w'))
-        
-        unique_times, idx = np.unique(tab['TIMESTAMP'], return_inverse = True)
+
+        logging.info('Finding unique timesteps and corresponding stations')
+        unique_times, idx = np.unique(tab['TIMESTAMP'].astype(int), return_inverse = True)
         all_stations = tab['STATION']
         
         if not len(unique_times):
@@ -888,7 +898,7 @@ class Database(object):
 
         for fn in job_files:
             logging.info('Submitting job {}'.format(fn))
-            #subprocess.call('sbatch {:s}'.format(fn), shell = True)
+            subprocess.call('sbatch {:s}'.format(fn), shell = True)
 
         
 def _compare_config(config1, config2, keys = None):
