@@ -15,25 +15,13 @@ import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../'))
 
-import mock 
- 
-
-MOCK_MODULES = ['numpy', 'netCDF4','prompt_toolkit.shortcuts','scipy','pyart.aux_io','matplotlib', 'matplotlib.pyplot', 'scipy.interpolate','pyart','pyspark','imageio','prompt_toolkit','matplotlib.colors','scipy.spatial',
-
-'sklearn','scipy.stats','scipy.ndimage','dask','pandas','yaml','sklearn.ensemble','scipy.signal','shapefile','scipy.spatial.distance',
-
-'dask.dataframe','dateutil','pyart.map','pyspark.sql','prompt_toolkit.formatted_text','pyart.retrieve','pyart.map.polar_to_cartesian',
-
-'xmltodict','pyart.util','pyart.map.polar_to_cartesian','pyart.correct','numpy.ma.core','scipy.ndimage.interpolation','prompt_toolkit.styles','pysteps']
-for mod_name in MOCK_MODULES:
-     sys.modules[mod_name] = mock.MagicMock()
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'Rainforest QPE library'
-copyright = '2020, Daniel Wolfensherger'
-author = 'Daniel Wolfensherger'
+copyright = '2020, Daniel Wolfensherger, Rebecca Gugerli'
+author = 'Daniel Wolfensherger, Rebecca Gugerli'
 
 
 # -- General configuration ---------------------------------------------------

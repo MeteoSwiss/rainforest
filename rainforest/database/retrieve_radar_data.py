@@ -297,7 +297,7 @@ class Updater(object):
         for sweep in radar_object.sweeps:
             #  i is an index going from 0 to number of sweeps in file
             # sweep is the actual sweep number, anything from 1 to 20visibility_rad
-            logging.info('Sweep = ' + str(sweep))
+            # logging.info('Sweep = ' + str(sweep))
             
             for j, sta in enumerate(list_stations):
                 
@@ -423,8 +423,8 @@ class Updater(object):
             
             logging.info('Processing timestep '+str(tstep))
             # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
-            tstart = datetime.datetime.utcfromtimestamp(float(tstep)) - datetime.timedelta(minutes=5)
-            tend= datetime.datetime.utcfromtimestamp(float(tstep))
+            tstart = datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc) - datetime.timedelta(minutes=5)
+            tend= datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc)
             
             stations_to_get = self.tasks[tstep]
             # Change to the timestep where the data is logged
@@ -502,7 +502,8 @@ class Updater(object):
                         
                         status_file = rad_files['status'][tstamp]
 
-                        radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file)
+                        radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file,
+                                    temp_ref=self.temp_ref)
 
                         # Add ISO0_HEIGHT and height_over_iso0 to radar object
                         if (self.temp_ref == "ISO0_HEIGHT") or ("ISO0_HEIGHT" in self.other_variables):
@@ -642,7 +643,7 @@ class Updater(object):
                         # Read dask DataFrame and convert it to Pandas DataFrame
                         df_old = dd.read_parquet(name_old).compute()
                         # Merge the old and new one and drop duplicate rows
-                        df_join = df_old.append(df).drop_duplicates()
+                        df_join = df_old._append(df).drop_duplicates()
                         # Save the new file and delete the old one
                         df_join.to_parquet(name, compression = 'gzip', index = False)
                         os.remove(name_old)
