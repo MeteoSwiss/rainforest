@@ -895,6 +895,17 @@ class QPEProcessor(object):
                         logger.error('Model failed!')
                         raise
                 
+                if ensembles:
+                    filepath = output_folder + '/' + k+'_ENS'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)                
+                    filepath += '/' + tstr
+                    f = h5py.File(filepath, 'w')
+                    f.create_dataset('RFO_ENS', data=ensemble_qpe)
+                    f.close()
+                    logger.info('Continuing with next timestep as we dont apply a temporal integration')
+                    continue
+
                 # Traditional QPE output
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
 
@@ -947,7 +958,6 @@ class QPEProcessor(object):
                     if not _PYSTEPS_AVAILABLE:
                         logger.error("Pysteps is not available, no qpe disaggregation will be performed!")
                     qpe_ac = _disaggregate(comp)
-                    
                     
                     filepath = output_folder + '/' + k +'_AC/'
                     if not os.path.exists(filepath):
