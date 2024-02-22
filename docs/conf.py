@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import rainforest
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
@@ -31,7 +32,7 @@ author = 'Daniel Wolfensherger, Rebecca Gugerli'
 # ones.
 extensions = ['sphinx.ext.napoleon']
 master_doc = 'index'
-
+version = rainforest.__version__
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
