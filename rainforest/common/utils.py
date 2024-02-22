@@ -12,6 +12,7 @@ December 2019
 # Global imports
 import datetime
 import io
+import importlib.metadata as _importlib_metadata
 import os
 from collections import OrderedDict
 import numpy as np
@@ -22,10 +23,21 @@ import yaml
 import  dask.dataframe as dd
 import re
 import numbers
+
 # Local imports
 from .logger import logger
 from .wgs84_ch1903 import GPSConverter
 from . import constants
+
+def get_version():
+    # Get the version
+    try:
+        version = _importlib_metadata.version("rainforest_mch")
+    except _importlib_metadata.PackageNotFoundError:
+        # package is not installed
+        version = "0.0.0"
+    return version
+
 
 def hex_to_rgb(value):
     value = value.lstrip('#')
