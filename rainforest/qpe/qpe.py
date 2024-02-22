@@ -33,7 +33,7 @@ from pyart.testing import make_empty_grid
 from pyart.aux_io.odim_h5_writer import write_odim_grid_h5
 from pyart.aux_io.odim_h5 import proj4_to_dict
 
-
+from .. import __version__
 from ..common.logger import logger
 from ..common import constants
 from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod, retrieve_prod_RT, retrieve_hzt_RT
@@ -160,6 +160,7 @@ def _features_to_chgrid(features, features_labels, time, missing_files):
     
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
     grid.metadata['version'] = b'H5rad 2.3'
+    grid.metadata['sw_version'] = __version__
     # Add missing radar information
     quality = 'ADLPW'
     if len(missing_files) != 0:
@@ -226,6 +227,7 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
     grid.fields['radar_estimated_rain_rate']['prodname'] = 'CHRFO'
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
     grid.metadata['version'] = b'H5rad 2.3'
+    grid.metadata['sw_version'] = __version__
     # Add missing radar information
     quality = 'ADLPW'
     if len(missing_files) != 0:
