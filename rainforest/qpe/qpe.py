@@ -236,7 +236,17 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
             qual_new = qual_new.replace(rad, '-')
         quality = qual_new
     grid.metadata['radar'] = quality.encode()
-    grid.metadata['nodes'] = 'WMO:06661,WMO:06699,WMO:06768,WMO:06726,WMO:06776'
+    
+    if '-' not in quality:
+        grid.metadata['nodes'] = 'WMO:06661,WMO:06699,WMO:06768,WMO:06726,WMO:06776'
+    else:
+        # 06661: Albis; 06699: Dôle; 06768: Lema; 06726: Plaine Morte; 06776: Weissfluh
+        all_wmo = ['WMO:06661','WMO:06699','WMO:06768','WMO:06726','WMO:06776']
+        rad_wmo = []
+        for ir, rad in enumerate(['A', 'D', 'L', 'P', 'W']):
+            if rad in quality:
+                rad_wmo.append(all_wmo[ir])
+        grid.metadata['nodes'] = ','.join(rad_wmo)
     
     return grid
 
@@ -423,8 +433,8 @@ class QPEProcessor(object):
 
                 self.radar_files[rad] = split_by_time(radfiles)
                 self.status_files[rad] = split_by_time(statfiles)
-            except:
-                logger.error('Failed to retrieve data for radar {:s}'.format(rad))
+            except Exception as error:
+                logger.error('Failed to retrieve data for radar {:s}. Error: {:s}'.format(rad, error))
                 
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
@@ -664,12 +674,28 @@ class QPEProcessor(object):
                 
                 # Read raw radar file and create a RADAR object
                 radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                                        self.status_files[rad][t])
+                                        self.status_files[rad][t],
+                                        metranet_reader='C')
+                # try:
+                #     radobjects[rad] = Radar(rad, self.radar_files[rad][t],
+                #                             self.status_files[rad][t],
+                #                             metranet_reader='C')
+                # except:
+                #     try:
+                #         wrnmsg = 'Could not read polar radar data for radar {:s}'.format(rad)+\
+                #                 ' with c-reader (default), trying with python-reader'
+                #         logger.warning(wrnmsg)
+                #         radobjects[rad] = Radar(rad, self.radar_files[rad][t],
+                #             self.status_files[rad][t],
+                #             metranet_reader='python')
+                #     except:
+                #         logger.error('Could not read polar radar data of {:s}'.format(rad))
+                        
                 
                 # if problem with radar file, exclude it and add to missing files list
                 if len(radobjects[rad].radarfields) == 0:
                     self.missing_files[rad] = t
-                    logger.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    logger.warning('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 
                 # Process the radar data
@@ -680,8 +706,8 @@ class QPEProcessor(object):
                     radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
                 except Exception as e:
                     self.missing_files[rad] = t
-                    logger.info(e)
-                    logger.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    logger.warning(e)
+                    logger.warning('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
