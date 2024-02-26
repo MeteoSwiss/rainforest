@@ -434,7 +434,8 @@ class QPEProcessor(object):
                 self.radar_files[rad] = split_by_time(radfiles)
                 self.status_files[rad] = split_by_time(statfiles)
             except Exception as error:
-                logger.error('Failed to retrieve data for radar {:s}. Error: {:s}'.format(rad, error))
+                error_msg = 'Failed to retrieve data for radar {:s}.\n'.format(rad)+ str(error)
+                logger.error(error_msg)
                 
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
