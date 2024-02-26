@@ -661,6 +661,7 @@ class QPEProcessor(object):
 
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
+            logger.info('Preparing all polar radar data')
             radobjects = {}
             for rad in self.config['RADARS']:
                 # if radar does not exist, add to missing file list
@@ -749,9 +750,11 @@ class QPEProcessor(object):
                 except:
                     logger.error('No cleanup was defined, unzipped files remain in temp-folder')
             
+            logger.info('Processing all sweeps of all radars')
             for sweep in self.config['SWEEPS']: # Loop on sweeps
-                logger.info('---')
-                logger.info('Processing sweep ' + str(sweep))
+                if not self.rt:
+                    logger.info('---')
+                    logger.info('Processing sweep ' + str(sweep))
 
                 for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
                     # If there is no radar file for the specific radar, continue to next radar
@@ -762,7 +765,8 @@ class QPEProcessor(object):
                         logger.info('Processing sweep {} of {} - no data for this timestep!'.format(sweep, rad))
                         continue
                     else:
-                        logger.info('Processing radar ' + str(rad))
+                        if not self.rt:
+                            logger.info('Processing radar ' + str(rad) + '; sweep '+str(sweep))
                         
                     try:
                         """Part two - retrieve radar data at every sweep"""
@@ -849,6 +853,7 @@ class QPEProcessor(object):
 
 
             """Part four - RF prediction"""
+            logger.info('Applying RF model to retrieve predictions')
             # Get QPE estimate
             # X: current time step; X_prev: previous timestep (t-5min)
             for k in self.models.keys():
