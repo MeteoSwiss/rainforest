@@ -132,7 +132,7 @@ def _features_to_chgrid(features, features_labels, time, missing_files):
                                             1000 * np.max(Y_QPE_CENTERS)]])
 
 
-    time_start = time - datetime.timedelta(seconds = 5 * 60)
+    time_start = time - datetime.timedelta(seconds = 5 * 60 + 1)
     grid.time['units'] = 'seconds since {:s}'.format(
                     datetime.datetime.strftime(time_start,
                                                '%Y-%m-%dT%H:%M:%SZ'))
@@ -203,7 +203,7 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
                                             1000 * np.max(Y_QPE_CENTERS)]])
 
 
-    time_start = time - datetime.timedelta(seconds = 5 * 60)
+    time_start = time - datetime.timedelta(seconds = 5 * 60 + 1)
     grid.time['units'] = 'seconds since {:s}'.format(
                     datetime.datetime.strftime(time_start,
                                                '%Y-%m-%dT%H:%M:%SZ'))
