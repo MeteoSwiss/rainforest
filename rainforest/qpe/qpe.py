@@ -136,7 +136,7 @@ def _features_to_chgrid(features, features_labels, time, missing_files):
     grid.time['units'] = 'seconds since {:s}'.format(
                     datetime.datetime.strftime(time_start,
                                                '%Y-%m-%dT%H:%M:%SZ'))
-    grid.time['data'] = np.arange(0, 5 *60)
+    grid.time['data'] = np.arange(0, 5 *60 + 1)
     grid.origin_latitude['data'] = 46.9524
     grid.origin_longitude['data'] = 7.43958333
     grid.projection = proj4_to_dict("+proj=somerc +lat_0=46.95240555555556 "+\
