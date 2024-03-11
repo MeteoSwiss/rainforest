@@ -46,3 +46,5 @@ def test_qpe():
         # Time
         assert qpe.time['units'] == 'seconds since 2022-09-28T05:05:00Z'
         assert qpe.time['data'] == [0, 300]
+
+        shutil.rmtree(str(Path(cwd, model)))
