@@ -40,7 +40,6 @@ def test_qpe():
         # Data
         assert 'radar_estimated_rain_rate' in qpe.fields
         assert qpe.fields['radar_estimated_rain_rate']['data'].shape == (1,640, 710)
-        assert qpe_field.shape == (640, 710) or qpe_field.shape == (1,640, 710)
         assert len(np.unique(qpe.fields['radar_estimated_rain_rate']['data'])) > 2
 
         # Time
