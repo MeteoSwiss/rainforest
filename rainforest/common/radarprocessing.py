@@ -36,7 +36,7 @@ class Radar(object):
     single pyart radar instance as this was found to be faster in practice
     '''
     def __init__(self, radname, polfiles, statusfile=None, vprfile=None,
-                temp_ref='TAIR', metranet_reader = 'python'):
+                temp_ref='TAIR', metranet_reader = 'C'):
         """
         Creates an Radar class instance
         

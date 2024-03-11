@@ -132,7 +132,7 @@ def _features_to_chgrid(features, features_labels, time, missing_files):
                                             1000 * np.max(Y_QPE_CENTERS)]])
 
 
-    time_start = time - datetime.timedelta(seconds = 5 * 60)
+    time_start = time - datetime.timedelta(seconds = 5 * 60 + 1)
     grid.time['units'] = 'seconds since {:s}'.format(
                     datetime.datetime.strftime(time_start,
                                                '%Y-%m-%dT%H:%M:%SZ'))
@@ -203,7 +203,7 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
                                             1000 * np.max(Y_QPE_CENTERS)]])
 
 
-    time_start = time - datetime.timedelta(seconds = 5 * 60)
+    time_start = time - datetime.timedelta(seconds = 5 * 60 + 1)
     grid.time['units'] = 'seconds since {:s}'.format(
                     datetime.datetime.strftime(time_start,
                                                '%Y-%m-%dT%H:%M:%SZ'))
@@ -236,7 +236,17 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
             qual_new = qual_new.replace(rad, '-')
         quality = qual_new
     grid.metadata['radar'] = quality.encode()
-    grid.metadata['nodes'] = 'WMO:06661,WMO:06699,WMO:06768,WMO:06726,WMO:06776'
+    
+    if '-' not in quality:
+        grid.metadata['nodes'] = 'WMO:06661,WMO:06699,WMO:06768,WMO:06726,WMO:06776'
+    else:
+        # 06661: Albis; 06699: Dôle; 06768: Lema; 06726: Plaine Morte; 06776: Weissfluh
+        all_wmo = ['WMO:06661','WMO:06699','WMO:06768','WMO:06726','WMO:06776']
+        rad_wmo = []
+        for ir, rad in enumerate(['A', 'D', 'L', 'P', 'W']):
+            if rad in quality:
+                rad_wmo.append(all_wmo[ir])
+        grid.metadata['nodes'] = ','.join(rad_wmo)
     
     return grid
 
@@ -423,8 +433,9 @@ class QPEProcessor(object):
 
                 self.radar_files[rad] = split_by_time(radfiles)
                 self.status_files[rad] = split_by_time(statfiles)
-            except:
-                logger.error('Failed to retrieve data for radar {:s}'.format(rad))
+            except Exception as error:
+                error_msg = 'Failed to retrieve data for radar {:s}.\n'.format(rad)+ str(error)
+                logger.error(error_msg)
                 
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
@@ -650,6 +661,7 @@ class QPEProcessor(object):
 
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
+            logger.info('Preparing all polar radar data')
             radobjects = {}
             for rad in self.config['RADARS']:
                 # if radar does not exist, add to missing file list
@@ -664,12 +676,28 @@ class QPEProcessor(object):
                 
                 # Read raw radar file and create a RADAR object
                 radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                                        self.status_files[rad][t])
+                                        self.status_files[rad][t],
+                                        metranet_reader='C')
+                # try:
+                #     radobjects[rad] = Radar(rad, self.radar_files[rad][t],
+                #                             self.status_files[rad][t],
+                #                             metranet_reader='C')
+                # except:
+                #     try:
+                #         wrnmsg = 'Could not read polar radar data for radar {:s}'.format(rad)+\
+                #                 ' with c-reader (default), trying with python-reader'
+                #         logger.warning(wrnmsg)
+                #         radobjects[rad] = Radar(rad, self.radar_files[rad][t],
+                #             self.status_files[rad][t],
+                #             metranet_reader='python')
+                #     except:
+                #         logger.error('Could not read polar radar data of {:s}'.format(rad))
+                        
                 
                 # if problem with radar file, exclude it and add to missing files list
                 if len(radobjects[rad].radarfields) == 0:
                     self.missing_files[rad] = t
-                    logger.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    logger.warning('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 
                 # Process the radar data
@@ -680,8 +708,8 @@ class QPEProcessor(object):
                     radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
                 except Exception as e:
                     self.missing_files[rad] = t
-                    logger.info(e)
-                    logger.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    logger.warning(e)
+                    logger.warning('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
@@ -722,9 +750,11 @@ class QPEProcessor(object):
                 except:
                     logger.error('No cleanup was defined, unzipped files remain in temp-folder')
             
+            logger.info('Processing all sweeps of all radars')
             for sweep in self.config['SWEEPS']: # Loop on sweeps
-                logger.info('---')
-                logger.info('Processing sweep ' + str(sweep))
+                if not self.rt:
+                    logger.info('---')
+                    logger.info('Processing sweep ' + str(sweep))
 
                 for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
                     # If there is no radar file for the specific radar, continue to next radar
@@ -735,7 +765,8 @@ class QPEProcessor(object):
                         logger.info('Processing sweep {} of {} - no data for this timestep!'.format(sweep, rad))
                         continue
                     else:
-                        logger.info('Processing radar ' + str(rad))
+                        if not self.rt:
+                            logger.info('Processing radar ' + str(rad) + '; sweep '+str(sweep))
                         
                     try:
                         """Part two - retrieve radar data at every sweep"""
@@ -822,6 +853,7 @@ class QPEProcessor(object):
 
 
             """Part four - RF prediction"""
+            logger.info('Applying RF model to retrieve predictions')
             # Get QPE estimate
             # X: current time step; X_prev: previous timestep (t-5min)
             for k in self.models.keys():
