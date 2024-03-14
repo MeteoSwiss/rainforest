@@ -131,13 +131,7 @@
 </li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">rainforest.ml package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf.RFModelEval"><code class="docutils literal notranslate"><span class="pre">RFModelEval</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf.calcScore"><code class="docutils literal notranslate"><span class="pre">calcScore()</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf.getTempIDX"><code class="docutils literal notranslate"><span class="pre">getTempIDX()</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf.prepareScoreDic"><code class="docutils literal notranslate"><span class="pre">prepareScoreDic()</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf.processFeatures"><code class="docutils literal notranslate"><span class="pre">processFeatures()</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf.readInputData"><code class="docutils literal notranslate"><span class="pre">readInputData()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
@@ -146,7 +140,6 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rfdefinitions.MyCustomUnpickler"><code class="docutils literal notranslate"><span class="pre">MyCustomUnpickler</span></code></a></li>
-<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">QuantileRandomForestRegressorBC</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rfdefinitions.read_rf"><code class="docutils literal notranslate"><span class="pre">read_rf()</span></code></a></li>
 </ul>
@@ -315,13 +308,12 @@
 <span id="rainforest-ml-rf-module"></span><h2>rainforest.ml.rf module<a class="headerlink" href="#module-rainforest.ml.rf" title="Permalink to this heading"></a></h2>
 <p>Main module to</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFModelEval">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">RFModelEval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFModelEval" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">RFTraining</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_regenerate_input</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>This is the main class that allows to preparate data for random forest
 training, train random forests and perform cross-validation of trained models</p>
-<p>Initializes the class to analyse the model and perform standard ML
-evaluation on it</p>
+<p>Initializes the class and if needed prepare input data for the training</p>
 <p>Note that when calling this constructor the input data is only
 generated for the central pixel (NX = NY = 0 = loc of gauge), if you
 want to regenerate the inputs for all neighbour pixels, please
@@ -340,32 +332,8 @@ the database even if already present in the input_location folder</p></li>
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFModelEval.calc_model_predictions">
-<span class="sig-name descname"><span class="pre">calc_model_predictions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">models_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CPCH',</span> <span class="pre">'RZC']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station_obs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['TRE200S0',</span> <span class="pre">'DKL010Z0',</span> <span class="pre">'FKL010Z0']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensemble</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantile_dic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFModelEval.calc_model_predictions" title="Permalink to this definition"></a></dt>
-<dd><p>_summary_</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>models_dic</strong> (<em>dic</em>) – dic with modelname, filename of model
-e.g.,model_dic = {‘RFO’: ‘<a href="#id1"><span class="problematic" id="id2">RFO_BETA_</span></a>-0.5_BC_spline.p’}</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em>) – Path where the dataframe is stored</p></li>
-<li><p><strong>model_folder</strong> (<em>str</em><em>, </em><em>optional</em>) – Path where model is stored. Defaults to None.</p></li>
-<li><p><strong>output_folder</strong> – Path to where to store the scores</p></li>
-<li><p><strong>tstart</strong> (<em>str</em><em> (</em><em>YYYYMMDDHHMM</em><em>)</em>) – A date to define a starting time for the input data</p></li>
-<li><p><strong>tend</strong> (<em>str</em><em> (</em><em>YYYYMMDDHHMM</em><em>)</em>) – A date to define the end of the input data</p></li>
-<li><p><strong>reference</strong> (<em>list</em><em>, </em><em>optional</em>) – _description_. Defaults to [‘CPCH’, ‘RZC’].</p></li>
-<li><p><strong>station_obs</strong> (<em>list</em><em>, </em><em>optional</em>) – _description_. Defaults to [‘TRE200S0’, ‘DKL1010Z0’, ‘FKL010Z0’].</p></li>
-<li><p><strong>ensemble</strong> (<em>list</em>) – List with all models that a ensemble output is wished for</p></li>
-<li><p><strong>quantile_dic</strong> (<em>dic</em>) – Dictionary with modelname and quantiles to extract,
-e.g., quantile_dic = {‘QuRFO’: [0.05,0.10,0.5,0.9,0.95]}</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFModelEval.feature_selection">
-<span class="sig-name descname"><span class="pre">feature_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">featuresel_configfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFModelEval.feature_selection" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.feature_selection">
+<span class="sig-name descname"><span class="pre">feature_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">featuresel_configfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.feature_selection" title="Permalink to this definition"></a></dt>
 <dd><p>The relative importance of all available input vairables aggregated to
 to the ground and to choose the most important ones, an approach
 from Han et al. (2016) was adpated to for regression.
@@ -385,8 +353,36 @@ See Wolfensberger et al. (2021) for further information.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFModelEval.model_intercomparison">
-<span class="sig-name descname"><span class="pre">model_intercomparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intercomparison_configfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_products</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CPCH',</span> <span class="pre">'RZC']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds10</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">2,</span> <span class="pre">10,</span> <span class="pre">100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds60</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">2,</span> <span class="pre">10,</span> <span class="pre">100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_val_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'years'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">years</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFModelEval.model_intercomparison" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.fit_models">
+<span class="sig-name descname"><span class="pre">fit_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.fit_models" title="Permalink to this definition"></a></dt>
+<dd><p>Fits a new RF model that can be used to compute QPE realizations and
+saves them to disk in pickle format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_file</strong> (<em>str</em>) – Location of the RF training configuration file, if not provided
+the default one in the ml submodule will be used</p></li>
+<li><p><strong>features_dic</strong> (<em>dict</em>) – A dictionary whose keys are the names of the models you want to
+create (a string) and the values are lists of features you want to
+use. For example {‘RF_dualpol’:[‘RADAR’, ‘zh_VISIB_mean’,
+‘zv_VISIB_mean’,’KDP_mean’,’RHOHV_mean’,’T’, ‘HEIGHT’,’VISIB_mean’]}
+will train a model with all these features that will then be stored
+under the name RF_dualpol_BC_&lt;type of BC&gt;.p in the ml/rf_models dir</p></li>
+<li><p><strong>tstart</strong> (<em>datetime</em>) – the starting time of the training time interval, default is to start
+at the beginning of the time interval covered by the database</p></li>
+<li><p><strong>tend</strong> (<em>datetime</em>) – the end time of the training time interval, default is to end
+at the end of the time interval covered by the database</p></li>
+<li><p><strong>output_folder</strong> (<em>str</em>) – Location where to store the trained models in pickle format,
+if not provided it will store them in the standard location
+&lt;library_path&gt;/ml/rf_models</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.model_intercomparison">
+<span class="sig-name descname"><span class="pre">model_intercomparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intercomparison_configfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_products</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CPCH',</span> <span class="pre">'RZC']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds10</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">2,</span> <span class="pre">10,</span> <span class="pre">100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds60</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">2,</span> <span class="pre">10,</span> <span class="pre">100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_val_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'years'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">years</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.model_intercomparison" title="Permalink to this definition"></a></dt>
 <dd><p>Does an intercomparison (cross-validation) of different RF models and
 reference products (RZC, CPC, …) and plots the performance plots</p>
 <dl class="field-list simple">
@@ -412,7 +408,7 @@ at 10 min time resolution
 <li><p><strong>bounds60</strong> (<em>list</em><em> of </em><em>float</em>) – list of precipitation bounds for which to compute scores separately
 at hourly time resolution
 [0,1,10,100] will give scores in range [0-1], [1-10] and [10-100]</p></li>
-<li><p><strong>cross_val_type</strong> (<em>str</em>) – Define how the split of events is done. Options are “random”,
+<li><p><strong>cross_val_type</strong> (<em>str</em>) – Define how the split of events is done. Options are “random events”,
 “years” and “seasons” (TODO)</p></li>
 <li><p><strong>K</strong> (<em>int</em><em> or </em><em>None</em>) – Number of splits in iterations do perform in the K fold cross-val</p></li>
 <li><p><strong>years</strong> (<em>list</em><em> or </em><em>None</em>) – List with the years that should be used in cross validation
@@ -423,60 +419,6 @@ Default is [2016,2017,2018,2019,2020,2021]</p></li>
 If False, only the scores across Switzerland are calculated</p></li>
 <li><p><strong>save_model</strong> (<em>True</em><em> or </em><em>False</em><em> (</em><em>Boolean</em><em>)</em>) – If True, all models of the cross-validation are saved into a pickle file
 This is useful for reproducibility</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">RFTraining</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_regenerate_input</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>This is the main class that allows to preparate data for random forest
-training, train random forests and perform cross-validation of trained models</p>
-<p>Initializes the class and if needed prepare input data for the training</p>
-<p>Note that when calling this constructor the input data is only
-generated for the central pixel (NX = NY = 0 = loc of gauge), if you
-want to regenerate the inputs for all neighbour pixels, please
-call the function self.prepare_input(only_center_pixel = False)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>db_location</strong> (<em>str</em>) – Location of the main directory of the database (with subfolders
-‘reference’, ‘gauge’ and ‘radar’ on the filesystem)</p></li>
-<li><p><strong>input_location</strong> (<em>str</em>) – Location of the prepared input data, if this data cannot be found
-in this folder, it will be computed here, default is a subfolder
-called rf_input_data within db_location</p></li>
-<li><p><strong>force_regenerate_input</strong> (<em>bool</em>) – if True the input parquet files will always be regenerated from
-the database even if already present in the input_location folder</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.fit_models">
-<span class="sig-name descname"><span class="pre">fit_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.fit_models" title="Permalink to this definition"></a></dt>
-<dd><p>Fits a new RF model that can be used to compute QPE realizations and
-saves them to disk in pickle format</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>config_file</strong> (<em>str</em>) – Location of the RF training configuration file, if not provided
-the default one in the ml submodule will be used</p></li>
-<li><p><strong>features_dic</strong> (<em>dict</em>) – A dictionary whose keys are the names of the models you want to
-create (a string) and the values are lists of features you want to
-use. For example {‘RF_dualpol’:[‘RADAR’, ‘zh_VISIB_mean’,
-‘zv_VISIB_mean’,’KDP_mean’,’RHOHV_mean’,’T’, ‘HEIGHT’,’VISIB_mean’]}
-will train a model with all these features that will then be stored
-under the name RF_dualpol_BC_&lt;type of BC&gt;.p in the ml/rf_models dir</p></li>
-<li><p><strong>tstart</strong> (<em>str</em>) – the starting time of the training time interval, default is to start
-at the beginning of the time interval covered by the database</p></li>
-<li><p><strong>tend</strong> (<em>str</em>) – the end time of the training time interval, default is to end
-at the end of the time interval covered by the database</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em>) – Location where to store the trained models in pickle format,
-if not provided it will store them in the standard location
-&lt;library_path&gt;/ml/rf_models</p></li>
 </ul>
 </dd>
 </dl>
@@ -516,59 +458,7 @@ QPE</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.prepare_input_vert_agg">
-<span class="sig-name descname"><span class="pre">prepare_input_vert_agg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aggregation_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.prepare_input_vert_agg" title="Permalink to this definition"></a></dt>
-<dd><blockquote>
-<div><p>Calculates the vertical aggregation of the input features dic and saves
-it to a file to run tests faster</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>aggregation_params</strong> (<em>dict</em>) – Dict with two keywords: beta and visib_weighting
-If not given, the default is used: {‘beta’ : -0.5 , ‘visib_weighting: True}</p></li>
-<li><p><strong>features</strong> (<em>list</em>) – A list with features that will be aggregated to the ground,
-e.g., [‘RADAR’, ‘zh_VISIB_mean’,
-‘zv_VISIB_mean’,’KDP_mean’,’RHOHV_mean’,’T’, ‘HEIGHT’,’VISIB_mean’]}</p></li>
-<li><p><strong>tstart</strong> (<em>str</em>) – the starting time of the training time interval, default is to start
-at the beginning of the time interval covered by the database</p></li>
-<li><p><strong>tend</strong> (<em>str</em>) – the end time of the training time interval, default is to end
-at the end of the time interval covered by the database</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em>) – Location where to store the trained models in pickle format,
-if not provided it will store them in the standard location
-str(Path(db_location, ‘rf_input_data’))</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="rainforest.ml.rf.calcScore">
-<span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">calcScore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_scores</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idxTemp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tagg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'10min'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'test'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.calcScore" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="rainforest.ml.rf.getTempIDX">
-<span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">getTempIDX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">TempOBS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grp_hourly</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.getTempIDX" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="rainforest.ml.rf.prepareScoreDic">
-<span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">prepareScoreDic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.prepareScoreDic" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="rainforest.ml.rf.processFeatures">
-<span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">processFeatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radartab</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.processFeatures" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="rainforest.ml.rf.readInputData">
-<span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">readInputData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datalist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['gauge',</span> <span class="pre">'radar',</span> <span class="pre">'refer']</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.readInputData" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
 
 </section>
 <section id="module-rainforest.ml.rf_train">
@@ -609,84 +499,8 @@ needed.  Both arguments passed are str objects.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rainforest.ml.rfdefinitions.</span></span><span class="sig-name descname"><span class="pre">QuantileRandomForestRegressorBC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visib_weighting</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bctype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cdf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mse'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples_leaf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_weight_fraction_leaf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_leaf_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_impurity_decrease</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bootstrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">QuantileRegressionForest</span></code></p>
-<p>This is an extension of the RandomForestRegressor regressor class of
-sklearn that does additional bias correction, is able
-to apply a rounding function to the outputs on the fly and adds a
-bit of metadata:</p>
-<blockquote>
-<div><p><em>bctype</em> : type of bias correction method
-<em>variables</em> : name of input features
-<em>beta</em> : weighting factor in vertical aggregation
-<em>degree</em> : order of the polyfit used in some bias-correction methods
-<em>metadata</em> : configuration setup used to train this model</p>
-</div></blockquote>
-<p>For <em>bc_type</em> tHe available methods are currently “raw”:
-simple linear fit between prediction and observation, “cdf”: linear fit
-between sorted predictions and sorted observations and “spline” :
-spline fit between sorted predictions and sorted observations. Any
-new method should be added in this class in order to be used.</p>
-<p>For any information regarding the parent class from the package doubt see
-<a class="reference external" href="https://github.com/saattrupdan/doubt">https://github.com/saattrupdan/doubt</a> (used version: 4.3.1)</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC.fit" title="Permalink to this definition"></a></dt>
-<dd><p>Fit both estimator and a-posteriori bias correction
-:param X (array-like or sparse matrix): The input samples, of shape [n_samples, n_features]. Internally, it</p>
-<blockquote>
-<div><p>will be converted to <cite>dtype=np.float32</cite> and if a sparse matrix is
-provided to a sparse <cite>csr_matrix</cite>.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>(</strong><strong>array-like</strong><strong>)</strong> (<em>y</em>) – The target values (class labels) as integers or strings, of shape
-[n_samples] or [n_samples, n_outputs].</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>self</strong></p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>object</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC.predict">
-<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC.predict" title="Permalink to this definition"></a></dt>
-<dd><p>Predict regression target for X.
-The predicted regression target of an input sample is computed as the
-mean predicted regression targets of the trees in the forest.
-:param X: The input samples. Internally, its dtype will be converted to</p>
-<blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>round_func</strong> (<em>lambda function</em>) – Optional function to apply to outputs (for example to discretize them
-using MCH lookup tables). If not provided f(x) = x will be applied
-(i.e. no function)</p></li>
-<li><p><strong>bc</strong> (<em>bool</em>) – if True the bias correction function will be applied</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>y</strong> – The predicted values.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array-like of shape (n_samples,) or (n_samples, n_outputs)</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="rainforest.ml.rfdefinitions.RandomForestRegressorBC">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rainforest.ml.rfdefinitions.</span></span><span class="sig-name descname"><span class="pre">RandomForestRegressorBC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visib_weighting</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bctype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cdf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mse'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples_leaf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_weight_fraction_leaf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_leaf_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_impurity_decrease</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bootstrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rainforest.ml.rfdefinitions.</span></span><span class="sig-name descname"><span class="pre">RandomForestRegressorBC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">visib_weighting</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bctype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cdf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_estimators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mse'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_samples_leaf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_weight_fraction_leaf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_leaf_nodes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_impurity_decrease</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bootstrap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oob_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RandomForestRegressor</span></code></p>
 <p>This is an extension of the RandomForestRegressor regressor class of
 sklearn that does additional bias correction, is able
@@ -757,35 +571,6 @@ using MCH lookup tables). If not provided f(x) = x will be applied
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>array-like of shape (n_samples,) or (n_samples, n_outputs)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict_ens">
-<span class="sig-name descname"><span class="pre">predict_ens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict_ens" title="Permalink to this definition"></a></dt>
-<dd><p>Predict regression target for X.
-The predicted regression target of an input sample is computed as the
-mean predicted regression targets of the trees in the forest.
-:param X: The input samples. Internally, its dtype will be converted to</p>
-<blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">dtype=np.float32</span></code>. If a sparse matrix is provided, it will be
-converted into a sparse <code class="docutils literal notranslate"><span class="pre">csr_matrix</span></code>.</p>
-</div></blockquote>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>round_func</strong> (<em>lambda function</em>) – Optional function to apply to outputs (for example to discretize them
-using MCH lookup tables). If not provided f(x) = x will be applied
-(i.e. no function)</p></li>
-<li><p><strong>bc</strong> (<em>bool</em>) – if True the bias correction function will be applied</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>pred</strong> – The predicted values.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array (n_samples,n_trees)</p>
 </dd>
 </dl>
 </dd></dl>
