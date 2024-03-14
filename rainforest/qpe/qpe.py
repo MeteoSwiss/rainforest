@@ -3,13 +3,10 @@
 """
 Main function to compute the QPE estimations on the Swiss grid
 
-Daniel Wolfensberger
-MeteoSwiss/EPFL
-daniel.wolfensberger@epfl.ch
-December 2019
+Daniel Wolfensberger, MeteoSwiss/EPFL, daniel.wolfensberger@meteoswiss.ch
+Rebecca Gugerli, EPFL/ MeteoSwiss
+March 2023
 
-Modified by D. Wolfensberger and R. Gugerli
-December 2022
 """
 
 
@@ -23,6 +20,7 @@ import glob
 from pathlib import Path
 import os
 
+import h5py
 from pathlib import Path
 from scipy.ndimage import gaussian_filter
 from scipy.signal import convolve2d
@@ -546,7 +544,7 @@ class QPEProcessor(object):
 
         
     def compute(self, output_folder, t0, t1, timestep = 5,
-                basename = 'RFO%y%j%H%MVH', test_mode = False):
+                basename = 'RFO%y%j%H%MVH', test_mode = False, ensembles = False):
         """
         Computes QPE values for a given time range and stores them in a
         folder, in a binary format
@@ -660,6 +658,7 @@ class QPEProcessor(object):
                             logger.info('HZT fields for timestep {} missing, creating empty one'.format(t.strftime('%Y%m%d%H%M')))
 
             """Part one - compute radar variables and mask"""
+            logger.info('Computing radar variables and masks')
             # Begin compilation of radarobject
             logger.info('Preparing all polar radar data')
             radobjects = {}
@@ -847,16 +846,15 @@ class QPEProcessor(object):
                                 W * isvalidzh_radsweep)),2)
 
                     except:
-                        raise
                         logger.error('Could not compute sweep {:d}'.format(sweep))
-                        pass
-
+                        raise
 
             """Part four - RF prediction"""
             logger.info('Applying RF model to retrieve predictions')
             # Get QPE estimate
             # X: current time step; X_prev: previous timestep (t-5min)
             for k in self.models.keys():
+                logger.info('Calculating prediction for model {}'.format(k))
                 model = self.models[k]
                 X = []
                 for v in model.variables:
@@ -892,18 +890,64 @@ class QPEProcessor(object):
 
                 # Convert radar data to precipitation estimates
                 qpe = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
-                try:
-                    qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
-                except:
-                    raise
-                    logger.error('Model failed!')
-                    pass
+
+                if len(self.config['QUANTILES'][k]) == 0: 
+                    try:
+                        qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
+                        ensemble_qpe = np.zeros((NBINS_X, NBINS_Y, self.models[k].n_estimators))
+                        for tree in range(self.models[k].n_estimators):
+                            qpe_temp = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
+                            qpe_temp[validrows] = self.models[k].estimators_[tree].predict(Xcomb[validrows,:])
+                            ensemble_qpe[:,:,tree] = np.reshape(qpe_temp, (NBINS_X, NBINS_Y))
+                    except:
+                        logger.error('Model failed!')
+                        raise
+                else:
+                    try:
+                        # This will render a tuple with the first element as a traditional
+                        # Random Forest estimation, and second element a 2D array with all
+                        # the quantile estimates
+                        timelog0 = datetime.datetime.now()
+                        qpe_all = self.models[k].predict(Xcomb[validrows,:],
+                                                quantiles = self.config['QUANTILES'][k])
+                        logger.info('Quantile prediction took {} '.format(datetime.datetime.now()-timelog0))
+                        qpe[validrows] = qpe_all[0]
+
+                        quantile_qpe = np.zeros((NBINS_X, NBINS_Y, len(self.config['QUANTILES'][k])))
+                        for iq, q in enumerate(self.config['QUANTILES'][k]):
+                            qpe_temp = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
+                            qpe_temp[validrows] = qpe_all[1][:,iq]
+                            quantile_qpe[:,:,iq] = np.reshape(qpe_temp, (NBINS_X, NBINS_Y))
+                        
+                        if ensembles:
+                            ensemble_qpe = np.zeros((NBINS_X, NBINS_Y, self.models[k].n_estimators))
+                            for tree in range(self.models[k].n_estimators):
+                                qpe_temp = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
+                                qpe_temp[validrows] = self.models[k].estimators_[tree].predict(Xcomb[validrows,:])
+                                ensemble_qpe[:,:,tree] = np.reshape(qpe_temp, (NBINS_X, NBINS_Y))    
+                    except:
+                        logger.error('Model failed!')
+                        raise
                 
+                if ensembles:
+                    filepath = output_folder + '/' + k+'_ENS'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)                
+                    filepath += '/' + tstr
+                    f = h5py.File(filepath, 'w')
+                    f.create_dataset('RFO_ENS', data=ensemble_qpe)
+                    f.close()
+                    logger.info('Continuing with next timestep as we dont apply a temporal integration')
+                    continue
+
+                # Traditional QPE output
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
+
                 if self.config['SAVE_NON_POSTPROCESSED_DATA']:
                     qpe_no_temp = qpe.copy()
                     
                 """Temporal disaggregation; Rescale qpe through rproxy"""
+                logger.info('Temporal disaggregation from 10-min to 5min')
                 idx_zh = np.where(np.array(model.variables)
                                 == 'zh_VISIB')[0][0]
 
@@ -949,7 +993,6 @@ class QPEProcessor(object):
                         logger.error("Pysteps is not available, no qpe disaggregation will be performed!")
                     qpe_ac = _disaggregate(comp)
                     
-                    
                     filepath = output_folder + '/' + k +'_AC/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
@@ -961,7 +1004,24 @@ class QPEProcessor(object):
                     os.mkdir(filepath)                
                 filepath += '/' + tstr
                 self.save_output(qpe, t, filepath)
-                
+
+                if ensembles:
+                    filepath = output_folder + '/' + k+'_ENS'
+                    if not os.path.exists(filepath):
+                        os.mkdir(filepath)                
+                    filepath += '/' + tstr
+                    f = h5py.File(filepath, 'w')
+                    f.create_dataset('RFO_ENS', data=ensemble_qpe)
+                    f.close()
+
+                if len(self.config['QUANTILES'][k]) != 0 :
+                    for iq, qu in enumerate(self.config['QUANTILES'][k]):
+                        filepath = output_folder + '/' + k +'_Q{}/'.format(str(qu).replace('.','_'))
+                        if not os.path.exists(filepath):
+                            os.mkdir(filepath)
+                        self.save_output(quantile_qpe[:,:,iq], t, filepath+tstr)  
+
+
                 if self.config['SAVE_NON_POSTPROCESSED_DATA']:
                     # Coding of folders (0 not applied, 1 applied)
                     # T: temporal disaggregation
