@@ -36,7 +36,13 @@ def test_qpe():
         qpe_field = qpe.data
 
         # Assertions
-        assert qpe_field.shape == (640, 710) or qpe_field.shape == (1,640, 710)
-        assert len(np.unique(qpe_field)) > 2
+        # Data
+        assert 'radar_estimated_rain_rate' in qpe.fields
+        assert qpe.fields['radar_estimated_rain_rate']['data'].shape == (1,640, 710)
+        assert len(np.unique(qpe.fields['radar_estimated_rain_rate']['data'])) > 2
+
+        # Time
+        assert qpe.time['units'] == 'seconds since 2022-09-28T05:05:00Z'
+        assert qpe.time['data'] == [0, 300]
 
         shutil.rmtree(str(Path(cwd, model)))

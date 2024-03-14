@@ -3,10 +3,13 @@
 """
 Main function to compute the QPE estimations on the Swiss grid
 
-Daniel Wolfensberger, MeteoSwiss/EPFL, daniel.wolfensberger@meteoswiss.ch
-Rebecca Gugerli, EPFL/ MeteoSwiss
-March 2023
+Daniel Wolfensberger
+MeteoSwiss/EPFL
+daniel.wolfensberger@epfl.ch
+December 2019
 
+Modified by D. Wolfensberger and R. Gugerli
+December 2022
 """
 
 
@@ -20,8 +23,6 @@ import glob
 from pathlib import Path
 import os
 
-import h5py
-
 from pathlib import Path
 from scipy.ndimage import gaussian_filter
 from scipy.signal import convolve2d
@@ -31,7 +32,7 @@ from pyart.testing import make_empty_grid
 from pyart.aux_io.odim_h5_writer import write_odim_grid_h5
 from pyart.aux_io.odim_h5 import proj4_to_dict
 
-
+from ..common.utils import get_version
 from ..common.logger import logger
 from ..common import constants
 from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod, retrieve_prod_RT, retrieve_hzt_RT
@@ -135,7 +136,7 @@ def _features_to_chgrid(features, features_labels, time, missing_files):
     grid.time['units'] = 'seconds since {:s}'.format(
                     datetime.datetime.strftime(time_start,
                                                '%Y-%m-%dT%H:%M:%SZ'))
-    grid.time['data'] = np.arange(0, 5 *60)
+    grid.time['data'] = np.arange(0, 5 *60 + 1)
     grid.origin_latitude['data'] = 46.9524
     grid.origin_longitude['data'] = 7.43958333
     grid.projection = proj4_to_dict("+proj=somerc +lat_0=46.95240555555556 "+\
@@ -158,6 +159,7 @@ def _features_to_chgrid(features, features_labels, time, missing_files):
     
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
     grid.metadata['version'] = b'H5rad 2.3'
+    grid.metadata['sw_version'] = get_version()
     # Add missing radar information
     quality = 'ADLPW'
     if len(missing_files) != 0:
@@ -205,7 +207,7 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
     grid.time['units'] = 'seconds since {:s}'.format(
                     datetime.datetime.strftime(time_start,
                                                '%Y-%m-%dT%H:%M:%SZ'))
-    grid.time['data'] = np.arange(0, 5 *60)
+    grid.time['data'] = np.arange(0, 5 *60 + 1)
     grid.origin_latitude['data'] = 46.9524
     grid.origin_longitude['data'] = 7.43958333
     grid.projection = proj4_to_dict("+proj=somerc +lat_0=46.95240555555556 "+\
@@ -224,6 +226,7 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
     grid.fields['radar_estimated_rain_rate']['prodname'] = 'CHRFO'
     grid.metadata['source'] = b'ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)'
     grid.metadata['version'] = b'H5rad 2.3'
+    grid.metadata['sw_version'] = get_version()
     # Add missing radar information
     quality = 'ADLPW'
     if len(missing_files) != 0:
@@ -233,7 +236,17 @@ def _qpe_to_chgrid(qpe, time, missing_files, precision=2):
             qual_new = qual_new.replace(rad, '-')
         quality = qual_new
     grid.metadata['radar'] = quality.encode()
-    grid.metadata['nodes'] = 'WMO:06661,WMO:06699,WMO:06768,WMO:06726,WMO:06776'
+    
+    if '-' not in quality:
+        grid.metadata['nodes'] = 'WMO:06661,WMO:06699,WMO:06768,WMO:06726,WMO:06776'
+    else:
+        # 06661: Albis; 06699: Dôle; 06768: Lema; 06726: Plaine Morte; 06776: Weissfluh
+        all_wmo = ['WMO:06661','WMO:06699','WMO:06768','WMO:06726','WMO:06776']
+        rad_wmo = []
+        for ir, rad in enumerate(['A', 'D', 'L', 'P', 'W']):
+            if rad in quality:
+                rad_wmo.append(all_wmo[ir])
+        grid.metadata['nodes'] = ','.join(rad_wmo)
     
     return grid
 
@@ -420,8 +433,9 @@ class QPEProcessor(object):
 
                 self.radar_files[rad] = split_by_time(radfiles)
                 self.status_files[rad] = split_by_time(statfiles)
-            except:
-                logger.error('Failed to retrieve data for radar {:s}'.format(rad))
+            except Exception as error:
+                error_msg = 'Failed to retrieve data for radar {:s}.\n'.format(rad)+ str(error)
+                logger.error(error_msg)
                 
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
@@ -532,7 +546,7 @@ class QPEProcessor(object):
 
         
     def compute(self, output_folder, t0, t1, timestep = 5,
-                basename = 'RFO%y%j%H%MVH', test_mode = False, ensembles = False):
+                basename = 'RFO%y%j%H%MVH', test_mode = False):
         """
         Computes QPE values for a given time range and stores them in a
         folder, in a binary format
@@ -646,8 +660,8 @@ class QPEProcessor(object):
                             logger.info('HZT fields for timestep {} missing, creating empty one'.format(t.strftime('%Y%m%d%H%M')))
 
             """Part one - compute radar variables and mask"""
-            logger.info('Computing radar variables and masks')
             # Begin compilation of radarobject
+            logger.info('Preparing all polar radar data')
             radobjects = {}
             for rad in self.config['RADARS']:
                 # if radar does not exist, add to missing file list
@@ -662,12 +676,28 @@ class QPEProcessor(object):
                 
                 # Read raw radar file and create a RADAR object
                 radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                                        self.status_files[rad][t])
+                                        self.status_files[rad][t],
+                                        metranet_reader='C')
+                # try:
+                #     radobjects[rad] = Radar(rad, self.radar_files[rad][t],
+                #                             self.status_files[rad][t],
+                #                             metranet_reader='C')
+                # except:
+                #     try:
+                #         wrnmsg = 'Could not read polar radar data for radar {:s}'.format(rad)+\
+                #                 ' with c-reader (default), trying with python-reader'
+                #         logger.warning(wrnmsg)
+                #         radobjects[rad] = Radar(rad, self.radar_files[rad][t],
+                #             self.status_files[rad][t],
+                #             metranet_reader='python')
+                #     except:
+                #         logger.error('Could not read polar radar data of {:s}'.format(rad))
+                        
                 
                 # if problem with radar file, exclude it and add to missing files list
                 if len(radobjects[rad].radarfields) == 0:
                     self.missing_files[rad] = t
-                    logger.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    logger.warning('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 
                 # Process the radar data
@@ -678,8 +708,8 @@ class QPEProcessor(object):
                     radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
                 except Exception as e:
                     self.missing_files[rad] = t
-                    logger.info(e)
-                    logger.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    logger.warning(e)
+                    logger.warning('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
                     continue
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
@@ -720,9 +750,11 @@ class QPEProcessor(object):
                 except:
                     logger.error('No cleanup was defined, unzipped files remain in temp-folder')
             
+            logger.info('Processing all sweeps of all radars')
             for sweep in self.config['SWEEPS']: # Loop on sweeps
-                logger.info('---')
-                logger.info('Processing sweep ' + str(sweep))
+                if not self.rt:
+                    logger.info('---')
+                    logger.info('Processing sweep ' + str(sweep))
 
                 for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
                     # If there is no radar file for the specific radar, continue to next radar
@@ -733,7 +765,8 @@ class QPEProcessor(object):
                         logger.info('Processing sweep {} of {} - no data for this timestep!'.format(sweep, rad))
                         continue
                     else:
-                        logger.info('Processing radar ' + str(rad))
+                        if not self.rt:
+                            logger.info('Processing radar ' + str(rad) + '; sweep '+str(sweep))
                         
                     try:
                         """Part two - retrieve radar data at every sweep"""
@@ -814,14 +847,16 @@ class QPEProcessor(object):
                                 W * isvalidzh_radsweep)),2)
 
                     except:
-                        logger.error('Could not compute sweep {:d}'.format(sweep))
                         raise
+                        logger.error('Could not compute sweep {:d}'.format(sweep))
+                        pass
+
 
             """Part four - RF prediction"""
+            logger.info('Applying RF model to retrieve predictions')
             # Get QPE estimate
             # X: current time step; X_prev: previous timestep (t-5min)
             for k in self.models.keys():
-                logger.info('Calculating prediction for model {}'.format(k))
                 model = self.models[k]
                 X = []
                 for v in model.variables:
@@ -857,64 +892,18 @@ class QPEProcessor(object):
 
                 # Convert radar data to precipitation estimates
                 qpe = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
-
-                if len(self.config['QUANTILES'][k]) == 0: 
-                    try:
-                        qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
-                        ensemble_qpe = np.zeros((NBINS_X, NBINS_Y, self.models[k].n_estimators))
-                        for tree in range(self.models[k].n_estimators):
-                            qpe_temp = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
-                            qpe_temp[validrows] = self.models[k].estimators_[tree].predict(Xcomb[validrows,:])
-                            ensemble_qpe[:,:,tree] = np.reshape(qpe_temp, (NBINS_X, NBINS_Y))
-                    except:
-                        logger.error('Model failed!')
-                        raise
-                else:
-                    try:
-                        # This will render a tuple with the first element as a traditional
-                        # Random Forest estimation, and second element a 2D array with all
-                        # the quantile estimates
-                        timelog0 = datetime.datetime.now()
-                        qpe_all = self.models[k].predict(Xcomb[validrows,:],
-                                                quantiles = self.config['QUANTILES'][k])
-                        logger.info('Quantile prediction took {} '.format(datetime.datetime.now()-timelog0))
-                        qpe[validrows] = qpe_all[0]
-
-                        quantile_qpe = np.zeros((NBINS_X, NBINS_Y, len(self.config['QUANTILES'][k])))
-                        for iq, q in enumerate(self.config['QUANTILES'][k]):
-                            qpe_temp = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
-                            qpe_temp[validrows] = qpe_all[1][:,iq]
-                            quantile_qpe[:,:,iq] = np.reshape(qpe_temp, (NBINS_X, NBINS_Y))
-                        
-                        if ensembles:
-                            ensemble_qpe = np.zeros((NBINS_X, NBINS_Y, self.models[k].n_estimators))
-                            for tree in range(self.models[k].n_estimators):
-                                qpe_temp = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
-                                qpe_temp[validrows] = self.models[k].estimators_[tree].predict(Xcomb[validrows,:])
-                                ensemble_qpe[:,:,tree] = np.reshape(qpe_temp, (NBINS_X, NBINS_Y))    
-                    except:
-                        logger.error('Model failed!')
-                        raise
+                try:
+                    qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
+                except:
+                    raise
+                    logger.error('Model failed!')
+                    pass
                 
-                if ensembles:
-                    filepath = output_folder + '/' + k+'_ENS'
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)                
-                    filepath += '/' + tstr
-                    f = h5py.File(filepath, 'w')
-                    f.create_dataset('RFO_ENS', data=ensemble_qpe)
-                    f.close()
-                    logger.info('Continuing with next timestep as we dont apply a temporal integration')
-                    continue
-
-                # Traditional QPE output
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
-
                 if self.config['SAVE_NON_POSTPROCESSED_DATA']:
                     qpe_no_temp = qpe.copy()
                     
                 """Temporal disaggregation; Rescale qpe through rproxy"""
-                logger.info('Temporal disaggregation from 10-min to 5min')
                 idx_zh = np.where(np.array(model.variables)
                                 == 'zh_VISIB')[0][0]
 
@@ -960,6 +949,7 @@ class QPEProcessor(object):
                         logger.error("Pysteps is not available, no qpe disaggregation will be performed!")
                     qpe_ac = _disaggregate(comp)
                     
+                    
                     filepath = output_folder + '/' + k +'_AC/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
@@ -971,24 +961,7 @@ class QPEProcessor(object):
                     os.mkdir(filepath)                
                 filepath += '/' + tstr
                 self.save_output(qpe, t, filepath)
-
-                if ensembles:
-                    filepath = output_folder + '/' + k+'_ENS'
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)                
-                    filepath += '/' + tstr
-                    f = h5py.File(filepath, 'w')
-                    f.create_dataset('RFO_ENS', data=ensemble_qpe)
-                    f.close()
-
-                if len(self.config['QUANTILES'][k]) != 0 :
-                    for iq, qu in enumerate(self.config['QUANTILES'][k]):
-                        filepath = output_folder + '/' + k +'_Q{}/'.format(str(qu).replace('.','_'))
-                        if not os.path.exists(filepath):
-                            os.mkdir(filepath)
-                        self.save_output(quantile_qpe[:,:,iq], t, filepath+tstr)  
-
-
+                
                 if self.config['SAVE_NON_POSTPROCESSED_DATA']:
                     # Coding of folders (0 not applied, 1 applied)
                     # T: temporal disaggregation
