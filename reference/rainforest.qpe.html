@@ -131,7 +131,13 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFModelEval"><code class="docutils literal notranslate"><span class="pre">RFModelEval</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.calcScore"><code class="docutils literal notranslate"><span class="pre">calcScore()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.getTempIDX"><code class="docutils literal notranslate"><span class="pre">getTempIDX()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.prepareScoreDic"><code class="docutils literal notranslate"><span class="pre">prepareScoreDic()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.processFeatures"><code class="docutils literal notranslate"><span class="pre">processFeatures()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.readInputData"><code class="docutils literal notranslate"><span class="pre">readInputData()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
@@ -140,6 +146,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler"><code class="docutils literal notranslate"><span class="pre">MyCustomUnpickler</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">QuantileRandomForestRegressorBC</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.read_rf"><code class="docutils literal notranslate"><span class="pre">read_rf()</span></code></a></li>
 </ul>
@@ -341,12 +348,9 @@ subfolders (models) available in qpefolder</p></li>
 <section id="module-rainforest.qpe.qpe">
 <span id="rainforest-qpe-qpe-module"></span><h2>rainforest.qpe.qpe module<a class="headerlink" href="#module-rainforest.qpe.qpe" title="Permalink to this heading"></a></h2>
 <p>Main function to compute the QPE estimations on the Swiss grid</p>
-<p>Daniel Wolfensberger
-MeteoSwiss/EPFL
-<a class="reference external" href="mailto:daniel&#46;wolfensberger&#37;&#52;&#48;epfl&#46;ch">daniel<span>&#46;</span>wolfensberger<span>&#64;</span>epfl<span>&#46;</span>ch</a>
-December 2019</p>
-<p>Modified by D. Wolfensberger and R. Gugerli
-December 2022</p>
+<p>Daniel Wolfensberger, MeteoSwiss/EPFL, <a class="reference external" href="mailto:daniel&#46;wolfensberger&#37;&#52;&#48;meteoswiss&#46;ch">daniel<span>&#46;</span>wolfensberger<span>&#64;</span>meteoswiss<span>&#46;</span>ch</a>
+Rebecca Gugerli, EPFL/ MeteoSwiss
+March 2023</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="rainforest.qpe.qpe.QPEProcessor">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rainforest.qpe.qpe.</span></span><span class="sig-name descname"><span class="pre">QPEProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.qpe.qpe.QPEProcessor" title="Permalink to this definition"></a></dt>
@@ -368,7 +372,7 @@ as stored in the rf_models subfolder</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="rainforest.qpe.qpe.QPEProcessor.compute">
-<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RFO%y%j%H%MVH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.qpe.qpe.QPEProcessor.compute" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RFO%y%j%H%MVH'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensembles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.qpe.qpe.QPEProcessor.compute" title="Permalink to this definition"></a></dt>
 <dd><p>Computes QPE values for a given time range and stores them in a
 folder, in a binary format</p>
 <dl class="field-list simple">

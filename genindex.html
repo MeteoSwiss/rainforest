@@ -128,7 +128,13 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="reference/rainforest.ml.html">rainforest.ml package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf.RFModelEval"><code class="docutils literal notranslate"><span class="pre">RFModelEval</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf.calcScore"><code class="docutils literal notranslate"><span class="pre">calcScore()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf.getTempIDX"><code class="docutils literal notranslate"><span class="pre">getTempIDX()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf.prepareScoreDic"><code class="docutils literal notranslate"><span class="pre">prepareScoreDic()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf.processFeatures"><code class="docutils literal notranslate"><span class="pre">processFeatures()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf.readInputData"><code class="docutils literal notranslate"><span class="pre">readInputData()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
@@ -137,6 +143,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler"><code class="docutils literal notranslate"><span class="pre">MyCustomUnpickler</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">QuantileRandomForestRegressorBC</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.read_rf"><code class="docutils literal notranslate"><span class="pre">read_rf()</span></code></a></li>
 </ul>
@@ -339,6 +346,10 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/common.html#rainforest.common.lookup.calc_lookup">calc_lookup() (in module rainforest.common.lookup)</a>
 </li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFModelEval.calc_model_predictions">calc_model_predictions() (rainforest.ml.rf.RFModelEval method)</a>
+</li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.calcScore">calcScore() (in module rainforest.ml.rf)</a>
+</li>
       <li><a href="reference/rainforest.html#rainforest.interface.check_input">check_input() (in module rainforest.interface)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.utils.check_random_state">check_random_state() (in module rainforest.common.utils)</a>
@@ -349,10 +360,10 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter.CHtoWGSlng">CHtoWGSlng() (rainforest.common.wgs84_ch1903.GPSConverter method)</a>
 </li>
-      <li><a href="reference/common.html#rainforest.common.utils.chunks">chunks() (in module rainforest.common.utils)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/common.html#rainforest.common.utils.chunks">chunks() (in module rainforest.common.utils)</a>
+</li>
       <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor.compute">compute() (rainforest.qpe.qpe.QPEProcessor method)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.compute_hydro">compute_hydro() (rainforest.common.radarprocessing.Radar method)</a>
@@ -399,7 +410,7 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.feature_selection">feature_selection() (rainforest.ml.rf.RFTraining method)</a>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFModelEval.feature_selection">feature_selection() (rainforest.ml.rf.RFModelEval method)</a>
 </li>
       <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor.fetch_data">fetch_data() (rainforest.qpe.qpe.QPEProcessor method)</a>
 </li>
@@ -415,8 +426,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler.find_class">find_class() (rainforest.ml.rfdefinitions.MyCustomUnpickler method)</a>
 </li>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit">fit() (rainforest.ml.rfdefinitions.RandomForestRegressorBC method)</a>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC.fit">fit() (rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC method)</a>
+
+      <ul>
+        <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit">(rainforest.ml.rfdefinitions.RandomForestRegressorBC method)</a>
 </li>
+      </ul></li>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.fit_models">fit_models() (rainforest.ml.rf.RFTraining method)</a>
 </li>
   </ul></td>
@@ -433,15 +448,17 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.radarprocessing.Radar.get_field">get_field() (rainforest.common.radarprocessing.Radar method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/common.html#rainforest.common.lookup.get_lookup">get_lookup() (in module rainforest.common.lookup)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/common.html#rainforest.common.utils.get_qpe_files">get_qpe_files() (in module rainforest.common.utils)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.utils.get_qpe_files_multiple_dirs">get_qpe_files_multiple_dirs() (in module rainforest.common.utils)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.utils.get_version">get_version() (in module rainforest.common.utils)</a>
+</li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.getTempIDX">getTempIDX() (in module rainforest.ml.rf)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.wgs84_ch1903.GPSConverter">GPSConverter (class in rainforest.common.wgs84_ch1903)</a>
 </li>
@@ -511,7 +528,7 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.constants.MODE">MODE() (in module rainforest.common.constants)</a>
 </li>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.model_intercomparison">model_intercomparison() (rainforest.ml.rf.RFTraining method)</a>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFModelEval.model_intercomparison">model_intercomparison() (rainforest.ml.rf.RFModelEval method)</a>
 </li>
       <li>
     module
@@ -596,12 +613,22 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.graphics.plot_crossval_stats">plot_crossval_stats() (in module rainforest.common.graphics)</a>
 </li>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict">predict() (rainforest.ml.rfdefinitions.RandomForestRegressorBC method)</a>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC.predict">predict() (rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC method)</a>
+
+      <ul>
+        <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict">(rainforest.ml.rfdefinitions.RandomForestRegressorBC method)</a>
+</li>
+      </ul></li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict_ens">predict_ens() (rainforest.ml.rfdefinitions.RandomForestRegressorBC method)</a>
 </li>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.prepare_input">prepare_input() (rainforest.ml.rf.RFTraining method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.prepare_input_vert_agg">prepare_input_vert_agg() (rainforest.ml.rf.RFTraining method)</a>
+</li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.prepareScoreDic">prepareScoreDic() (in module rainforest.ml.rf)</a>
+</li>
       <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater.process_all_timesteps">process_all_timesteps() (rainforest.database.retrieve_radar_data.Updater method)</a>
 
       <ul>
@@ -609,6 +636,8 @@
 </li>
       </ul></li>
       <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater.process_single_timestep">process_single_timestep() (rainforest.database.retrieve_radar_data.Updater method)</a>
+</li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.processFeatures">processFeatures() (in module rainforest.ml.rf)</a>
 </li>
       <li><a href="reference/rainforest.html#rainforest.interface.prompt_check">prompt_check() (in module rainforest.interface)</a>
 </li>
@@ -624,13 +653,15 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.graphics.qpe_scatterplot">qpe_scatterplot() (in module rainforest.common.graphics)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor">QPEProcessor (class in rainforest.qpe.qpe)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/common.html#rainforest.common.utils.quantile">quantile() (in module rainforest.common.utils)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.utils.quantile_1D">quantile_1D() (in module rainforest.common.utils)</a>
+</li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC">QuantileRandomForestRegressorBC (class in rainforest.ml.rfdefinitions)</a>
 </li>
       <li><a href="reference/rainforest.database.html#rainforest.database.database.Database.query">query() (rainforest.database.database.Database method)</a>
 </li>
@@ -761,8 +792,6 @@
         <li><a href="reference/rainforest.ml.html#module-rainforest.ml.rfdefinitions">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     rainforest.ml.utils
 
@@ -770,6 +799,8 @@
         <li><a href="reference/rainforest.ml.html#module-rainforest.ml.utils">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     rainforest.qpe.evaluation
 
@@ -829,6 +860,8 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.io_data.read_xls">read_xls() (in module rainforest.common.io_data)</a>
 </li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.readInputData">readInputData() (in module rainforest.ml.rf)</a>
+</li>
       <li><a href="reference/common.html#rainforest.common.utils.rename_fields">rename_fields() (in module rainforest.common.utils)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.retrieve_data.retrieve_AQC_XLS">retrieve_AQC_XLS() (in module rainforest.common.retrieve_data)</a>
@@ -848,6 +881,8 @@
       <li><a href="reference/common.html#rainforest.common.retrieve_data.retrieve_prod_RT">retrieve_prod_RT() (in module rainforest.common.retrieve_data)</a>
 </li>
       <li><a href="reference/rainforest.database.html#rainforest.database.retrieve_radar_data.Updater.retrieve_radar_files">retrieve_radar_files() (rainforest.database.retrieve_radar_data.Updater method)</a>
+</li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFModelEval">RFModelEval (class in rainforest.ml.rf)</a>
 </li>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining">RFTraining (class in rainforest.ml.rf)</a>
 </li>

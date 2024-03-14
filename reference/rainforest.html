@@ -129,7 +129,13 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFModelEval"><code class="docutils literal notranslate"><span class="pre">RFModelEval</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.calcScore"><code class="docutils literal notranslate"><span class="pre">calcScore()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.getTempIDX"><code class="docutils literal notranslate"><span class="pre">getTempIDX()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.prepareScoreDic"><code class="docutils literal notranslate"><span class="pre">prepareScoreDic()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.processFeatures"><code class="docutils literal notranslate"><span class="pre">processFeatures()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.readInputData"><code class="docutils literal notranslate"><span class="pre">readInputData()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
@@ -138,6 +144,7 @@
 </li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler"><code class="docutils literal notranslate"><span class="pre">MyCustomUnpickler</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">QuantileRandomForestRegressorBC</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.read_rf"><code class="docutils literal notranslate"><span class="pre">read_rf()</span></code></a></li>
 </ul>
@@ -347,13 +354,23 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining.feature_selection"><code class="docutils literal notranslate"><span class="pre">RFTraining.feature_selection()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining.fit_models"><code class="docutils literal notranslate"><span class="pre">RFTraining.fit_models()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining.model_intercomparison"><code class="docutils literal notranslate"><span class="pre">RFTraining.model_intercomparison()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining.prepare_input"><code class="docutils literal notranslate"><span class="pre">RFTraining.prepare_input()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFModelEval"><code class="docutils literal notranslate"><span class="pre">RFModelEval</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFModelEval.calc_model_predictions"><code class="docutils literal notranslate"><span class="pre">RFModelEval.calc_model_predictions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFModelEval.feature_selection"><code class="docutils literal notranslate"><span class="pre">RFModelEval.feature_selection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFModelEval.model_intercomparison"><code class="docutils literal notranslate"><span class="pre">RFModelEval.model_intercomparison()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining.fit_models"><code class="docutils literal notranslate"><span class="pre">RFTraining.fit_models()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining.prepare_input"><code class="docutils literal notranslate"><span class="pre">RFTraining.prepare_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining.prepare_input_vert_agg"><code class="docutils literal notranslate"><span class="pre">RFTraining.prepare_input_vert_agg()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.calcScore"><code class="docutils literal notranslate"><span class="pre">calcScore()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.getTempIDX"><code class="docutils literal notranslate"><span class="pre">getTempIDX()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.prepareScoreDic"><code class="docutils literal notranslate"><span class="pre">prepareScoreDic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.processFeatures"><code class="docutils literal notranslate"><span class="pre">processFeatures()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.readInputData"><code class="docutils literal notranslate"><span class="pre">readInputData()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
@@ -365,9 +382,15 @@
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.MyCustomUnpickler.find_class"><code class="docutils literal notranslate"><span class="pre">MyCustomUnpickler.find_class()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">QuantileRandomForestRegressorBC</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC.fit"><code class="docutils literal notranslate"><span class="pre">QuantileRandomForestRegressorBC.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.QuantileRandomForestRegressorBC.predict"><code class="docutils literal notranslate"><span class="pre">QuantileRandomForestRegressorBC.predict()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC.fit()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC.predict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict_ens"><code class="docutils literal notranslate"><span class="pre">RandomForestRegressorBC.predict_ens()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rfdefinitions.read_rf"><code class="docutils literal notranslate"><span class="pre">read_rf()</span></code></a></li>
