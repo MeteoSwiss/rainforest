@@ -18,6 +18,8 @@ import numpy as np
 import pandas as pd
 import datetime
 import logging
+import pyart
+dask.config.set({'dataframe.query-planning': False})
 import dask.dataframe as dd
 
 logging.basicConfig(level=logging.INFO)

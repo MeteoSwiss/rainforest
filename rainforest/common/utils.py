@@ -20,6 +20,8 @@ from scipy.stats import energy_distance
 from dateutil import parser
 import glob
 import yaml
+import dask
+dask.config.set({'dataframe.query-planning': False})
 import  dask.dataframe as dd
 import re
 import numbers

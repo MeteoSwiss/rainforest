@@ -10,6 +10,8 @@ assemble one DataFrame with 10min estimates of gauges and RFmodels
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import dask
+dask.config.set({'dataframe.query-planning': False})
 import dask.dataframe as dd
 import copy
 import pickle
