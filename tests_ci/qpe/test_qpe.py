@@ -4,6 +4,7 @@ from pathlib import Path
 import datetime
 import numpy as np
 import shutil
+import pyart
 
 from rainforest.common.object_storage import ObjectStorage
 from rainforest.qpe import QPEProcessor
@@ -32,8 +33,8 @@ def test_qpe():
         print(str(Path(cwd, 'test_config.yml')))        
         qpeproc = QPEProcessor(str(Path(cwd, 'test_config.yml')), models)
         qpeproc.compute(cwd, t0,t1, basename = '{}{}'.format(names[model], tstr), test_mode = True)
-        qpe = read_cart(str(Path(cwd, model, datetime.datetime.strftime(t1, '{}{}.h5'.format(names[model], tstr)))))
-        qpe_field = qpe.data
+        qpe = pyart.aux_io.read_odim_grid_h5(str(Path(cwd, model, datetime.datetime.strftime(t1,
+            '{}{}.h5'.format(names[model], tstr)))))
 
         # Assertions
         # Data
