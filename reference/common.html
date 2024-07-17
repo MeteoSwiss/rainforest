@@ -974,28 +974,30 @@ afterwards</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>vmin</strong> (<em>float</em><em> or </em><em>None</em>) – If <em>vmin</em> and/or <em>vmax</em> is not given, they are initialized from the
-minimum and maximum value, respectively, of the first input
-processed; i.e., <code class="docutils literal notranslate"><span class="pre">__call__(A)</span></code> calls <code class="docutils literal notranslate"><span class="pre">autoscale_None(A)</span></code>.</p></li>
-<li><p><strong>vmax</strong> (<em>float</em><em> or </em><em>None</em>) – If <em>vmin</em> and/or <em>vmax</em> is not given, they are initialized from the
-minimum and maximum value, respectively, of the first input
-processed; i.e., <code class="docutils literal notranslate"><span class="pre">__call__(A)</span></code> calls <code class="docutils literal notranslate"><span class="pre">autoscale_None(A)</span></code>.</p></li>
+<li><p><strong>vmin</strong> (<em>float</em><em> or </em><em>None</em>) – Values within the range <code class="docutils literal notranslate"><span class="pre">[vmin,</span> <span class="pre">vmax]</span></code> from the input data will be
+linearly mapped to <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>. If either <em>vmin</em> or <em>vmax</em> is not
+provided, they default to the minimum and maximum values of the input,
+respectively.</p></li>
+<li><p><strong>vmax</strong> (<em>float</em><em> or </em><em>None</em>) – Values within the range <code class="docutils literal notranslate"><span class="pre">[vmin,</span> <span class="pre">vmax]</span></code> from the input data will be
+linearly mapped to <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>. If either <em>vmin</em> or <em>vmax</em> is not
+provided, they default to the minimum and maximum values of the input,
+respectively.</p></li>
 <li><p><strong>clip</strong> (<em>bool</em><em>, </em><em>default: False</em>) – <p>Determines the behavior for mapping values outside the range
 <code class="docutils literal notranslate"><span class="pre">[vmin,</span> <span class="pre">vmax]</span></code>.</p>
-<p>If clipping is off, values outside the range <code class="docutils literal notranslate"><span class="pre">[vmin,</span> <span class="pre">vmax]</span></code> are also
-transformed linearly, resulting in values outside <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>. For a
-standard use with colormaps, this behavior is desired because colormaps
-mark these outside values with specific colors for <em>over</em> or <em>under</em>.</p>
-<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code> values falling outside the range <code class="docutils literal notranslate"><span class="pre">[vmin,</span> <span class="pre">vmax]</span></code>,
-are mapped to 0 or 1, whichever is closer. This makes these values
-indistinguishable from regular boundary values and can lead to
-misinterpretation of the data.</p>
+<p>If clipping is off, values outside the range <code class="docutils literal notranslate"><span class="pre">[vmin,</span> <span class="pre">vmax]</span></code> are
+also transformed, resulting in values outside <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>.  This
+behavior is usually desirable, as colormaps can mark these <em>under</em>
+and <em>over</em> values with specific colors.</p>
+<p>If clipping is on, values below <em>vmin</em> are mapped to 0 and values
+above <em>vmax</em> are mapped to 1. Such values become indistinguishable
+from regular boundary values, which may cause misinterpretation of
+the data.</p>
 </p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>Returns 0 if <code class="docutils literal notranslate"><span class="pre">vmin</span> <span class="pre">==</span> <span class="pre">vmax</span></code>.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">vmin</span> <span class="pre">==</span> <span class="pre">vmax</span></code>, input data will be mapped to 0.</p>
 </dd></dl>
 
 <dl class="py class">
