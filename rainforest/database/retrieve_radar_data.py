@@ -14,6 +14,8 @@ so you should never have to call it manually
 
 import numpy as np
 import pandas as pd
+import dask
+dask.config.set({'dataframe.query-planning': False})
 import dask.dataframe as dd
 import datetime
 import logging

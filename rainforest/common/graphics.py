@@ -169,7 +169,7 @@ def qpe_plot(data, subplots = None, figsize = None,
               np.min(x),np.max(x)]
 
     for i,dd in enumerate(data):
-        m = ax[i].imshow(dd,vmin = vmin, vmax = vmax, extent = extent,
+        m = ax[i].imshow(dd, extent = extent,
               cmap = cmap_qpe,  norm = norm, **kwargs)
         
         if ch_border:

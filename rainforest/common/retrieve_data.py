@@ -124,7 +124,9 @@ def retrieve_hzt_RT(tstep):
         # Sort filelist to most recent prediction
         content_filt = np.array([c for c in content_zip if c.endswith('800')])
         times_filt = np.array([datetime.datetime.strptime(c[3:12],
-                            '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_filt])
+                                '%y%j%H%M').replace(tzinfo=datetime.timezone.utc)+\
+                                datetime.timedelta(hours=int(c[-2::])) \
+                                for c in content_filt])
         conditions = np.array([np.logical_and((t >= start_time), (t <= end_time)) for t in times_filt])
         
         content_filt = content_filt[conditions]
@@ -139,7 +141,8 @@ def retrieve_hzt_RT(tstep):
     
     if len(all_hours) != len(times_filt):
         content_times = np.array([datetime.datetime.strptime(c[3:12],
-                '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_zip])
+                    '%y%j%H%M').replace(tzinfo=datetime.timezone.utc)+\
+                    datetime.timedelta(hours=int(c[-2::])) for c in content_zip])
         # Find time that is missing:
         for hh in all_hours:
             if not hh in times_filt:
@@ -571,7 +574,8 @@ def retrieve_prod_RT(time, product_name,
 
     # Derive datetime of each file
     times_zip = np.array([datetime.datetime.strptime(c[3:12],
-                '%y%j%H%M') for c in content_zip])
+                '%y%j%H%M').replace(tzinfo=datetime.timezone.utc)
+                    for c in content_zip])
 
     # Get a list of all files to retrieve
     conditions = (times_zip == time)
