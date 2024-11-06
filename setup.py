@@ -24,10 +24,6 @@ with open(path.join(here, 'requirements.txt')) as requirements_file:
         line for line in requirements_file.read().splitlines() if not line.startswith('#')
     ]
 
-extension_addat = Extension(
-    'rainforest.common.add_at', sources=['rainforest/common/add_at.pyx'],
-    include_dirs = [get_include()])
-
 
 s = setup(name        = "rainforest_mch",
     description = "RandomForest QPE python library",
@@ -54,5 +50,4 @@ s = setup(name        = "rainforest_mch",
                            'rf_train = rainforest.ml.rf_train:main',
                            'interact_cloud = rainforest.common.interact_cloud:main',
                            'jretrievedwh = rainforest.common.jretrievedwh:main']},
-    ext_modules = cythonize(extension_addat)
         )
