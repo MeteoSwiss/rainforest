@@ -77,9 +77,9 @@ class RFTraining(object):
         
         if not valid :
             logging.info('Could not find valid input data from the folder {:s}'.format(input_location))
-        # if force_regenerate_input or not valid:
-        #     logging.info('The program will now compute this input data from the database, this takes quite some time')
-        #     self.prepare_input()
+        if force_regenerate_input or not valid:
+            logging.info('The program will now compute this input data from the database, this takes quite some time')
+            self.prepare_input()
     
     def prepare_input(self, only_center=True, foldername_radar='radar'):
         """

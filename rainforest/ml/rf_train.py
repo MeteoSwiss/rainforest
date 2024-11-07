@@ -149,7 +149,7 @@ def main():
     input_location = str(Path(options.dbfolder, 'rf_input_data'))
     logging.info('Assuming that input data for RF training is in folder {:s}'.format(input_location))
     logging.info('If not available in this folder, they will be computed and stored there')
-    
+
     rf = RFTraining(options.dbfolder, options.inputfolder,
                     options.generate_inputs)
     
