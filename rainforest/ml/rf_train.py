@@ -63,9 +63,9 @@ def main():
                       '"dualpol_default" = \'{"RF_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\'' +
                       '"vpol_default" = \'{"RF_vpol": ["RADAR", "zv_VISIB_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\'' +
                       '"hpol_default" = \'{"RF_hpol": ["RADAR", "zh_VISIB_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\'' +
-                      '"RFO" = \'{"RF_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","SW_mean", "HISO", "HEIGHT","VISIB_mean"]}\'' +
-                      '"RFO_vpol" = \'{"RF_vpol": ["RADAR", "zv_VISIB_mean","SW_mean", "HISO", "HEIGHT","VISIB_mean"]}\'' +
-                      '"RFO_hpol" = \'{"RF_hpol": ["RADAR", "zh_VISIB_mean","SW_mean", "HISO", "HEIGHT","VISIB_mean"]}\'' +
+                      '"RFO_default" = \'{"RFO_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","SW_mean", "HISO", "HEIGHT","VISIB_mean"]}\'' +
+                      '"RFO_default_vpol" = \'{"RFO_vpol": ["RADAR", "zv_VISIB_mean","SW_mean", "HISO", "HEIGHT","VISIB_mean"]}\'' +
+                      '"RFO_default_hpol" = \'{"RFO_hpol": ["RADAR", "zh_VISIB_mean","SW_mean", "HISO", "HEIGHT","VISIB_mean"]}\'' +
                       'You can combine them for example "vpol_default, hpol_default, dualpol_default, will compute all three"',
                       metavar="MODELS")
 
@@ -119,15 +119,15 @@ def main():
                 elif opt == 'vpol_default':
                     dic_models['RF_hpol'] =  ["RADAR", "zv_VISIB_mean","SW_mean","T",
                                               "HEIGHT","VISIB_mean"]
-                elif opt == 'RFO':
+                elif opt == 'RFO_default':
                     dic_models['RFO'] =  ["RADAR", "zh_VISIB_mean",
                                                  "zv_VISIB_mean","KDP_mean",
                                                  "RHOHV_mean","SW_mean","HISO", 
                                                  "HEIGHT","VISIB_mean"]
-                elif opt == 'RFO_hpol':
+                elif opt == 'RFO_default_hpol':
                     dic_models['RFO_hpol'] =  ["RADAR", "zh_VISIB_mean","SW_mean","HISO",
                                               "HEIGHT","VISIB_mean"]
-                elif opt == 'RFO_vpol':
+                elif opt == 'RFO_default_vpol':
                     dic_models['RFO_hpol'] =  ["RADAR", "zv_VISIB_mean","SW_mean","HISO",
                                               "HEIGHT","VISIB_mean"]
                     
