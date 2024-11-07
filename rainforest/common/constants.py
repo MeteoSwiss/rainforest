@@ -28,7 +28,7 @@ metadata_folder = str(Path(data_folder, 'references', 'metadata'))
 lut_folder = str(Path(data_folder, 'references', 'lookup_data'))
 lut_boscacci_folder = str(Path(data_folder, 'references', 'lut_boscacci'))
 cosmo_coords_folder = str(Path(data_folder, 'references', 'coords_cosmo'))
-radar_samples_folder = str(Path(data_folder, 'references', 'radar_samples')) 
+radar_samples_folder = str(Path(data_folder, 'references', 'radar_samples'))
 rfmodels_folder = str(Path(data_folder, 'rf_models'))
 
 
@@ -44,7 +44,7 @@ THRESHOLD_SOLID = 2 # Below 2 °C is considerd to be solid precipitation
 # STATIONS
 ###############
 
-METSTATIONS = pd.read_csv(ObjStorage.check_file(str(Path(metadata_folder, 'data_stations.csv'))), 
+METSTATIONS = pd.read_csv(ObjStorage.check_file(str(Path(metadata_folder, 'data_stations.csv'))),
                            sep=';', encoding='latin-1')
 
 ###############HE
@@ -55,7 +55,7 @@ METSTATIONS = pd.read_csv(ObjStorage.check_file(str(Path(metadata_folder, 'data_
 RADARS = pd.read_csv(ObjStorage.check_file(str(Path(metadata_folder, 'data_radars.csv'))),
                            sep=';', encoding='latin-1')
 
-ELEVATIONS = [-0.2, 0.4, 1.0, 1.6, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 
+ELEVATIONS = [-0.2, 0.4, 1.0, 1.6, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5,
                9.5, 11.0, 13.0, 16.0, 20.0, 25.0, 30.0, 35.0, 40.0]
 
 RADIAL_RESOLUTION = {'L':500, 'H': 83.3}
@@ -125,7 +125,7 @@ X_QPE_CENTERS = 0.5 * (X_QPE[0:-1] + X_QPE[1:])
 
 MASK_NAN = np.load(ObjStorage.check_file(str(Path(metadata_folder, 'mask_nan.npy'))))
 
-        
+
 dic = np.load(ObjStorage.check_file(str(Path(metadata_folder, 'scale_RGB.npz'))))
 SCALE_RGB = {'colors':dic['arr_0'],'values':dic['arr_1']}
 
@@ -255,7 +255,7 @@ if ('lom' in socket.gethostname()) or ('meteoswiss' in socket.gethostname()):
     FOLDER_RADAR = '/srn/data/'
     FOLDER_ISO0 = '/srn/data/HZT/'
 elif 'balfrin' in socket.gethostname():
-    FOLDER_DATABASE = '/store_new/mch/msrad/radar/radar_database/'
+    FOLDER_DATABASE = '/store_new/mch/msrad/radar/radar_database_v2/'
     FOLDER_RADAR = '/store_new/mch/msrad/radar/swiss/data/'
     FOLDER_RADARH = '/store_new/mch/msrad/radar/polarHR/data/'
     FOLDER_CPCCV = '/store_new/mch/msrad/radar/cpc_validation/daily/'
@@ -307,7 +307,7 @@ PYART_NAMES_MAPPING = {'reflectivity':'ZH',
 NUM_RADAR_PER_GAUGE = 2 # 2 5-min radar scans per 10-min gauge accumulation
 
 
-AVG_BY_VAR = {'ZH': 1 , 'ZH_VISIB' : 1, 'ZV': 1, 'ZV_VISIB' : 1, 'ZDR': 1, 
+AVG_BY_VAR = {'ZH': 1 , 'ZH_VISIB' : 1, 'ZV': 1, 'ZV_VISIB' : 1, 'ZDR': 1,
               'ZV_CORR': 1, 'ZH_CORR':1 , 'ZDR_CORR':1,
               'NH': 1, 'NV': 1, 'TCOUNT':2}
 
@@ -321,15 +321,15 @@ AVG_METHODS[2] = lambda x, axis: np.nansum(x, axis = axis)
 WARNING_RAM = 512 # megabytes
 
 # Default (not indicated) is np.float32
-COL_TYPES = {'TIMESTAMP':np.int32, 
+COL_TYPES = {'TIMESTAMP':np.int32,
          'RADAR':str,
          'SWEEP':np.dtype(np.int8),
          'NX':np.dtype(np.int8),
-         'NY':np.dtype(np.int8),         
+         'NY':np.dtype(np.int8),
          'STATION':str,
          'HYDRO':np.int8,
          'VISIB':np.int8,
-         'TCOUNT':np.int8}    
+         'TCOUNT':np.int8}
 
 
 HYDRO_CENTROIDS = {}
@@ -378,6 +378,3 @@ HYDRO_CENTROIDS['W'] = [[16.7650, 0.3754, 0.0442, 0.9866, 1409.0],  # AG
          [36.8091, 0.7266, 0.1284, 0.9924, -0071.1],  # WS
          [53.8402, 0.8922, 0.5306, 0.9890, -1017.6],  # MH
          [45.9686, 0.0845, 0.0963, 0.9940, 0867.4]]  # IH/HDG
-
-
-
