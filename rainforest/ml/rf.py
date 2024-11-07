@@ -387,7 +387,7 @@ class RFTraining(object):
             ###############################################################################
 
             gaugetab_train = gaugetab[~invalid].copy()
-
+            import pdb; pdb.set_trace()
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))
             features_VERT_AGG = vert_aggregation(radartab[features_dic[model]],
                                  vweights, grp_vertical,
