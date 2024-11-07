@@ -1,4 +1,4 @@
-numba
+mba
 Cython
 numpy
 netCDF4
@@ -18,3 +18,4 @@ h5py
 pysteps
 xlrd
 pyproj
+xarray<=2024.9.0

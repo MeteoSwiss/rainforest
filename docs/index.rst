@@ -24,7 +24,7 @@ as well as a command line (:ref:`interface <Interface>`) to run most of the comm
 :ref:`Usage`
 ~~~~~~~~~~~~~~~~~
 
-How to use the code on Kesch
+How to use the code on balfrin
 
 :ref:`Reference`
 ~~~~~~~~~~~~~~~~~~~~~~~~

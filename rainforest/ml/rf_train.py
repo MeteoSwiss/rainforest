@@ -50,7 +50,7 @@ def main():
                       metavar = "END", default = None)
 
     parser.add_option("-c", "--config", dest = "config", type = str,
-                      default = None, help="Path of the config file, the default will be default_config.yml in the database module", 
+                      default = None, help="Path of the config file, the default will be default_config.yml in the ml module", 
                       metavar="CONFIG")
     
     parser.add_option("-m", "--models", dest = "models", type = str,
