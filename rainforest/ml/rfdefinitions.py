@@ -14,9 +14,13 @@ December 2019
 import pickle
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error
 import os
 from scipy.interpolate import UnivariateSpline
 from pathlib import Path
+import mlflow
+import mlflow.sklearn
+from mlflow.models.signature import infer_signature
 
 # Local imports
 from ..common.object_storage import ObjectStorage
@@ -126,24 +130,51 @@ class RandomForestRegressorBC(RandomForestRegressor):
         -------
         self : object
         """
+        mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
+        mlflow.set_experiment(experiment_name='rainforest')
+
         X.columns = [str(col) for col in X.columns]
-        super().fit(X,y, sample_weight)
-        y_pred = super().predict(X)
-        if self.bctype in ['cdf','raw']:
-            if self.bctype == 'cdf':
+
+        with mlflow.start_run() as run:
+
+            features_dic = {'features': X.columns.to_list()}
+            mlflow.log_dict(features_dic, 'features.json')
+
+            super().fit(X,y, sample_weight)
+            y_pred = super().predict(X)
+
+            if self.bctype in ['cdf','raw']:
+                if self.bctype == 'cdf':
+                    x_ = np.sort(y_pred)
+                    y_ = np.sort(y)
+                elif self.bctype == 'raw':
+                    x_ = y_pred
+                    y_ = y
+                self.p = _polyfit_no_inter(x_,y_,self.degree)
+            elif self.bctype == 'spline':
                 x_ = np.sort(y_pred)
                 y_ = np.sort(y)
-            elif self.bctype == 'raw':
-                x_ = y_pred
-                y_ = y
-            self.p = _polyfit_no_inter(x_,y_,self.degree)
-        elif self.bctype == 'spline':
-            x_ = np.sort(y_pred)
-            y_ = np.sort(y)
-            _,idx = np.unique(x_, return_index = True)
-            self.p = UnivariateSpline(x_[idx], y_[idx])
-        else:
-            self.p = 1
+                _,idx = np.unique(x_, return_index = True)
+                self.p = UnivariateSpline(x_[idx], y_[idx])
+            else:
+                self.p = 1
+
+            # logging
+            mlflow.log_metric('train_R2', r2_score(y_true=y, y_pred=y_pred))
+            mlflow.log_metric('train_MAE', mean_absolute_error(y_true=y, y_pred=y_pred))
+            mlflow.log_metric('train_RMSE', root_mean_squared_error(y_true=y, y_pred=y_pred))
+
+            y_pred_bc = self.predict(X=X, bc=True)
+            mlflow.log_metric('train_R2_bc', r2_score(y_true=y, y_pred=y_pred_bc))
+            mlflow.log_metric('train_MAE_bc', mean_absolute_error(y_true=y, y_pred=y_pred_bc))
+            mlflow.log_metric('train_RMSE_bc', root_mean_squared_error(y_true=y, y_pred=y_pred_bc))
+
+            inpt_exp = X[:1]
+            sign = infer_signature(X[:10],y[:10])
+            mlflow.sklearn.log_model(self,
+                                      artifact_path='random_forest_model',
+                                      input_example=inpt_exp,
+                                      signature=sign)
 
         return
 
