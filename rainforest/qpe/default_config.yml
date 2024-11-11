@@ -1,4 +1,4 @@
-TMP_FOLDER: '/scratch/${USER}/temp/'
+TMP_FOLDER: '/scratch/mch/${USER}/temp/'
 KDP_PARAMETERS:
     RMIN : 1000.
     RMAX : 50000.
