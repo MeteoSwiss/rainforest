@@ -139,6 +139,8 @@ class RandomForestRegressorBC(RandomForestRegressor):
 
             features_dic = {'features': X.columns.to_list()}
             mlflow.log_dict(features_dic, 'features.json')
+            params_dic = self.get_params()
+            mlflow.log_params(params_dic)
 
             super().fit(X,y, sample_weight)
             y_pred = super().predict(X)
