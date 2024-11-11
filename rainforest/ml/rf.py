@@ -34,7 +34,7 @@ class RFTraining(object):
     training, train random forests and perform cross-validation of trained models
     '''
     def __init__(self, db_location, input_location=None,
-                 force_regenerate_input = False):
+                 force_regenerate_input = False, logmlflow=False):
         """
         Initializes the class and if needed prepare input data for the training
 
@@ -55,6 +55,9 @@ class RFTraining(object):
         force_regenerate_input : bool
             if True the input parquet files will always be regenerated from
             the database even if already present in the input_location folder
+        logmlflow : bool
+            If True, training logs will be produced for MLFlow.
+            The trained model will also be logged. 
         """
 
         if input_location == None:
@@ -74,6 +77,7 @@ class RFTraining(object):
 
         self.input_location = input_location
         self.db_location = db_location
+        self.logmlflow = logmlflow
 
         if not valid :
             logging.info('Could not find valid input data from the folder {:s}'.format(input_location))
@@ -435,7 +439,7 @@ class RFTraining(object):
                           n_jobs = config["n_jobs"],
                           **config[model]['RANDOMFOREST_REGRESSOR'])
 
-            reg.fit(features_VERT_AGG[valid], Y[valid])
+            reg.fit(features_VERT_AGG[valid], Y[valid], logmlflow = self.logmlflow)
 
             out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}.p'.format(model,
                                                   config[model]['VERT_AGG']['BETA'],

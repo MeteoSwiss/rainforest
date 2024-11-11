@@ -75,6 +75,13 @@ def main():
                       help="If set to 1 (default), the input parquet files (homogeneized tables) for the ml routines will be recomputed from the current database rows"+
                       "This takes a bit of time but is needed if you updated the database and want to use the new data in the training",
                       metavar="MODELS")
+    
+    parser.add_option("-l", "--logmlflow", 
+                      action="store_true", 
+                      dest="logmlflow", 
+                      default=False,
+                      help = "If set to 1, the training procedure will produce logs for MLFlow. The default value is 0." +
+                      "To log to a remove ML server, the environment variable MLFLOW_TRACKING_URI needs to be set.")
 
     (options, args) = parser.parse_args()
 
@@ -151,7 +158,7 @@ def main():
     logging.info('If not available in this folder, they will be computed and stored there')
 
     rf = RFTraining(options.dbfolder, options.inputfolder,
-                    options.generate_inputs)
+                    options.generate_inputs, options.logmlflow)
 
     if not only_regenerate:
         rf.fit_models(options.config, options.models, options.start,

@@ -21,6 +21,7 @@ from pathlib import Path
 import mlflow
 import mlflow.sklearn
 from mlflow.models.signature import infer_signature
+from contextlib import nullcontext
 
 # Local imports
 from ..common.object_storage import ObjectStorage
@@ -111,7 +112,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         self.visib_weighting = visib_weighting
         self.metadata = metadata
 
-    def fit(self, X,y, sample_weight = None):
+    def fit(self, X,y, sample_weight = None, logmlflow = False):
         """
         Fit both estimator and a-posteriori bias correction
         Parameters
@@ -126,6 +127,8 @@ class RandomForestRegressorBC(RandomForestRegressor):
             ignored while searching for a split in each node. In the case of
             classification, splits are also ignored if they would result in any
             single class carrying a negative weight in either child node.
+        logmlflow : bool, default = False
+            It defines whether logs and the trained model should be logged to MLFlow.
         Returns
         -------
         self : object
@@ -135,12 +138,14 @@ class RandomForestRegressorBC(RandomForestRegressor):
 
         X.columns = [str(col) for col in X.columns]
 
-        with mlflow.start_run() as run:
+        run_context = mlflow.start_run() if logmlflow else nullcontext()
+        with run_context as run:
 
-            features_dic = {'features': X.columns.to_list()}
-            mlflow.log_dict(features_dic, 'features.json')
-            params_dic = self.get_params()
-            mlflow.log_params(params_dic)
+            if logmlflow:
+                features_dic = {'features': X.columns.to_list()}
+                mlflow.log_dict(features_dic, 'features.json')
+                params_dic = self.get_params()
+                mlflow.log_params(params_dic)
 
             super().fit(X,y, sample_weight)
             y_pred = super().predict(X)
@@ -161,24 +166,25 @@ class RandomForestRegressorBC(RandomForestRegressor):
             else:
                 self.p = 1
 
-            # logging
-            mlflow.log_metric('train_R2', r2_score(y_true=y, y_pred=y_pred))
-            mlflow.log_metric('train_MAE', mean_absolute_error(y_true=y, y_pred=y_pred))
-            mlflow.log_metric('train_RMSE', root_mean_squared_error(y_true=y, y_pred=y_pred))
+            if logmlflow:
+                self._log_metrics(y=y, y_pred=y_pred, metrics_prefix='train')
 
-            y_pred_bc = self.predict(X=X, bc=True)
-            mlflow.log_metric('train_R2_bc', r2_score(y_true=y, y_pred=y_pred_bc))
-            mlflow.log_metric('train_MAE_bc', mean_absolute_error(y_true=y, y_pred=y_pred_bc))
-            mlflow.log_metric('train_RMSE_bc', root_mean_squared_error(y_true=y, y_pred=y_pred_bc))
+                y_pred_bc = self.predict(X=X, bc=True)
+                self._log_metrics(y=y, y_pred=y_pred_bc, metrics_prefix='train_bc')
 
-            inpt_exp = X[:1]
-            sign = infer_signature(X[:10],y[:10])
-            mlflow.sklearn.log_model(self,
-                                      artifact_path='random_forest_model',
-                                      input_example=inpt_exp,
-                                      signature=sign)
+                inpt_exp = X[:1]
+                sign = infer_signature(X[:10],y[:10])
+                mlflow.sklearn.log_model(self,
+                                        artifact_path='random_forest_model',
+                                        input_example=inpt_exp,
+                                        signature=sign)
 
         return
+    
+    def _log_metrics(self, y, y_pred, metrics_prefix):
+        mlflow.log_metric(f'{metrics_prefix}_R2', r2_score(y_true=y, y_pred=y_pred))
+        mlflow.log_metric(f'{metrics_prefix}_MAE', mean_absolute_error(y_true=y, y_pred=y_pred))
+        mlflow.log_metric(f'{metrics_prefix}_RMSE', root_mean_squared_error(y_true=y, y_pred=y_pred))
 
     def predict(self, X, round_func = None, bc = True):
         """
