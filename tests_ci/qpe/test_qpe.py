@@ -15,11 +15,9 @@ def test_qpe():
     cwd = os.path.dirname(os.getenv('PYTEST_CURRENT_TEST')) + '/'
     # Get RF model
     filename = {}
-    filename['RF_dualpol'] = 'RF_dualpol_BETA_-0.5_BC_spline.p'
-    filename['RFO'] = 'RFO_BETA_-0.5_BC_spline_trained_2016_2019.p'
+    filename['RFO'] = 'RFO_BETA_-0.5_BC_spline.p'
 
     names = {}
-    names['RF_dualpol'] = 'RFQ'
     names['RFO'] = 'RFO'
 
     t0 = datetime.datetime(2022,9,28,5,10)
