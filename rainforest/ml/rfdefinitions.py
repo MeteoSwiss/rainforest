@@ -111,6 +111,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         self.beta = beta
         self.visib_weighting = visib_weighting
         self.metadata = metadata
+        self.p = None
 
     def fit(self, X,y, sample_weight = None, logmlflow = False):
         """
@@ -133,19 +134,21 @@ class RandomForestRegressorBC(RandomForestRegressor):
         -------
         self : object
         """
-        mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
-        mlflow.set_experiment(experiment_name='rainforest')
+        if logmlflow:
+            mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
+            mlflow.set_experiment(experiment_name='rainforest')
+            mlflow.sklearn.autolog(log_model_signatures=True, log_input_examples=True)
 
         X.columns = [str(col) for col in X.columns]
 
         run_context = mlflow.start_run() if logmlflow else nullcontext()
         with run_context as run:
 
-            if logmlflow:
-                features_dic = {'features': X.columns.to_list()}
-                mlflow.log_dict(features_dic, 'features.json')
-                params_dic = self.get_params()
-                mlflow.log_params(params_dic)
+            # if logmlflow:
+            #     features_dic = {'features': X.columns.to_list()}
+            #     mlflow.log_dict(features_dic, 'features.json')
+            #     params_dic = self.get_params()
+            #     mlflow.log_params(params_dic)
 
             super().fit(X,y, sample_weight)
             y_pred = super().predict(X)
@@ -167,18 +170,10 @@ class RandomForestRegressorBC(RandomForestRegressor):
                 self.p = 1
 
             if logmlflow:
-                self._log_metrics(y=y, y_pred=y_pred, metrics_prefix='train')
+                # self._log_metrics(y=y, y_pred=y_pred, metrics_prefix='manual_train')
 
                 y_pred_bc = self.predict(X=X, bc=True)
                 self._log_metrics(y=y, y_pred=y_pred_bc, metrics_prefix='train_bc')
-
-                inpt_exp = X[:1]
-                sign = infer_signature(X[:10],y[:10])
-                mlflow.sklearn.log_model(self,
-                                        artifact_path='random_forest_model',
-                                        input_example=inpt_exp,
-                                        signature=sign)
-
         return
     
     def _log_metrics(self, y, y_pred, metrics_prefix):
@@ -215,7 +210,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
             round_func = lambda x: x
 
         func = lambda x: x
-        if bc:
+        if bc and self.p is not None:
             if self.bctype in ['cdf','raw']:
                 func = lambda x : np.polyval(self.p,x)
             elif self.bctype == 'spline':
