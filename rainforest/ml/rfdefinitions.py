@@ -233,10 +233,12 @@ def read_rf(rf_name, filepath=''):
     else:
         rf_name = str(Path(filepath, rf_name))
 
+    # Get model from cloud if needed
+    rf_name = ObjStorage.check_file(rf_name)
+    
     if not os.path.exists(rf_name):
         raise IOError('RF model {:s} does not exist!'.format(rf_name))
-        return None
-    
+        
     if is_compressed:
         with gzip.open(open(ObjStorage.check_file(rf_name), 'rb')) as f: 
             return MyCustomUnpickler(f).load()
