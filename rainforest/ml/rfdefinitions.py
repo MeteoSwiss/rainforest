@@ -12,6 +12,8 @@ December 2019
 
 # Global imports
 import pickle
+import gzip
+import tempfile
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error
@@ -137,18 +139,17 @@ class RandomForestRegressorBC(RandomForestRegressor):
         if logmlflow:
             mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
             mlflow.set_experiment(experiment_name='rainforest')
-            mlflow.sklearn.autolog(log_model_signatures=True, log_input_examples=True)
 
         X.columns = [str(col) for col in X.columns]
 
         run_context = mlflow.start_run() if logmlflow else nullcontext()
         with run_context as run:
 
-            # if logmlflow:
-            #     features_dic = {'features': X.columns.to_list()}
-            #     mlflow.log_dict(features_dic, 'features.json')
-            #     params_dic = self.get_params()
-            #     mlflow.log_params(params_dic)
+            if logmlflow:
+                features_dic = {'features': X.columns.to_list()}
+                mlflow.log_dict(features_dic, 'features.json')
+                params_dic = self.get_params()
+                mlflow.log_params(params_dic)
 
             super().fit(X,y, sample_weight)
             y_pred = super().predict(X)
@@ -170,10 +171,32 @@ class RandomForestRegressorBC(RandomForestRegressor):
                 self.p = 1
 
             if logmlflow:
-                # self._log_metrics(y=y, y_pred=y_pred, metrics_prefix='manual_train')
+                self._log_metrics(y=y, y_pred=y_pred, metrics_prefix='train')
 
                 y_pred_bc = self.predict(X=X, bc=True)
                 self._log_metrics(y=y, y_pred=y_pred_bc, metrics_prefix='train_bc')
+                
+
+                # Log a gzipped version of the pickled model using a temporary in-memory file                    
+                with tempfile.TemporaryDirectory() as tmp_dir:
+
+                    temp_file_path = os.path.join(tmp_dir, "rf.pkl.gz")
+                    
+                    with gzip.open(temp_file_path, 'wb') as f:
+                        pickle.dump(self, f)
+                        print('wrote file')
+
+                    mlflow.log_artifact(temp_file_path, "rf_gzipped_pickle_model")
+                    print('logged model')
+                
+                # Log the signature of the model to obtain a visualization in MLflow 
+                # If MLflow will support compressed model logging in the future, this should be changed. 
+                inpt_exp = X[:1]
+                sign = infer_signature(X[:10],y[:10])
+                mlflow.sklearn.log_model(sk_model=None,
+                                        artifact_path='rf_signature_no_model',
+                                        input_example=inpt_exp,
+                                        signature=sign)                
         return
     
     def _log_metrics(self, y, y_pred, metrics_prefix):
