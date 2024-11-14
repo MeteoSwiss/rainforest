@@ -392,7 +392,7 @@ class QPEProcessor(object):
 
         if self.rt:
             import socket
-            if 'tsa' in socket.gethostname():
+            if 'balfrin' in socket.gethostname() or 'nid' in socket.gethostname():
                 constants.FOLDER_RADAR = '/scratch/rgugerli/rainforest_debug/output/output_RT/temp/'
                 constants.FOLDER_ISO0 = '/scratch/rgugerli/rainforest_debug/output/output_RT/temp/HZT/'
 
