@@ -71,8 +71,6 @@ def main():
 
     options.start = datetime.datetime.strptime(options.start, '%Y%m%d%H%M')
     options.end = datetime.datetime.strptime(options.end, '%Y%m%d%H%M')
-    print(options.config, options.models)
-    print(options.start, options.end)
     qpe = QPEProcessor(options.config, options.models)
     qpe.compute(options.outputfolder, options.start, options.end)
 

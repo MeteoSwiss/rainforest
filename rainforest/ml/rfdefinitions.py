@@ -12,6 +12,7 @@ December 2019
 
 # Global imports
 import pickle
+import gzip
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 import os
@@ -195,7 +196,6 @@ class MyCustomUnpickler(pickle.Unpickler):
     import __main__
     __main__.RandomForestRegressorBC = RandomForestRegressorBC
     def find_class(self, module, name):
-        print(module,name)
         return super().find_class(module, name)
 
 
@@ -220,8 +220,12 @@ def read_rf(rf_name, filepath=''):
     that allows to predict precipitation intensities for new points
     """
 
-    if rf_name[-2:] != '.p':
-        rf_name += '.p'
+    is_compressed = False
+    if rf_name.endswith('.gz'):
+        is_compressed = True
+    else:
+        if not rf_name[-2:].endswith('.p'):
+            rf_name += '.p'
 
     if filepath == '':
         if os.path.dirname(rf_name) == '':
@@ -229,8 +233,14 @@ def read_rf(rf_name, filepath=''):
     else:
         rf_name = str(Path(filepath, rf_name))
 
-    unpickler = MyCustomUnpickler(open(ObjStorage.check_file(rf_name), 'rb'))
     if not os.path.exists(rf_name):
         raise IOError('RF model {:s} does not exist!'.format(rf_name))
+        return None
+    
+    if is_compressed:
+        with gzip.open(open(ObjStorage.check_file(rf_name), 'rb')) as f: 
+            return MyCustomUnpickler(f).load()
     else:
-        return unpickler.load()
+        with open(ObjStorage.check_file(rf_name), 'rb') as f: 
+            return MyCustomUnpickler(f).load()
+
