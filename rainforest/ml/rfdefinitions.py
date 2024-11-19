@@ -139,8 +139,10 @@ class RandomForestRegressorBC(RandomForestRegressor):
 
         X.columns = [str(col) for col in X.columns]
         
+        
+        
         run_context = mlflow.start_run() if logmlflow else nullcontext()
-        with run_context as run:
+        with run_context:
             if logmlflow:
                 features_dic = {'features': X.columns.to_list()}
                 mlflow.log_dict(features_dic, 'features.json')
@@ -149,11 +151,6 @@ class RandomForestRegressorBC(RandomForestRegressor):
             
             logging.info(f"Fitting model to train data")
             
-            super().fit(X, y, sample_weight)
-            y_pred = super().predict(X)
-
-            x_ = np.sort(y_pred)
-            y_ = np.sort(y)
             
             if cross_validate:
                 # Perform cross-validation
@@ -172,25 +169,26 @@ class RandomForestRegressorBC(RandomForestRegressor):
                     super().fit(X_train, y_train)
                     
                     y_pred_test[test_index] = super().predict(X_test)
+                    
+                    self.fit_bias_correction(y=y_test, y_pred=y_pred_test[test_index])
+                    
                     y_pred_test_bc[test_index] = self.predict(X=X_test, bc=True)
                     y_pred_ref[test_index] = y_test
                     
                     i+=1
             
-
-            # Bias correction
-            if self.bctype in ['cdf', 'raw']:
-                self.p = _polyfit_no_inter(x_, y_, self.degree)
-            elif self.bctype == 'spline':
-                _, idx = np.unique(x_, return_index=True)
-                self.p = UnivariateSpline(x_[idx], y_[idx])
-            else:
-                self.p = 1
+            # After CV, train a whole model from scratch
+            self.set_params(warm_start=False) 
+            super().fit(X, y, sample_weight)
+            y_pred = super().predict(X)
+            
+            self.fit_bias_correction(y=y, y_pred=y_pred)
+            
+            y_pred_bc = self.predict(X=X, bc=True)
 
             if logmlflow:
                 logging.info(f"Logging train performance to mlflow")
                 self._log_metrics(y, y_pred, metrics_prefix='train')
-                y_pred_bc = self.predict(X=X, bc=True)
                 self._log_metrics(y, y_pred_bc, metrics_prefix='train_bc')
                 if cross_validate:
                     logging.info(f"Logging test performance to mlflow")
@@ -220,6 +218,19 @@ class RandomForestRegressorBC(RandomForestRegressor):
         mlflow.log_metric(f'{metrics_prefix}_R2', r2_score(y_true=y, y_pred=y_pred))
         mlflow.log_metric(f'{metrics_prefix}_MAE', mean_absolute_error(y_true=y, y_pred=y_pred))
         mlflow.log_metric(f'{metrics_prefix}_RMSE', root_mean_squared_error(y_true=y, y_pred=y_pred))
+        
+        
+    def fit_bias_correction(self, y, y_pred):
+        x_ = np.sort(y_pred)
+        y_ = np.sort(y)
+        
+        if self.bctype in ['cdf', 'raw']:
+            self.p = _polyfit_no_inter(x_, y_, self.degree)
+        elif self.bctype == 'spline':
+            _, idx = np.unique(x_, return_index=True)
+            self.p = UnivariateSpline(x_[idx], y_[idx])
+        else:
+            self.p = 1
 
 
     def predict(self, X, round_func = None, bc = True):
