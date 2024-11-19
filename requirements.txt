@@ -21,3 +21,6 @@ pyproj
 xarray<=2024.9.0
 numba
 mlflow
+onnx
+skl2onnx
+onnxruntime
