@@ -1,0 +1,82 @@
+INFO:root:Output folder will be /users/wolfensb/rainforest/rainforest/ml/rf_models
+INFO:root:Folder with RF input data will be /store_new/mch/msrad/radar/radar_database_v2/rf_input_data
+INFO:root:Found at least one "default" alias in models RFO_default, assuming they are all aliases
+INFO:root:Starting randomForest training, leave the script running!
+INFO:root:Assuming that input data for RF training is in folder /store_new/mch/msrad/radar/radar_database_v2/rf_input_data
+INFO:root:If not available in this folder, they will be computed and stored there
+INFO:root:Loading input data
+INFO:root:Computing derived variable zh_VISIB_mean
+INFO:root:Computing derived variable zv_VISIB_mean
+INFO:root:Computing data filter
+INFO:root:List of stations to ignore TIT,GSB,GRH,PIL,SAE,AUB
+INFO:root:Start time None
+INFO:root:End time None
+INFO:root:ZH must be > 5.000000 if R <= 0.500000
+INFO:root:ZH must be < 20.000000 if R <= 0.000000
+INFO:root:Performing vertical aggregation of input features for model RFO
+INFO:root:
+INFO:root:Training model on gauge data
+INFO:root:Fitting model to train data
+INFO:root:Running CV iteration 0
+INFO:root:Running CV iteration 1
+INFO:root:Running CV iteration 2
+INFO:root:Running CV iteration 3
+INFO:root:Running CV iteration 4
+INFO:root:Logging train performance to mlflow
+INFO:root:Logging test performance to mlflow
+INFO:root:Upload fitted model to mlflow
+2024/11/19 00:35:55 WARNING mlflow.sklearn: Model was missing function: predict. Not logging python_function flavor!
+
+## You are using the Python ARM Radar Toolkit (Py-ART), an open source
+## library for working with weather radar data. Py-ART is partly
+## supported by the U.S. Department of Energy as part of the Atmospheric
+## Radiation Measurement (ARM) Climate Research Facility, an Office of
+## Science user facility.
+##
+## If you use this software to prepare a publication, please cite:
+##
+##     JJ Helmus and SM Collis, JORS 2016, doi: 10.5334/jors.119
+
+Pysteps configuration file found at: /store_new/mch/msrad/utils/miniconda-wolfensb/envs/rainforest/lib/python3.11/site-packages/pysteps/pystepsrc
+
+Downloading artifacts:   0%|          | 0/7 [00:00<?, ?it/s]Downloading artifacts:  14%|█▍        | 1/7 [00:00<00:00, 17.99it/s]Downloading artifacts:  29%|██▊       | 2/7 [00:00<00:00, 21.33it/s]Downloading artifacts:  43%|████▎     | 3/7 [00:00<00:00, 13.93it/s]Downloading artifacts:  43%|████▎     | 3/7 [00:00<00:00, 13.93it/s]Downloading artifacts:  57%|█████▋    | 4/7 [00:00<00:00, 13.93it/s]Downloading artifacts:  71%|███████▏  | 5/7 [00:00<00:00, 15.68it/s]Downloading artifacts:  71%|███████▏  | 5/7 [00:00<00:00, 15.68it/s]Downloading artifacts:  86%|████████▌ | 6/7 [00:00<00:00, 15.68it/s]Downloading artifacts: 100%|██████████| 7/7 [00:00<00:00, 10.73it/s]Downloading artifacts: 100%|██████████| 7/7 [00:00<00:00, 10.73it/s]Downloading artifacts: 100%|██████████| 7/7 [00:00<00:00, 11.72it/s]
+2024/11/19 00:36:30 WARNING mlflow.models.model: Failed to validate serving input example {
+  "dataframe_split": {
+    "columns": [
+      "RADAR_prop_A",
+      "RADAR_prop_D",
+      "RADAR_prop_L",
+      "RADAR_prop_P",
+      "RADAR_prop_W",
+      "zh_VISIB_mean",
+      "zv_VISIB_mean",
+      "KDP_mean",
+      "RHOHV_mean",
+      "SW_mean",
+      "ISO0_HEIGHT",
+      "HEIGHT",
+      "VISIB_mean"
+    ],
+    "data": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.8311060667037964,
+        1.0549437999725342,
+        0.31389597058296204,
+        0.7425534725189209,
+        1.0344722270965576,
+        1556.25,
+        1135.6361083984375,
+        99.22643280029297
+      ]
+    ]
+  }
+}. Alternatively, you can avoid passing input example and pass model signature instead when logging the model. To ensure the input example is valid prior to serving, please try calling `mlflow.models.validate_serving_input` on the model uri and serving input example. A serving input example can be generated from model input example using `mlflow.models.convert_input_example_to_serving_input` function.
+Got error: Model does not have the "python_function" flavor
+2024/11/19 00:36:30 INFO mlflow.tracking._tracking_service.client: 🏃 View run resilient-finch-501 at: https://servicedepl.meteoswiss.ch/mlstore/#/experiments/148/runs/373d4617bdcc49e0966da125c8936ed7.
+2024/11/19 00:36:30 INFO mlflow.tracking._tracking_service.client: 🧪 View experiment at: https://servicedepl.meteoswiss.ch/mlstore/#/experiments/148.
+INFO:root:Saving model to /store_new/mch/msrad/radar/rainforest_data/rf_models/RFO_BETA_-0.5_BC_spline.p

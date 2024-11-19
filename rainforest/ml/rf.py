@@ -34,7 +34,7 @@ class RFTraining(object):
     training, train random forests and perform cross-validation of trained models
     '''
     def __init__(self, db_location, input_location=None,
-                 force_regenerate_input = False, logmlflow=False):
+                 force_regenerate_input = False, logmlflow=False, cv = 0):
         """
         Initializes the class and if needed prepare input data for the training
 
@@ -267,7 +267,7 @@ class RFTraining(object):
 
 
     def fit_models(self, config_file, features_dic, tstart = None, tend = None,
-                   output_folder = None):
+                   output_folder = None, cv = 0):
         """
         Fits a new RF model that can be used to compute QPE realizations and
         saves them to disk in pickle format
@@ -294,6 +294,9 @@ class RFTraining(object):
             Location where to store the trained models in pickle format,
             if not provided it will store them in the standard location
             <library_path>/ml/rf_models
+        cv : int, default=0
+            Number of folds for cross-validation, when running fit function.
+            If set to 0, will not perform cross-validation (i.e. no test error)
         """
 
         if output_folder == None:
@@ -438,8 +441,8 @@ class RFTraining(object):
                           metadata = config[model]['FILTERING'],
                           n_jobs = config["n_jobs"],
                           **config[model]['RANDOMFOREST_REGRESSOR'])
-
-            reg.fit(features_VERT_AGG[valid], Y[valid], logmlflow = self.logmlflow)
+            
+            reg.fit(features_VERT_AGG[valid], Y[valid], logmlflow = self.logmlflow, cv = cv)
 
             out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}.p'.format(model,
                                                   config[model]['VERT_AGG']['BETA'],

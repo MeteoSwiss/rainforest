@@ -24,6 +24,8 @@ import mlflow
 import mlflow.sklearn
 from mlflow.models.signature import infer_signature
 from contextlib import nullcontext
+import logging
+logging.getLogger().setLevel(logging.INFO)
 
 # Local imports
 from ..common.object_storage import ObjectStorage
@@ -46,36 +48,27 @@ def _polyfit_no_inter(x,y, degree):
     p = np.insert(p,0,0) # Add zero intercept at beginning for compatibility with polyval
     return p[::-1] # Reverse because that's how it is in polyfit (high degree first)
 
+from sklearn.model_selection import cross_val_predict, KFold
+from sklearn.metrics import mean_absolute_error, r2_score
+import numpy as np
+import tempfile
+import os
+import gzip
+import pickle
+from contextlib import nullcontext
+
 class RandomForestRegressorBC(RandomForestRegressor):
-    '''
-    This is an extension of the RandomForestRegressor regressor class of
-    sklearn that does additional bias correction, is able
-    to apply a rounding function to the outputs on the fly and adds a
-    bit of metadata:
-
-        *bctype* : type of bias correction method
-        *variables* : name of input features
-        *beta* : weighting factor in vertical aggregation
-        *degree* : order of the polyfit used in some bias-correction methods
-        *metadata* : configuration setup used to train this model
-
-    For *bc_type* tHe available methods are currently "raw":
-    simple linear fit between prediction and observation, "cdf": linear fit
-    between sorted predictions and sorted observations and "spline" :
-    spline fit between sorted predictions and sorted observations. Any
-    new method should be added in this class in order to be used.
-
-    For any information regarding the sklearn parent class see
-
-    https://github.com/scikit-learn/scikit-learn/blob/b194674c4/sklearn/ensemble/_forest.py#L1150
-    '''
+    """
+    Extended RandomForestRegressor with optional bias correction,
+    on-the-fly rounding, metadata, and optional cross-validation.
+    """
     def __init__(self,
                  variables,
                  beta,
                  visib_weighting,
-                 degree = 1,
-                 bctype = 'cdf',
-                 metadata = {},
+                 degree=1,
+                 bctype='cdf',
+                 metadata={},
                  n_estimators=100,
                  criterion="squared_error",
                  max_depth=None,
@@ -91,21 +84,21 @@ class RandomForestRegressorBC(RandomForestRegressor):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super().__init__(n_estimators = n_estimators,
-                         criterion = criterion,
-                         max_depth = max_depth,
-                         min_samples_split = min_samples_split,
-                         min_samples_leaf = min_samples_leaf,
-                         min_weight_fraction_leaf = min_weight_fraction_leaf,
-                         max_features = max_features,
-                         max_leaf_nodes = max_leaf_nodes,
-                         min_impurity_decrease = min_impurity_decrease,
-                         bootstrap = bootstrap,
-                         oob_score = oob_score,
-                         n_jobs = n_jobs,
-                         random_state = random_state,
-                         verbose = verbose,
-                         warm_start = warm_start)
+        super().__init__(n_estimators=n_estimators,
+                         criterion=criterion,
+                         max_depth=max_depth,
+                         min_samples_split=min_samples_split,
+                         min_samples_leaf=min_samples_leaf,
+                         min_weight_fraction_leaf=min_weight_fraction_leaf,
+                         max_features=max_features,
+                         max_leaf_nodes=max_leaf_nodes,
+                         min_impurity_decrease=min_impurity_decrease,
+                         bootstrap=bootstrap,
+                         oob_score=oob_score,
+                         n_jobs=n_jobs,
+                         random_state=random_state,
+                         verbose=verbose,
+                         warm_start=warm_start)
 
         self.degree = degree
         self.bctype = bctype
@@ -115,94 +108,119 @@ class RandomForestRegressorBC(RandomForestRegressor):
         self.metadata = metadata
         self.p = None
 
-    def fit(self, X,y, sample_weight = None, logmlflow = False):
+    def fit(self, X, y, sample_weight=None, logmlflow=False, cv=0):
         """
-        Fit both estimator and a-posteriori bias correction
+        Fit both estimator and a-posteriori bias correction with optional cross-validation.
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            The input samples. Use ``dtype=np.float32`` for maximum
-            efficiency. Sparse matrices are also supported, use sparse
-            ``csc_matrix`` for maximum efficiency.
+            The input samples.
+        y : array-like, shape=(n_samples,)
+            The target values.
         sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-        logmlflow : bool, default = False
-            It defines whether logs and the trained model should be logged to MLFlow.
+            Sample weights.
+        logmlflow : bool, default=False
+            Whether to log training metrics to MLFlow.
+        cv : int, default=0
+            Number of folds for cross-validation. If set to 0, will not perform
+            cross-validation (i.e. no test error)
         Returns
         -------
         self : object
         """
+        if cv >= 1:
+            cross_validate = True
+        else:
+            cross_validate = False
+        
         if logmlflow:
             mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
             mlflow.set_experiment(experiment_name='rainforest')
 
         X.columns = [str(col) for col in X.columns]
-
+        
         run_context = mlflow.start_run() if logmlflow else nullcontext()
         with run_context as run:
-
             if logmlflow:
                 features_dic = {'features': X.columns.to_list()}
                 mlflow.log_dict(features_dic, 'features.json')
                 params_dic = self.get_params()
                 mlflow.log_params(params_dic)
-
-            super().fit(X,y, sample_weight)
+            
+            logging.info(f"Fitting model to train data")
+            
+            super().fit(X, y, sample_weight)
             y_pred = super().predict(X)
 
-            if self.bctype in ['cdf','raw']:
-                if self.bctype == 'cdf':
-                    x_ = np.sort(y_pred)
-                    y_ = np.sort(y)
-                elif self.bctype == 'raw':
-                    x_ = y_pred
-                    y_ = y
-                self.p = _polyfit_no_inter(x_,y_,self.degree)
+            x_ = np.sort(y_pred)
+            y_ = np.sort(y)
+            
+            if cross_validate:
+                # Perform cross-validation
+                kf = KFold(n_splits=cv, shuffle=True, random_state=self.random_state)
+                y_pred_test = np.zeros(len(y))
+                y_pred_test_bc = np.zeros(len(y))
+                y_pred_ref = np.zeros(len(y))
+                
+                i = 0
+                for train_index, test_index in kf.split(X):
+                    logging.info(f"Running CV iteration {i}")
+                    X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+                    y_train, y_test = y[train_index], y[test_index]
+                    
+                    self.set_params(warm_start=False)  # Ensure a fresh model
+                    super().fit(X_train, y_train)
+                    
+                    y_pred_test[test_index] = super().predict(X_test)
+                    y_pred_test_bc[test_index] = self.predict(X=X_test, bc=True)
+                    y_pred_ref[test_index] = y_test
+                    
+                    i+=1
+            
+
+            # Bias correction
+            if self.bctype in ['cdf', 'raw']:
+                self.p = _polyfit_no_inter(x_, y_, self.degree)
             elif self.bctype == 'spline':
-                x_ = np.sort(y_pred)
-                y_ = np.sort(y)
-                _,idx = np.unique(x_, return_index = True)
+                _, idx = np.unique(x_, return_index=True)
                 self.p = UnivariateSpline(x_[idx], y_[idx])
             else:
                 self.p = 1
 
             if logmlflow:
-                self._log_metrics(y=y, y_pred=y_pred, metrics_prefix='train')
-
+                logging.info(f"Logging train performance to mlflow")
+                self._log_metrics(y, y_pred, metrics_prefix='train')
                 y_pred_bc = self.predict(X=X, bc=True)
-                self._log_metrics(y=y, y_pred=y_pred_bc, metrics_prefix='train_bc')
+                self._log_metrics(y, y_pred_bc, metrics_prefix='train_bc')
+                if cross_validate:
+                    logging.info(f"Logging test performance to mlflow")
+                    self._log_metrics(y=y_pred_ref, y_pred=y_pred_test, metrics_prefix='test')
+                    self._log_metrics(y=y_pred_ref, y_pred=y_pred_test_bc, metrics_prefix='test_bc')
                 
-
-                # Log a gzipped version of the pickled model using a temporary in-memory file                    
+                logging.info(f"Upload fitted model to mlflow")
+                # Log the trained model and signature
                 with tempfile.TemporaryDirectory() as tmp_dir:
-
                     temp_file_path = os.path.join(tmp_dir, "rf.pkl.gz")
-                    
                     with gzip.open(temp_file_path, 'wb') as f:
                         pickle.dump(self, f)
-                        print('wrote file')
-
                     mlflow.log_artifact(temp_file_path, "rf_gzipped_pickle_model")
-                    print('logged model')
-                
-                # Log the signature of the model to obtain a visualization in MLflow 
-                # If MLflow will support compressed model logging in the future, this should be changed. 
+
                 inpt_exp = X[:1]
-                sign = infer_signature(X[:10],y[:10])
+                sign = infer_signature(X[:10], y[:10])
                 mlflow.sklearn.log_model(sk_model=None,
-                                        artifact_path='rf_signature_no_model',
-                                        input_example=inpt_exp,
-                                        signature=sign)                
-        return
-    
+                                         artifact_path='rf_signature_no_model',
+                                         input_example=inpt_exp,
+                                         signature=sign)
+        return self
+
     def _log_metrics(self, y, y_pred, metrics_prefix):
+        """
+        Logs metrics to MLFlow.
+        """
         mlflow.log_metric(f'{metrics_prefix}_R2', r2_score(y_true=y, y_pred=y_pred))
         mlflow.log_metric(f'{metrics_prefix}_MAE', mean_absolute_error(y_true=y, y_pred=y_pred))
         mlflow.log_metric(f'{metrics_prefix}_RMSE', root_mean_squared_error(y_true=y, y_pred=y_pred))
+
 
     def predict(self, X, round_func = None, bc = True):
         """
@@ -227,6 +245,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted values.
         """
+        
         pred = super().predict(X)
 
         if round_func == None:

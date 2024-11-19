@@ -83,6 +83,14 @@ def main():
                       help = "If set to 1, the training procedure will produce logs for MLFlow. The default value is 0." +
                       "To log to a remove ML server, the environment variable MLFLOW_TRACKING_URI needs to be set.")
 
+    
+    parser.add_option("-C", "--cv", 
+                      dest="cv", 
+                      default=0,
+                      help = "Number of folds for cross-validation, when running fit function." +
+                      "If set to 0, will not perform cross-validation (i.e. no test error)")
+
+
     (options, args) = parser.parse_args()
 
 
@@ -96,6 +104,8 @@ def main():
 
     if not os.path.exists(options.outputfolder):
         os.makedirs(options.outputfolder)
+
+    options.cv = int(options.cv)
 
     logging.info('Output folder will be {:s}'.format(options.outputfolder))
 
@@ -162,7 +172,7 @@ def main():
 
     if not only_regenerate:
         rf.fit_models(options.config, options.models, options.start,
-                      options.end)
+                      options.end, cv = options.cv)
 
 
 if __name__ == '__main__':
