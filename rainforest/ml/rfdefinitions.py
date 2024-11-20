@@ -108,7 +108,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         self.metadata = metadata
         self.p = None
 
-    def fit(self, X, y, sample_weight=None, logmlflow=False, cv=0):
+    def fit(self, X, y, sample_weight=None, logmlflow='none', cv=0):
         """
         Fit both estimator and a-posteriori bias correction with optional cross-validation.
         Parameters
@@ -119,8 +119,9 @@ class RandomForestRegressorBC(RandomForestRegressor):
             The target values.
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
-        logmlflow : bool, default=False
-            Whether to log training metrics to MLFlow.
+        logmlflow : str, default='none'
+            Whether to log training metrics to MLFlow. Can be 'none' to not log anything, 'metrics' to 
+            only log metrics, or 'all' to log metrics and the trained model.
         cv : int, default=0
             Number of folds for cross-validation. If set to 0, will not perform
             cross-validation (i.e. no test error)
@@ -133,7 +134,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         else:
             cross_validate = False
         
-        if logmlflow:
+        if logmlflow != 'none':
             mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
             mlflow.set_experiment(experiment_name='rainforest')
 
@@ -141,9 +142,9 @@ class RandomForestRegressorBC(RandomForestRegressor):
         
         
         
-        run_context = mlflow.start_run() if logmlflow else nullcontext()
+        run_context = mlflow.start_run() if logmlflow != 'none' else nullcontext()
         with run_context:
-            if logmlflow:
+            if logmlflow != 'none':
                 features_dic = {'features': X.columns.to_list()}
                 mlflow.log_dict(features_dic, 'features.json')
                 params_dic = self.get_params()
@@ -186,7 +187,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
             
             y_pred_bc = self.predict(X=X, bc=True)
 
-            if logmlflow:
+            if logmlflow != 'none':
                 logging.info(f"Logging train performance to mlflow")
                 self._log_metrics(y, y_pred, metrics_prefix='train')
                 self._log_metrics(y, y_pred_bc, metrics_prefix='train_bc')
@@ -195,20 +196,22 @@ class RandomForestRegressorBC(RandomForestRegressor):
                     self._log_metrics(y=y_pred_ref, y_pred=y_pred_test, metrics_prefix='test')
                     self._log_metrics(y=y_pred_ref, y_pred=y_pred_test_bc, metrics_prefix='test_bc')
                 
-                logging.info(f"Upload fitted model to mlflow")
-                # Log the trained model and signature
-                with tempfile.TemporaryDirectory() as tmp_dir:
-                    temp_file_path = os.path.join(tmp_dir, "rf.pkl.gz")
-                    with gzip.open(temp_file_path, 'wb') as f:
-                        pickle.dump(self, f)
-                    mlflow.log_artifact(temp_file_path, "rf_gzipped_pickle_model")
+                logging.info(f"Logged metrics to mlflow")
+                if logmlflow == 'all':
+                    logging.info(f"Upload fitted model to mlflow")
+                    # Log the trained model and signature
+                    with tempfile.TemporaryDirectory() as tmp_dir:
+                        temp_file_path = os.path.join(tmp_dir, "rf.pkl.gz")
+                        with gzip.open(temp_file_path, 'wb') as f:
+                            pickle.dump(self, f)
+                        mlflow.log_artifact(temp_file_path, "rf_gzipped_pickle_model")
 
-                inpt_exp = X[:1]
-                sign = infer_signature(X[:10], y[:10])
-                mlflow.sklearn.log_model(sk_model=None,
-                                         artifact_path='rf_signature_no_model',
-                                         input_example=inpt_exp,
-                                         signature=sign)
+                    inpt_exp = X[:1]
+                    sign = infer_signature(X[:10], y[:10])
+                    mlflow.sklearn.log_model(sk_model=None,
+                                            artifact_path='rf_signature_no_model',
+                                            input_example=inpt_exp,
+                                            signature=sign)
         return self
 
     def _log_metrics(self, y, y_pred, metrics_prefix):
