@@ -34,7 +34,7 @@ class RFTraining(object):
     training, train random forests and perform cross-validation of trained models
     '''
     def __init__(self, db_location, input_location=None,
-                 force_regenerate_input = False, logmlflow=False, cv = 0):
+                 force_regenerate_input = False, logmlflow='none', cv = 0):
         """
         Initializes the class and if needed prepare input data for the training
 
@@ -55,9 +55,11 @@ class RFTraining(object):
         force_regenerate_input : bool
             if True the input parquet files will always be regenerated from
             the database even if already present in the input_location folder
-        logmlflow : bool
-            If True, training logs will be produced for MLFlow.
-            The trained model will also be logged. 
+        logmlflow : str
+            Specify the logging mode for MLFlow. Choices are:
+            - 'none' (default, no logging)
+            - 'metrics' (log metrics only)
+            - 'all' (log metrics and model)
         """
 
         if input_location == None:

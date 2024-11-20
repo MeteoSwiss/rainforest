@@ -108,7 +108,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         self.metadata = metadata
         self.p = None
 
-    def fit(self, X, y, sample_weight=None, logmlflow=False, cv=0):
+    def fit(self, X, y, sample_weight=None, logmlflow='none', cv=0):
         """
         Fit both estimator and a-posteriori bias correction with optional cross-validation.
         Parameters
@@ -119,8 +119,9 @@ class RandomForestRegressorBC(RandomForestRegressor):
             The target values.
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
-        logmlflow : bool, default=False
-            Whether to log training metrics to MLFlow.
+        logmlflow : str, default='none'
+            Whether to log training metrics to MLFlow. Can be 'none' to not log anything, 'metrics' to 
+            only log metrics, or 'all' to log metrics and the trained model.
         cv : int, default=0
             Number of folds for cross-validation. If set to 0, will not perform
             cross-validation (i.e. no test error)
@@ -133,15 +134,17 @@ class RandomForestRegressorBC(RandomForestRegressor):
         else:
             cross_validate = False
         
-        if logmlflow:
+        if logmlflow != 'none':
             mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
             mlflow.set_experiment(experiment_name='rainforest')
 
         X.columns = [str(col) for col in X.columns]
         
-        run_context = mlflow.start_run() if logmlflow else nullcontext()
-        with run_context as run:
-            if logmlflow:
+        
+        
+        run_context = mlflow.start_run() if logmlflow != 'none' else nullcontext()
+        with run_context:
+            if logmlflow != 'none':
                 features_dic = {'features': X.columns.to_list()}
                 mlflow.log_dict(features_dic, 'features.json')
                 params_dic = self.get_params()
@@ -149,11 +152,6 @@ class RandomForestRegressorBC(RandomForestRegressor):
             
             logging.info(f"Fitting model to train data")
             
-            super().fit(X, y, sample_weight)
-            y_pred = super().predict(X)
-
-            x_ = np.sort(y_pred)
-            y_ = np.sort(y)
             
             if cross_validate:
                 # Perform cross-validation
@@ -172,45 +170,48 @@ class RandomForestRegressorBC(RandomForestRegressor):
                     super().fit(X_train, y_train)
                     
                     y_pred_test[test_index] = super().predict(X_test)
+                    
+                    self.fit_bias_correction(y=y_test, y_pred=y_pred_test[test_index])
+                    
                     y_pred_test_bc[test_index] = self.predict(X=X_test, bc=True)
                     y_pred_ref[test_index] = y_test
                     
                     i+=1
             
+            # After CV, train a whole model from scratch
+            self.set_params(warm_start=False) 
+            super().fit(X, y, sample_weight)
+            y_pred = super().predict(X)
+            
+            self.fit_bias_correction(y=y, y_pred=y_pred)
+            
+            y_pred_bc = self.predict(X=X, bc=True)
 
-            # Bias correction
-            if self.bctype in ['cdf', 'raw']:
-                self.p = _polyfit_no_inter(x_, y_, self.degree)
-            elif self.bctype == 'spline':
-                _, idx = np.unique(x_, return_index=True)
-                self.p = UnivariateSpline(x_[idx], y_[idx])
-            else:
-                self.p = 1
-
-            if logmlflow:
+            if logmlflow != 'none':
                 logging.info(f"Logging train performance to mlflow")
                 self._log_metrics(y, y_pred, metrics_prefix='train')
-                y_pred_bc = self.predict(X=X, bc=True)
                 self._log_metrics(y, y_pred_bc, metrics_prefix='train_bc')
                 if cross_validate:
                     logging.info(f"Logging test performance to mlflow")
                     self._log_metrics(y=y_pred_ref, y_pred=y_pred_test, metrics_prefix='test')
                     self._log_metrics(y=y_pred_ref, y_pred=y_pred_test_bc, metrics_prefix='test_bc')
                 
-                logging.info(f"Upload fitted model to mlflow")
-                # Log the trained model and signature
-                with tempfile.TemporaryDirectory() as tmp_dir:
-                    temp_file_path = os.path.join(tmp_dir, "rf.pkl.gz")
-                    with gzip.open(temp_file_path, 'wb') as f:
-                        pickle.dump(self, f)
-                    mlflow.log_artifact(temp_file_path, "rf_gzipped_pickle_model")
+                logging.info(f"Logged metrics to mlflow")
+                if logmlflow == 'all':
+                    logging.info(f"Upload fitted model to mlflow")
+                    # Log the trained model and signature
+                    with tempfile.TemporaryDirectory() as tmp_dir:
+                        temp_file_path = os.path.join(tmp_dir, "rf.pkl.gz")
+                        with gzip.open(temp_file_path, 'wb') as f:
+                            pickle.dump(self, f)
+                        mlflow.log_artifact(temp_file_path, "rf_gzipped_pickle_model")
 
-                inpt_exp = X[:1]
-                sign = infer_signature(X[:10], y[:10])
-                mlflow.sklearn.log_model(sk_model=None,
-                                         artifact_path='rf_signature_no_model',
-                                         input_example=inpt_exp,
-                                         signature=sign)
+                    inpt_exp = X[:1]
+                    sign = infer_signature(X[:10], y[:10])
+                    mlflow.sklearn.log_model(sk_model=None,
+                                            artifact_path='rf_signature_no_model',
+                                            input_example=inpt_exp,
+                                            signature=sign)
         return self
 
     def _log_metrics(self, y, y_pred, metrics_prefix):
@@ -220,6 +221,19 @@ class RandomForestRegressorBC(RandomForestRegressor):
         mlflow.log_metric(f'{metrics_prefix}_R2', r2_score(y_true=y, y_pred=y_pred))
         mlflow.log_metric(f'{metrics_prefix}_MAE', mean_absolute_error(y_true=y, y_pred=y_pred))
         mlflow.log_metric(f'{metrics_prefix}_RMSE', root_mean_squared_error(y_true=y, y_pred=y_pred))
+        
+        
+    def fit_bias_correction(self, y, y_pred):
+        x_ = np.sort(y_pred)
+        y_ = np.sort(y)
+        
+        if self.bctype in ['cdf', 'raw']:
+            self.p = _polyfit_no_inter(x_, y_, self.degree)
+        elif self.bctype == 'spline':
+            _, idx = np.unique(x_, return_index=True)
+            self.p = UnivariateSpline(x_[idx], y_[idx])
+        else:
+            self.p = 1
 
 
     def predict(self, X, round_func = None, bc = True):

@@ -77,11 +77,14 @@ def main():
                       metavar="MODELS")
     
     parser.add_option("-l", "--logmlflow", 
-                      action="store_true", 
-                      dest="logmlflow", 
-                      default=False,
-                      help = "If set to 1, the training procedure will produce logs for MLFlow. The default value is 0." +
-                      "To log to a remove ML server, the environment variable MLFLOW_TRACKING_URI needs to be set.")
+                  type="choice", 
+                  choices=["none", "metrics", "all"],
+                  dest="logmlflow", 
+                  default="none",
+                  help="Specify the logging mode for MLFlow. Choices are:" +
+                       " 'none' (default, no logging), 'metrics' (log metrics only)," +
+                       " or 'all' (log metrics and model)." +
+                       " To log to a remote ML server, the environment variable MLFLOW_TRACKING_URI needs to be set.")
 
     
     parser.add_option("-C", "--cv", 
