@@ -26,6 +26,11 @@ from mlflow.models.signature import infer_signature
 from contextlib import nullcontext
 import logging
 logging.getLogger().setLevel(logging.INFO)
+from skl2onnx.common.data_types import FloatTensorType
+import skl2onnx
+import onnxruntime as rt
+import io
+import inspect
 
 # Local imports
 from ..common.object_storage import ObjectStorage
@@ -200,18 +205,42 @@ class RandomForestRegressorBC(RandomForestRegressor):
                 if logmlflow == 'all':
                     logging.info(f"Upload fitted model to mlflow")
                     # Log the trained model and signature
+                    
+                    # Log gzipped model
                     with tempfile.TemporaryDirectory() as tmp_dir:
                         temp_file_path = os.path.join(tmp_dir, "rf.pkl.gz")
                         with gzip.open(temp_file_path, 'wb') as f:
                             pickle.dump(self, f)
                         mlflow.log_artifact(temp_file_path, "rf_gzipped_pickle_model")
-
+                    # Log the signature
                     inpt_exp = X[:1]
                     sign = infer_signature(X[:10], y[:10])
                     mlflow.sklearn.log_model(sk_model=None,
                                             artifact_path='rf_signature_no_model',
                                             input_example=inpt_exp,
                                             signature=sign)
+                    # Log onnx model
+                    # For now, only RF, no bias correction 
+                    
+                    # base_params = self.get_params()
+                    base_params = inspect.signature(RandomForestRegressor).parameters
+                    base_params_filtered = {key: value for key, value in self.get_params().items() if key in base_params}
+                    base_rf = RandomForestRegressor(**base_params_filtered)
+
+                    # Copy the fitted attributes
+                    base_rf.estimators_ = self.estimators_
+                    base_rf.n_features_in_ = self.n_features_in_
+                    base_rf.n_outputs_ = self.n_outputs_
+                    base_rf.feature_names_in_ = self.feature_names_in_
+                             
+                    initial_type = [('float_input', FloatTensorType([None, X.shape[1]]))]
+                    
+                    onnx_model = skl2onnx.convert_sklearn(base_rf, initial_types=initial_type)
+                    
+                    onnx_model_info = mlflow.onnx.log_model(
+                        onnx_model=onnx_model, artifact_path="onnx_model_rf_only"
+                        )
+                    logging.info(f'Logged onnx model {onnx_model_info.artifact_path}')
         return self
 
     def _log_metrics(self, y, y_pred, metrics_prefix):
