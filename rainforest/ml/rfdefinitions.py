@@ -26,6 +26,7 @@ from mlflow.models.signature import infer_signature
 from contextlib import nullcontext
 import logging
 logging.getLogger().setLevel(logging.INFO)
+import mlflow
 
 # Local imports
 from ..common.object_storage import ObjectStorage
@@ -288,7 +289,7 @@ class MyCustomUnpickler(pickle.Unpickler):
         return super().find_class(module, name)
 
 
-def read_rf(rf_name, filepath=''):
+def read_rf(rf_name='', filepath='', mlflow_runid=None):
     """
     Reads a randomForest model from the RF models folder using pickle. All custom
     classes and functions used in the construction of these pickled models
@@ -302,6 +303,12 @@ def read_rf(rf_name, filepath=''):
 
     filepath: str
         Path to the model files, if not in default folder
+        
+    mlflow_runid: str
+        If the model needs to be downloaded from mlflow, this variable 
+        indicates the run ID that contains the model to use. If this value 
+        is not None, rf_name and filepath are ignored. The env variable 
+        MLFLOW_TRACKING_URI needs to be set.  
 
     Returns
     -------
@@ -310,20 +317,31 @@ def read_rf(rf_name, filepath=''):
     """
 
     is_compressed = False
-    if rf_name.endswith('.gz'):
-        is_compressed = True
+    if mlflow_runid is not None:
+        artifact_path = 'rf_gzipped_pickle_model/rf.pkl.gz'
+        logging.info(f'Downloading model from MLFlow at {os.getenv("MLFLOW_TRACKING_URI")}')
+        logging.info(f'Run id: {mlflow_runid}, artifact: {artifact_path}')
+        is_compressed = artifact_path.endswith('.gz')
+        rf_name = mlflow.artifacts.download_artifacts(run_id=mlflow_runid, 
+                                                      artifact_path=artifact_path,
+                                                      dst_path='./') 
+        logging.info(f'Model stored in {rf_name}.')
     else:
-        if not rf_name[-2:].endswith('.p'):
-            rf_name += '.p'
+        
+        if rf_name.endswith('.gz'):
+            is_compressed = True
+        else:
+            if not rf_name[-2:].endswith('.p'):
+                rf_name += '.p'
 
-    if filepath == '':
-        if os.path.dirname(rf_name) == '':
-            rf_name = str(Path(FOLDER_RF, rf_name))
-    else:
-        rf_name = str(Path(filepath, rf_name))
+        if filepath == '':
+            if os.path.dirname(rf_name) == '':
+                rf_name = str(Path(FOLDER_RF, rf_name))
+        else:
+            rf_name = str(Path(filepath, rf_name))
 
-    # Get model from cloud if needed
-    rf_name = ObjStorage.check_file(rf_name)
+        # Get model from cloud if needed
+        rf_name = ObjStorage.check_file(rf_name)
     
     if not os.path.exists(rf_name):
         raise IOError('RF model {:s} does not exist!'.format(rf_name))
