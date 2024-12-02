@@ -842,6 +842,7 @@ class RFTraining(object):
         name_file = str(Path(output_folder, 'feature_selection_scores.p'))
         pickle.dump(scores, open(name_file, 'wb'))
 
+
     def model_intercomparison(self, features_dic, intercomparison_configfile,
                               output_folder, reference_products = ['CPCH','RZC'],
                               bounds10 = [0,2,10,100], bounds60 = [0,2,10,100],
@@ -983,23 +984,23 @@ class RFTraining(object):
         for model in modelnames:
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))
 
-            vweights = 10**(config["MODELS"][model]['VERT_AGG']['BETA'] *
+            vweights = 10**(config[model]['VERT_AGG']['BETA'] *
                                 (radartab['HEIGHT']/1000.)) # vert. weights
             features_VERT_AGG[model] = vert_aggregation(radartab[features_dic[model]],
                                  vweights, grp_vertical,
-                                 config["MODELS"][model]['VERT_AGG']['visib_weighting'],
+                                 config[model]['VERT_AGG']['VISIB_WEIGHTING'],
                                  radartab['VISIB_mean'])
 
             regressors[model] = RandomForestRegressorBC(degree = 1,
-                          bctype = config["MODELS"][model]['BIAS_CORR'],
+                          bctype = config[model]['BIAS_CORR'],
                           variables = features_dic[model],
-                          beta = config["MODELS"][model]['VERT_AGG']['BETA'],
-                          visib_weighting=config["MODELS"][model]['VERT_AGG']['visib_weighting'],
-                          **config["MODELS"][model]['RANDOMFOREST_REGRESSOR'])
+                          beta = config[model]['VERT_AGG']['BETA'],
+                          visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                          **config[model]['RANDOMFOREST_REGRESSOR'])
 
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
-                        axis = 1)
+                       axis = 1)
         # if (tstart != None) and (tend == None):
         #     (gaugetab['TIMESTAMP'] >= tstart)
         # elif (tstart == None) and (tend != None):
@@ -1044,4 +1045,287 @@ class RFTraining(object):
             all_station_scores = {'10min': {}, '60min': {}}
             all_station_stats = {'10min': {}, '60min': {}}
 
-        
+        ###############################################################################
+        # Initialize outputs
+        ###############################################################################
+        for model in modelnames:
+            all_scores['10min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
+                         'test':  {'solid':[],'liquid':[],'all':[]}}
+            all_scores['60min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
+                         'test':  {'solid':[],'liquid':[],'all':[]}}
+
+            all_stats['10min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
+                         'test':  {'solid':{},'liquid':{},'all':{}}}
+
+            all_stats['60min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
+                         'test':  {'solid':{},'liquid':{},'all':{}}}
+
+            if station_scores == True:
+                # for station scores we will limit the output to test data only
+                for timeagg in all_station_scores.keys():
+                    all_station_scores[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
+                    all_station_stats[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
+
+
+        for k in K:
+            logging.info('Run {:d}/{:d}-{:d} of cross-validation'.format(k,np.nanmin(K),np.nanmax(K)))
+
+            test = idx_testtrain == k
+            train = idx_testtrain != k
+
+            if cross_val_type == 'years':
+                logging.info('Time range for testing set: {} - {} with {:3.2f}% of datapoints'.format(
+                                datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].min()),
+                                datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].max()),
+                                gaugetab['TIMESTAMP'][test].count()/ gaugetab['TIMESTAMP'].count()*100))
+
+            # Get reference values
+            R_test_60 = np.squeeze(np.array(pd.DataFrame(R[test])
+                            .groupby(grp_hourly[test]).mean()))
+
+            R_train_60 = np.squeeze(np.array(pd.DataFrame(R[train])
+                            .groupby(grp_hourly[train]).mean()))
+
+            T_test_60 = np.squeeze(np.array(pd.DataFrame(T[test])
+                            .groupby(grp_hourly[test]).mean()))
+
+            T_train_60 = np.squeeze(np.array(pd.DataFrame(T[train])
+                            .groupby(grp_hourly[train]).mean()))
+
+
+            liq_10_train = T[train] >= constants.THRESHOLD_SOLID
+            sol_10_train = T[train] < constants.THRESHOLD_SOLID
+            liq_60_train = T_train_60 >= constants.THRESHOLD_SOLID
+            sol_60_train = T_train_60 < constants.THRESHOLD_SOLID
+
+            liq_10_test = T[test] >= constants.THRESHOLD_SOLID
+            sol_10_test = T[test] < constants.THRESHOLD_SOLID
+            liq_60_test = T_test_60 >= constants.THRESHOLD_SOLID
+            sol_60_test = T_test_60 < constants.THRESHOLD_SOLID
+
+            # Fit every regression model
+            for model in modelnames:
+                logging.info('Checking model {:s}'.format(model))
+                logging.info('Evaluating test error')
+                # 10 min
+                logging.info('at 10 min')
+
+                # Performing fit
+                if model not in reference_products:
+                    logging.info('Training model on gauge data')
+
+                    regressors[model].fit(features_VERT_AGG[model][train],R[train])
+                    R_pred_10 = regressors[model].predict(features_VERT_AGG[model][test])
+
+                    if (save_model == True):
+                        regressors[model].variables = features_VERT_AGG[model].columns
+                        out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}_excl_{}.p'.format(model,
+                                                            config[model]['VERT_AGG']['BETA'],
+                                                            config[model]['BIAS_CORR'],k)))
+                        logging.info('Saving model to {:s}'.format(out_name))
+                        pickle.dump(regressors[model], open(out_name, 'wb'))
+
+                else:
+                    R_pred_10 = refertab[model].values[test]
+
+
+                scores_solid = perfscores(R_pred_10[sol_10_test],
+                                          R[test][sol_10_test],
+                                          bounds = bounds10)
+
+                all_scores['10min'][model]['test']['solid'].append(scores_solid)
+
+                scores_liquid = perfscores(R_pred_10[liq_10_test],
+                                                 R[test][liq_10_test],
+                                                 bounds = bounds10)
+                all_scores['10min'][model]['test']['liquid'].append(scores_liquid)
+
+                scores_all = perfscores(R_pred_10,
+                                                 R[test],
+                                                 bounds = bounds10)
+                all_scores['10min'][model]['test']['all'].append(scores_all)
+
+                # 60 min
+                logging.info('at 60 min')
+                R_pred_60 = np.squeeze(np.array(pd.DataFrame(R_pred_10)
+                                    .groupby(grp_hourly[test]).mean()))
+
+                scores_solid = perfscores(R_pred_60[sol_60_test],
+                                                 R_test_60[sol_60_test],
+                                                 bounds = bounds60)
+                all_scores['60min'][model]['test']['solid'].append(scores_solid)
+
+
+                scores_liquid = perfscores(R_pred_60[liq_60_test],
+                                                 R_test_60[liq_60_test],
+                                                 bounds = bounds60)
+                all_scores['60min'][model]['test']['liquid'].append(scores_liquid)
+
+                scores_all = perfscores(R_pred_60,
+                                                 R_test_60,
+                                                 bounds = bounds60)
+                all_scores['60min'][model]['test']['all'].append(scores_all)
+
+                if station_scores == True:
+                    logging.info('Calculating station performances for model {}'.format(model))
+
+                    stations_60 = np.array(gaugetab['STATION'][test]
+                                    .groupby(grp_hourly[test]).first())
+
+                    df = pd.DataFrame(columns=gaugetab['STATION'].unique(),
+                    index = scores_all['all'].keys())
+
+                    for timeagg in all_station_scores.keys():
+                        all_station_scores[timeagg][model]['all'][k] = df.copy()
+                        all_station_scores[timeagg][model]['liquid'][k] = df.copy()
+                        all_station_scores[timeagg][model]['solid'][k] = df.copy()
+
+                    for sta in gaugetab['STATION'].unique():
+                        sta_idx = (gaugetab['STATION'][test] == sta)
+                        sta_idx_60 = (stations_60 == sta)
+
+                        try:
+                            scores_all_10 = perfscores(R_pred_10[sta_idx],
+                                                    R[test][sta_idx])['all']
+                            all_station_scores['10min'][model]['all'][k][sta] = scores_all_10
+
+                            scores_all_60 = perfscores(R_pred_60[sta_idx_60],R_test_60[sta_idx_60])['all']
+                            all_station_scores['60min'][model]['all'][k][sta] = scores_all_60
+
+                            del scores_all_10, scores_all_60
+                        except:
+                            logging.info('No performance score for {}'.format(sta))
+                        try:
+                            scores_liquid_10 = perfscores(R_pred_10[liq_10_test & sta_idx],
+                                                    R[test][liq_10_test & sta_idx])['all']
+                            all_station_scores['10min'][model]['liquid'][k][sta] = scores_liquid_10
+
+                            scores_liquid_60 = perfscores(R_pred_60[liq_60_test & sta_idx_60],
+                                                    R_test_60[liq_60_test & sta_idx_60])['all']
+                            all_station_scores['60min'][model]['liquid'][k][sta] = scores_liquid_60
+                        except:
+                            logging.info('No performance score for liquid precip for {}'.format(sta))
+                        try:
+                            scores_solid_10 = perfscores(R_pred_10[sol_10_test & sta_idx],
+                                                    R[test][sol_10_test & sta_idx])['all']
+                            all_station_scores['10min'][model]['solid'][k][sta] = scores_solid_10
+
+                            scores_solid_60 = perfscores(R_pred_60[sol_60_test & sta_idx_60],
+                                                        R_test_60[sol_60_test & sta_idx_60])['all']
+                            all_station_scores['60min'][model]['solid'][k][sta] = scores_solid_60
+                        except:
+                            logging.info('No performance score for solid precip for {}'.format(sta))
+
+                # train
+                logging.info('Evaluating train error')
+                # 10 min
+                logging.info('at 10 min')
+
+                if model not in reference_products:
+                    R_pred_10 = regressors[model].predict(features_VERT_AGG[model][train])
+                else:
+                    R_pred_10 = refertab[model].values[train]
+
+                scores_solid = perfscores(R_pred_10[sol_10_train],
+                                                 R[train][sol_10_train],
+                                                 bounds = bounds10)
+                all_scores['10min'][model]['train']['solid'].append(scores_solid)
+
+                scores_liquid = perfscores(R_pred_10[liq_10_train],
+                                                 R[train][liq_10_train],
+                                                 bounds = bounds10)
+
+                all_scores['10min'][model]['train']['liquid'].append(scores_liquid)
+
+                scores_all = perfscores(R_pred_10,
+                                                 R[train],
+                                                 bounds = bounds10)
+                all_scores['10min'][model]['train']['all'].append(scores_all)
+
+
+                R_pred_60 = np.squeeze(np.array(pd.DataFrame(R_pred_10)
+                                    .groupby(grp_hourly[train]).mean()))
+
+                # 60 min
+                logging.info('at 60 min')
+                # Evaluate model 10 min
+
+                scores_solid = perfscores(R_pred_60[sol_60_train],
+                                        R_train_60[sol_60_train],
+                                        bounds = bounds60)
+                all_scores['60min'][model]['train']['solid'].append(scores_solid)
+
+                scores_liquid = perfscores(R_pred_60[liq_60_train],
+                                        R_train_60[liq_60_train],
+                                         bounds = bounds60)
+                all_scores['60min'][model]['train']['liquid'].append(scores_liquid)
+
+                scores_all = perfscores(R_pred_60,R_train_60,
+                                        bounds = bounds60)
+                all_scores['60min'][model]['train']['all'].append(scores_all)
+
+
+        # Compute statistics after the 5-fold cross validation
+        for agg in all_scores.keys():
+            for model in all_scores[agg].keys():
+                for veriftype in all_scores[agg][model].keys():
+                    for preciptype in all_scores[agg][model][veriftype].keys():
+                        bounds = list(all_scores[agg][model][veriftype][preciptype][0].keys())
+                        scores =  all_scores[agg][model][veriftype][preciptype][0][bounds[0]].keys()
+                        for bound in bounds:
+                            all_stats[agg][model][veriftype][preciptype][bound] = {}
+                            for score in scores:
+                                data = all_scores[agg][model][veriftype][preciptype]
+                                for d in data:
+                                    if type(d[bound]) != dict:
+                                        d[bound] = {'ME':np.nan,
+                                                    'CORR':np.nan,
+                                                    'STDE':np.nan,
+                                                    'MAE':np.nan,
+                                                    'scatter':np.nan,
+                                                    'bias':np.nan,
+                                                    'ED':np.nan}
+                                datasc = [d[bound][score] for d in data]
+                                all_stats[agg][model][veriftype][preciptype][bound][score] = {}
+
+                                for stat in stats.keys():
+                                    sdata = stats[stat](datasc)
+                                    all_stats[agg][model][veriftype][preciptype][bound][score][stat] = sdata
+
+        if station_scores == True:
+            for agg in all_station_scores.keys():
+                for model in all_station_scores[agg].keys():
+                    for preciptype in all_station_scores[agg][model].keys():
+                        df = pd.DataFrame(columns=gaugetab['STATION'].unique())
+                        perfs = {'RMSE': df.copy(), 'scatter':df.copy(),
+                                 'logBias':df.copy(), 'ED':df.copy(), 'N':df.copy(),
+                                 'mest':df.copy(), 'mref':df.copy()}
+                        all_station_stats[agg][model][preciptype] = {}
+                        for score in perfs.keys():
+                            for kidx in all_station_scores[agg][model][preciptype].keys():
+                                df_dummy = all_station_scores[agg][model][preciptype][kidx].copy()
+                                perfs[score] = perfs[score].append(df_dummy.loc[df_dummy.index == score])
+
+                            all_station_stats[agg][model][preciptype][score] = pd.concat([perfs[score].mean().rename('mean'),
+                                                                                          perfs[score].std().rename('std')],
+                                                                                         axis=1)
+
+
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+
+        plot_crossval_stats(all_stats, output_folder)
+        name_file = str(Path(output_folder, 'all_scores.p'))
+        pickle.dump(all_scores, open(name_file, 'wb'))
+        name_file = str(Path(output_folder, 'all_scores_stats.p'))
+        pickle.dump(all_stats, open(name_file, 'wb'))
+
+        if station_scores == True:
+            name_file = str(Path(output_folder, 'all_station_scores.p'))
+            pickle.dump(all_station_scores, open(name_file, 'wb'))
+            name_file = str(Path(output_folder, 'all_station_stats.p'))
+            pickle.dump(all_station_stats, open(name_file, 'wb'))
+
+
+        logging.info('Finished script and saved all scores to {}'.format(output_folder))
+        return all_scores, all_stats
