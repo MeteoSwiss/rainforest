@@ -107,7 +107,47 @@ class RandomForestRegressorBC(RandomForestRegressor):
         self.visib_weighting = visib_weighting
         self.metadata = metadata
         self.p = None
-
+        
+    def fit(self, X,y, sample_weight = None):
+        """
+        Fit both estimator and a-posteriori bias correction
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            The input samples. Use ``dtype=np.float32`` for maximum
+            efficiency. Sparse matrices are also supported, use sparse
+            ``csc_matrix`` for maximum efficiency.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
+        Returns
+        -------
+        self : object
+        """
+        
+        super().fit(X,y, sample_weight)
+        y_pred = super().predict(X)
+        if self.bctype in ['cdf','raw']:
+            if self.bctype == 'cdf':
+                x_ = np.sort(y_pred)
+                y_ = np.sort(y)
+            elif self.bctype == 'raw':
+                x_ = y_pred
+                y_ = y
+            self.p = _polyfit_no_inter(x_,y_,self.degree)
+        elif self.bctype == 'spline':
+            x_ = np.sort(y_pred)
+            y_ = np.sort(y)
+            _,idx = np.unique(x_, return_index = True)
+            self.p = UnivariateSpline(x_[idx], y_[idx])
+        else:
+            self.p = 1
+            
+        return 
+    
     def fit(self, X, y, sample_weight=None, logmlflow='none', cv=0):
         """
         Fit both estimator and a-posteriori bias correction with optional cross-validation.
@@ -129,90 +169,15 @@ class RandomForestRegressorBC(RandomForestRegressor):
         -------
         self : object
         """
-        if cv >= 1:
-            cross_validate = True
-        else:
-            cross_validate = False
-        
-        if logmlflow != 'none':
-            mlflow.set_tracking_uri(os.getenv('MLFLOW_TRACKING_URI'))
-            mlflow.set_experiment(experiment_name='rainforest')
 
         X.columns = [str(col) for col in X.columns]
+        # After CV, train a whole model from scratch
+        self.set_params(warm_start=False) 
+        super().fit(X, y, sample_weight)
+        y_pred = super().predict(X)
         
+        self.fit_bias_correction(y=y, y_pred=y_pred)
         
-        
-        run_context = mlflow.start_run() if logmlflow != 'none' else nullcontext()
-        with run_context:
-            if logmlflow != 'none':
-                features_dic = {'features': X.columns.to_list()}
-                mlflow.log_dict(features_dic, 'features.json')
-                params_dic = self.get_params()
-                mlflow.log_params(params_dic)
-            
-            logging.info(f"Fitting model to train data")
-            
-            
-            if cross_validate:
-                # Perform cross-validation
-                kf = KFold(n_splits=cv, shuffle=True, random_state=self.random_state)
-                y_pred_test = np.zeros(len(y))
-                y_pred_test_bc = np.zeros(len(y))
-                y_pred_ref = np.zeros(len(y))
-                
-                i = 0
-                for train_index, test_index in kf.split(X):
-                    logging.info(f"Running CV iteration {i}")
-                    X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-                    y_train, y_test = y[train_index], y[test_index]
-                    
-                    self.set_params(warm_start=False)  # Ensure a fresh model
-                    super().fit(X_train, y_train)
-                    
-                    y_pred_test[test_index] = super().predict(X_test)
-                    
-                    self.fit_bias_correction(y=y_test, y_pred=y_pred_test[test_index])
-                    
-                    y_pred_test_bc[test_index] = self.predict(X=X_test, bc=True)
-                    y_pred_ref[test_index] = y_test
-                    
-                    i+=1
-            
-            # After CV, train a whole model from scratch
-            self.set_params(warm_start=False) 
-            super().fit(X, y, sample_weight)
-            y_pred = super().predict(X)
-            
-            self.fit_bias_correction(y=y, y_pred=y_pred)
-            
-            y_pred_bc = self.predict(X=X, bc=True)
-
-            if logmlflow != 'none':
-                logging.info(f"Logging train performance to mlflow")
-                self._log_metrics(y, y_pred, metrics_prefix='train')
-                self._log_metrics(y, y_pred_bc, metrics_prefix='train_bc')
-                if cross_validate:
-                    logging.info(f"Logging test performance to mlflow")
-                    self._log_metrics(y=y_pred_ref, y_pred=y_pred_test, metrics_prefix='test')
-                    self._log_metrics(y=y_pred_ref, y_pred=y_pred_test_bc, metrics_prefix='test_bc')
-                
-                logging.info(f"Logged metrics to mlflow")
-                if logmlflow == 'all':
-                    logging.info(f"Upload fitted model to mlflow")
-                    # Log the trained model and signature
-                    with tempfile.TemporaryDirectory() as tmp_dir:
-                        temp_file_path = os.path.join(tmp_dir, "rf.pkl.gz")
-                        with gzip.open(temp_file_path, 'wb') as f:
-                            pickle.dump(self, f)
-                        mlflow.log_artifact(temp_file_path, "rf_gzipped_pickle_model")
-
-                    inpt_exp = X[:1]
-                    sign = infer_signature(X[:10], y[:10])
-                    mlflow.sklearn.log_model(sk_model=None,
-                                            artifact_path='rf_signature_no_model',
-                                            input_example=inpt_exp,
-                                            signature=sign)
-        return self
 
     def _log_metrics(self, y, y_pred, metrics_prefix):
         """

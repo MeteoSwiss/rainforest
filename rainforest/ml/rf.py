@@ -13,20 +13,38 @@ import pickle
 import glob
 import dask.dataframe as dd
 import pandas as pd
+import json
 import numpy as np
+import gzip
 import datetime
 from pathlib import Path
 from scipy.stats import rankdata
+from warnings import warn
+import uuid
+import operator
+from functools import reduce
 
+# Optional mlflow import
+try:
+    import mlflow
+    mlflow.set_experiment(experiment_name='rainforest')
+    import mlflow.sklearn
+    from mlflow.models.signature import infer_signature
+    _MLFLOW_AVAILABLE = True
+except ImportError:
+    _MLFLOW_AVAILABLE = False
+    warn("mflow not available, you will not be able to register the model!")
+        
 # Local imports
 from ..common import constants
 from .utils import vert_aggregation, split_event, split_years
 from .rfdefinitions import RandomForestRegressorBC
 from ..common.utils import perfscores, envyaml
-from ..common.graphics import plot_crossval_stats
+from ..common.graphics import plot_crossval_stats, plot_fit_metrics
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 FOLDER_MODELS = Path(os.environ['RAINFOREST_DATAPATH'], 'rf_models')
+
 
 class RFTraining(object):
     '''
@@ -34,7 +52,7 @@ class RFTraining(object):
     training, train random forests and perform cross-validation of trained models
     '''
     def __init__(self, db_location, input_location=None,
-                 force_regenerate_input = False, logmlflow='none', cv = 0):
+                 force_regenerate_input = False, logmlflow="none", cv = 0):
         """
         Initializes the class and if needed prepare input data for the training
 
@@ -55,11 +73,10 @@ class RFTraining(object):
         force_regenerate_input : bool
             if True the input parquet files will always be regenerated from
             the database even if already present in the input_location folder
-        logmlflow : str
-            Specify the logging mode for MLFlow. Choices are:
-            - 'none' (default, no logging)
-            - 'metrics' (log metrics only)
-            - 'all' (log metrics and model)
+        logmlflow : str, default='none'
+            Whether to log training metrics to MLFlow. Can be 'none' to not log anything, 'metrics' to 
+            only log metrics, or 'all' to log metrics and the trained model.
+        
         """
 
         if input_location == None:
@@ -315,6 +332,9 @@ class RFTraining(object):
 
         config = envyaml(config_file)
 
+        # Create unique uuid for the run
+        run_id = str(uuid.uuid4())
+        
         #######################################################################
         # Read data
         #######################################################################
@@ -324,7 +344,8 @@ class RFTraining(object):
         gaugetab = pd.read_parquet(str(Path(self.input_location, 'gauge.parquet')))
         grp = pickle.load(open(str(Path(self.input_location, 'grouping_idx_x0y0.p')),'rb'))
         grp_vertical = grp['grp_vertical']
-
+        grp_hourly = grp['grp_hourly']
+        
         ###############################################################################
         # Compute additional data if needed
         ###############################################################################
@@ -335,14 +356,14 @@ class RFTraining(object):
         features = np.unique([item for sub in list(features_dic.values())
                             for item in sub])
 
-        for f in features:
-            if 'zh' in f:
-                logging.info('Computing derived variable {:s}'.format(f))
-                radartab[f] = 10**(0.1 * radartab[f.replace('zh','ZH')])
-            elif 'zv' in f:
-                logging.info('Computing derived variable {:s}'.format(f))
-                radartab[f] = 10**(0.1 * radartab[f.replace('zv','ZV')])
-            if 'DIST_TO_RAD' in f:
+        for feat in features:
+            if 'zh' in feat:
+                logging.info('Computing derived variable {:s}'.format(feat))
+                radartab[feat] = 10**(0.1 * radartab[feat.replace('zh','ZH')])
+            elif 'zv' in feat:
+                logging.info('Computing derived variable {:s}'.format(feat))
+                radartab[feat] = 10**(0.1 * radartab[feat.replace('zv','ZV')])
+            if 'DIST_TO_RAD' in feat:
                 info_radar = constants.RADARS
                 vals = np.unique(radartab['RADAR'])
                 for val in vals:
@@ -354,29 +375,44 @@ class RFTraining(object):
         # Compute data filter for each model
         ###############################################################################
 
-        for model in features_dic.keys():
+        for model in features_dic:
+            
+            # Create artifacts folder
+            artifacts_folder = str(Path(FOLDER_MODELS, 'artifacts', run_id, model))
+            if not os.path.exists(artifacts_folder):
+                os.makedirs(artifacts_folder)
+            
+            # Initialize scores
+            if cv:
+                cv_scores = {'10min':{},'60min':{}}
+                for model in features_dic:
+                    cv_scores['10min'] = {'train': {'solid':[],'liquid':[],'all':[]},
+                                'test':  {'solid':[],'liquid':[],'all':[]}}
+                    cv_scores['60min'] = {'train': {'solid':[],'liquid':[],'all':[]},
+                                'test':  {'solid':[],'liquid':[],'all':[]}}
+            
+            vweights = 10**(config["MODELS"][model]['VERT_AGG']['beta'] * (radartab['HEIGHT']/1000.)) # vert. weights
 
-            vweights = 10**(config[model]['VERT_AGG']['BETA'] * (radartab['HEIGHT']/1000.)) # vert. weights
-
-            filterconf = config[model]['FILTERING'].copy()
+            filterconf = config["MODELS"][model]['FILTERING'].copy()
             logging.info('Computing data filter')
-            logging.info('List of stations to ignore {:s}'.format(','.join(filterconf['STA_TO_REMOVE'])))
+            logging.info('List of stations to ignore {:s}'.format(','.join(filterconf['sta_to_remove'])))
             logging.info('Start time {:s}'.format(str(tstart)))
             logging.info('End time {:s}'.format(str(tend)))
-            logging.info('ZH must be > {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MIN_ZH'][1],
-                                                filterconf['CONSTRAINT_MIN_ZH'][0]))
-            logging.info('ZH must be < {:f} if R <= {:f}'.format(filterconf['CONSTRAINT_MAX_ZH'][1],
-                                                filterconf['CONSTRAINT_MAX_ZH'][0]))
+            logging.info('ZH must be > {:f} if R <= {:f}'.format(filterconf['constraint_min_zh'][1],
+                                                filterconf['constraint_min_zh'][0]))
+            logging.info('ZH must be < {:f} if R <= {:f}'.format(filterconf['constraint_max_zh'][1],
+                                                filterconf['constraint_max_zh'][0]))
 
             ZH_agg = vert_aggregation(pd.DataFrame(radartab['ZH_mean']),
                                         vweights,
                                         grp_vertical,
                                         True, radartab['VISIB_mean'])
-            cond1 = np.array(np.isin(gaugetab['STATION'], filterconf['STA_TO_REMOVE']))
-            cond2 = np.logical_and(ZH_agg['ZH_mean'] < filterconf['CONSTRAINT_MIN_ZH'][1],
-                6 * gaugetab['RRE150Z0'].values >= filterconf['CONSTRAINT_MIN_ZH'][0])
-            cond3 = np.logical_and(ZH_agg['ZH_mean'] >  filterconf['CONSTRAINT_MAX_ZH'][1],
-                6 * gaugetab['RRE150Z0'].values <=  filterconf['CONSTRAINT_MIN_ZH'][0])
+            cond1 = np.array(np.isin(gaugetab['STATION'], filterconf['sta_to_remove']))
+            cond2 = np.logical_and(ZH_agg['ZH_mean'] < filterconf['constraint_min_zh'][1],
+                6 * gaugetab['RRE150Z0'].values >= filterconf['constraint_min_zh'][0])
+            cond3 = np.logical_and(ZH_agg['ZH_mean'] >  filterconf['constraint_max_zh'][1],
+                6 * gaugetab['RRE150Z0'].values <=  filterconf['constraint_min_zh'][0])
+
 
             invalid = np.logical_or(cond1,cond2)
             invalid = np.logical_or(invalid,cond3)
@@ -394,65 +430,205 @@ class RFTraining(object):
             ###############################################################################
             # Prepare training dataset
             ###############################################################################
-
-            gaugetab_train = gaugetab[~invalid].copy()
+            
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))
             features_VERT_AGG = vert_aggregation(radartab[features_dic[model]],
                                  vweights, grp_vertical,
-                                 config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                                 config["MODELS"][model]['VERT_AGG']['visib_weighting'],
                                  radartab['VISIB_mean'])
+            
+            # Filter according to stations and ZH constraints
             features_VERT_AGG = features_VERT_AGG[~invalid]
-
+            gaugetab = gaugetab[~invalid]
+            grp_hourly = grp_hourly[~invalid]
+            
+            # Filter rows which have at least one nan
+            valid = np.all(np.isfinite(features_VERT_AGG),axis=1)
+            gaugetab = gaugetab[valid]
+            grp_hourly = grp_hourly[valid]
+            features_VERT_AGG = features_VERT_AGG[valid]
+            
+            # Get R, T and idx test/train
+            R = np.array(gaugetab['RRE150Z0'] * 6) # Reference precip in mm/h
+            R[np.isnan(R)] = 0
+            
+            T = np.array(gaugetab['TRE200S0'])  # Reference temp in degrees
+            
             ###############################################################################
             # Fit
             ###############################################################################
             # create name of variables used in the model
             features = []
-            for f in features_VERT_AGG.columns:
-                if '_max' in f:
-                    f = f.replace('_max','')
-                elif '_min' in f:
-                    f = f.replace('_min','')
-                elif '_mean' in f:
-                    f = f.replace('_mean','')
-                features.append(f)
-
-            Y = np.array(gaugetab_train['RRE150Z0'] * 6)
-            valid = np.all(np.isfinite(features_VERT_AGG),axis=1)
-
-            # Add some metadata
-            config[model]['FILTERING']['N_datapoints'] = len(Y[valid])
-            config[model]['FILTERING']['GAUGE_min_10min_mm_h'] = np.nanmin(Y[valid])
-            config[model]['FILTERING']['GAUGE_max_10min_mm_h'] = np.nanmax(Y[valid])
-            config[model]['FILTERING']['GAUGE_median_10min_mm_h'] = np.nanmedian(Y[valid])
-
-            config[model]['FILTERING']['TIME_START'] = np.nanmin(gaugetab['TIMESTAMP'][~invalid])
-            config[model]['FILTERING']['TIME_END'] = np.nanmax(gaugetab['TIMESTAMP'][~invalid])
-
-            config[model]['FILTERING']['STA_INCLUDED'] = gaugetab['STATION'][~invalid].unique()
-            config[model]['FILTERING']['CREATED'] = datetime.datetime.utcnow().strftime('%d %b %Y %H:%M UTC')
-
-            logging.info('')
-            logging.info('Training model on gauge data')
-
-            reg = RandomForestRegressorBC(degree = 1,
-                          bctype = config[model]['BIAS_CORR'],
-                          visib_weighting = config[model]['VERT_AGG']['VISIB_WEIGHTING'],
-                          variables = features,
-                          beta = config[model]['VERT_AGG']['BETA'],
-                          metadata = config[model]['FILTERING'],
-                          n_jobs = config["n_jobs"],
-                          **config[model]['RANDOMFOREST_REGRESSOR'])
+            for feat in features_VERT_AGG.columns:
+                if '_max' in feat:
+                    feat = feat.replace('_max','')
+                elif '_min' in feat:
+                    feat = feat.replace('_min','')
+                elif '_mean' in feat:
+                    feat = feat.replace('_mean','')
+                features.append(feat)
             
-            reg.fit(features_VERT_AGG[valid], Y[valid], logmlflow = self.logmlflow, cv = cv)
+            # Create run_parameters dict that will be logged
+            run_parameters = config["MODELS"][model]
+            run_parameters['FILTERING']['N_datapoints'] = len(R)
+            run_parameters['FILTERING']['GAUGE_min_10min_mm_h'] = np.nanmin(R)
+            run_parameters['FILTERING']['GAUGE_max_10min_mm_h'] = np.nanmax(R)
+            run_parameters['FILTERING']['GAUGE_median_10min_mm_h'] = np.nanmedian(R)
+            run_parameters['FILTERING']['time_start'] = np.nanmin(gaugetab['TIMESTAMP'])
+            run_parameters['FILTERING']['time_end'] = np.nanmax(gaugetab['TIMESTAMP'])
+            run_parameters['FILTERING']['sta_included'] = gaugetab['STATION'].unique()
+            run_parameters['FILTERING']['created'] = datetime.datetime.utcnow().strftime('%d %b %Y %H:%M UTC')
+            
+            logging.info('Training model on gauge data')
+            # Training reference model
+            reg = RandomForestRegressorBC(degree = 1,
+                          bctype = config["MODELS"][model]['bias_corr'],
+                          visib_weighting = config["MODELS"][model]['VERT_AGG']['visib_weighting'],
+                          variables = features,
+                          beta = config["MODELS"][model]['VERT_AGG']['beta'],
+                          metadata = config["MODELS"][model]['FILTERING'],
+                          n_jobs = config["PARAMETERS"]["n_jobs"],
+                          **config["MODELS"][model]['RANDOMFOREST_REGRESSOR'])
+            # add id
+            reg.run_id = run_id
+            
+            # Fit model and get train_scores
+            reg.fit(features_VERT_AGG, R)
+            y_train = reg.predict(features_VERT_AGG)
+            train_scores = perfscores(y_train, R)["all"]
+                       
+            # Saving model
+            gz_model_name = str(Path(output_folder, f'{model}_{run_id}.pkl.gz'))
+            logging.info('Saving model to {:s}'.format(gz_model_name))
+            with gzip.open(gz_model_name, 'wb') as f:
+                pickle.dump(reg, f)
+            
+            # Saving run parameters
+            out_name = str(Path(artifacts_folder, 'run_parameters.pkl'))
+            logging.info(f'Saving run parameters to {out_name}')
+            pickle.dump(run_parameters, open(out_name, "wb"))
+         
+            # Saving train scores
+            out_name = str(Path(artifacts_folder, 'train_scores.pkl'))
+            logging.info(f'Saving train scores of fit to {out_name}')
+            pickle.dump(train_scores, open(out_name, "wb"))
+            
+            if self.logmlflow != "none":
+                run_context = mlflow.start_run()
+                with run_context:
+                    mlflow_run_id = mlflow.active_run().info.run_id
+                    features_dic = {'features': features_VERT_AGG.columns.to_list()}
+                    mlflow.log_dict(features_dic, 'features.json')
+                    mlflow.log_params(run_parameters)
+                    for metric in train_scores:
+                        mlflow.log_metric(f'train_{metric}', train_scores[metric])
+                    
+                    if self.logmlflow == "all": # also log model
+                        logging.info(f"Upload fitted model to mlflow")
+                        # Log the trained model and signature
+                        mlflow.log_artifact(gz_model_name, "rf_gzipped_pickle_model")
 
-            out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}.p'.format(model,
-                                                  config[model]['VERT_AGG']['BETA'],
-                                                  config[model]['BIAS_CORR'])))
-            logging.info('Saving model to {:s}'.format(out_name))
+                        inpt_exp = features_VERT_AGG[valid][:1]
+                        sign = infer_signature(features_VERT_AGG[:10], R[:10])
+                        mlflow.sklearn.log_model(sk_model=None,
+                                                artifact_path='rf_signature_no_model',
+                                                input_example=inpt_exp,
+                                                signature=sign)
+            if not cv:
+                # stop here
+                return
+            
+            precip_bounds = config["PARAMETERS"].get("cv_precip_bounds", [0,2,10,100])
+            
+            idx_testtrain = split_event(gaugetab['TIMESTAMP'].values, cv)
+            
+            # Initialize arrays
+            data_cv = {}
+            for agg_p in ["10min", "60min"]:
+                data_cv[agg_p] = {}
+                for fraction in ["test", "train"]:
+                    data_cv[agg_p][fraction] = {"Rref": [], "Rest": [], "T": []}
+                
+            for cv_it in range(cv):
+                logging.info(f"Run {cv_it+1}/{cv} of cross-validation")
+                
+                test = idx_testtrain == cv_it
+                train = idx_testtrain != cv_it
 
-            pickle.dump(reg, open(out_name, 'wb'))
+                # Get reference values
+                data_cv["10min"]["test"]["T"].extend(T[test])
+                data_cv["10min"]["train"]["T"].extend(T[train])
+                data_cv["10min"]["test"]["Rref"].extend(R[test])
+                data_cv["10min"]["train"]["Rref"].extend(R[train])
+                
+                data_cv["60min"]["test"]["Rref"].extend(np.squeeze(np.array(pd.DataFrame(R[test])
+                                .groupby(grp_hourly[test]).mean())))
+        
+                data_cv["60min"]["train"]["Rref"].extend(np.squeeze(np.array(pd.DataFrame(R[train])
+                                .groupby(grp_hourly[train]).mean())))
+                
+                data_cv["60min"]["test"]["T"].extend(np.squeeze(np.array(pd.DataFrame(T[test])
+                                .groupby(grp_hourly[test]).mean())))
+                
+                data_cv["60min"]["train"]["T"].extend(np.squeeze(np.array(pd.DataFrame(T[train])
+                                .groupby(grp_hourly[train]).mean())))
+                
+                # Train model
+                reg.fit(features_VERT_AGG[train], R[train])
+                
+                # Predictions
+                Rest_10_test = reg.predict(features_VERT_AGG[test])
+                Rest_10_train = reg.predict(features_VERT_AGG[train])
+                data_cv["10min"]["test"]["Rest"].extend(Rest_10_test)
+                data_cv["10min"]["train"]["Rest"].extend(Rest_10_train)
+                
+                data_cv["60min"]["test"]["Rest"].extend(np.squeeze(np.array(pd.DataFrame(Rest_10_test)
+                                    .groupby(grp_hourly[test]).mean())))
+                data_cv["60min"]["train"]["Rest"].extend(np.squeeze(np.array(pd.DataFrame(Rest_10_train)
+                                    .groupby(grp_hourly[train]).mean())))
 
+            # Compute scores
+            for agg_p in data_cv:
+                for fraction in data_cv[agg_p]:
+                    # First convert to arrays
+                    for var in data_cv[agg_p][fraction]:
+                        data_cv[agg_p][fraction][var] = np.array(data_cv[agg_p][fraction][var])
+                        
+                    solid = data_cv[agg_p][fraction]["T"] < constants.THRESHOLD_SOLID
+                    liquid = data_cv[agg_p][fraction]["T"] >= constants.THRESHOLD_SOLID
+                    
+                    cv_scores[agg_p][fraction]['solid'] = perfscores(data_cv[agg_p][fraction]["Rest"][solid],
+                                        data_cv[agg_p][fraction]["Rref"][solid],
+                                        bounds = precip_bounds)
+                    cv_scores[agg_p][fraction]['liquid'] = perfscores(data_cv[agg_p][fraction]["Rest"][liquid],
+                                        data_cv[agg_p][fraction]["Rref"][liquid],
+                                        bounds = precip_bounds)
+                    cv_scores[agg_p][fraction]['all'] = perfscores(data_cv[agg_p][fraction]["Rest"],
+                                        data_cv[agg_p][fraction]["Rref"],
+                                        bounds = precip_bounds)
+            # Save figures and metrics        
+            cv_figures = plot_fit_metrics(cv_scores, artifacts_folder)
+            pickle.dump(cv_scores, open(str(Path(artifacts_folder, 'all_cv_metrics.p')),'wb'))
+            
+            # log to mlflow
+            if self.logmlflow != 'none':
+                # Reuse run_id from previous logging
+                with mlflow.start_run(run_id=mlflow_run_id) as run_context:
+                    # get metrics to log
+                    mlflow_cv_metrics = config["MLFLOW"].get("cv_scores_to_log", [])
+                    for score in mlflow_cv_metrics:
+                        all_keys_of_metric = score.split(',')
+                        try:
+                            mlflow.log_metric('_'.join(all_keys_of_metric), reduce(operator.getitem, 
+                                all_keys_of_metric, cv_scores))
+                        except KeyError:
+                            logging.error(f"Could not find metric {score} in dict of CV metrics")
+                    mlflow.log_dict(cv_scores, 'cv_scores.json')
+                    # Log all generated figures
+                    for figname in cv_figures:
+                        mlflow.log_figure(cv_figures[figname], figname)
+                
+                
     def feature_selection(self, features_dic, featuresel_configfile,
                         output_folder, K=5, tstart=None, tend=None):
         """
@@ -554,24 +730,24 @@ class RFTraining(object):
         for im, model in enumerate(modelnames):
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))
 
-            if (im > 0) and (config[model]['VERT_AGG']['BETA'] == config[modelnames[im-1]]['VERT_AGG']['BETA']) \
-                    and (config[model]['VERT_AGG']['VISIB_WEIGHTING'] == config[modelnames[im-1]]['VERT_AGG']['VISIB_WEIGHTING']):
+            if (im > 0) and (config["MODELS"][model]['VERT_AGG']['BETA'] == config[modelnames[im-1]]['VERT_AGG']['BETA']) \
+                    and (config["MODELS"][model]['VERT_AGG']['visib_weighting'] == config[modelnames[im-1]]['VERT_AGG']['visib_weighting']):
                 logging.info('Model {} has same vertical aggregation settings as {}, hence just copy aggregated 2D fields'.format(model, modelnames[im-1]))
                 features_VERT_AGG[model] = features_VERT_AGG[modelnames[im-1]].copy()
             else:
-                vweights = 10**(config[model]['VERT_AGG']['BETA'] *
+                vweights = 10**(config["MODELS"][model]['VERT_AGG']['BETA'] *
                                     (radartab['HEIGHT']/1000.)) # vert. weights
                 features_VERT_AGG[model] = vert_aggregation(radartab[features_dic[model]],
                                     vweights, grp_vertical,
-                                    config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                                    config["MODELS"][model]['VERT_AGG']['visib_weighting'],
                                     radartab['VISIB_mean'])
 
             regressors[model] = RandomForestRegressorBC(degree = 1,
-                        bctype = config[model]['BIAS_CORR'],
-                        beta = config[model]['VERT_AGG']['BETA'],
+                        bctype = config["MODELS"][model]['BIAS_CORR'],
+                        beta = config["MODELS"][model]['VERT_AGG']['BETA'],
                         variables = features_dic[model],
-                        visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
-                        **config[model]['RANDOMFOREST_REGRESSOR'])
+                        visib_weighting=config["MODELS"][model]['VERT_AGG']['visib_weighting'],
+                        **config["MODELS"][model]['RANDOMFOREST_REGRESSOR'])
 
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
@@ -807,23 +983,23 @@ class RFTraining(object):
         for model in modelnames:
             logging.info('Performing vertical aggregation of input features for model {:s}'.format(model))
 
-            vweights = 10**(config[model]['VERT_AGG']['BETA'] *
+            vweights = 10**(config["MODELS"][model]['VERT_AGG']['BETA'] *
                                 (radartab['HEIGHT']/1000.)) # vert. weights
             features_VERT_AGG[model] = vert_aggregation(radartab[features_dic[model]],
                                  vweights, grp_vertical,
-                                 config[model]['VERT_AGG']['VISIB_WEIGHTING'],
+                                 config["MODELS"][model]['VERT_AGG']['visib_weighting'],
                                  radartab['VISIB_mean'])
 
             regressors[model] = RandomForestRegressorBC(degree = 1,
-                          bctype = config[model]['BIAS_CORR'],
+                          bctype = config["MODELS"][model]['BIAS_CORR'],
                           variables = features_dic[model],
-                          beta = config[model]['VERT_AGG']['BETA'],
-                          visib_weighting=config[model]['VERT_AGG']['VISIB_WEIGHTING'],
-                          **config[model]['RANDOMFOREST_REGRESSOR'])
+                          beta = config["MODELS"][model]['VERT_AGG']['BETA'],
+                          visib_weighting=config["MODELS"][model]['VERT_AGG']['visib_weighting'],
+                          **config["MODELS"][model]['RANDOMFOREST_REGRESSOR'])
 
         # remove nans
         valid = np.all(np.isfinite(features_VERT_AGG[modelnames[0]]),
-                       axis = 1)
+                        axis = 1)
         # if (tstart != None) and (tend == None):
         #     (gaugetab['TIMESTAMP'] >= tstart)
         # elif (tstart == None) and (tend != None):
@@ -868,287 +1044,4 @@ class RFTraining(object):
             all_station_scores = {'10min': {}, '60min': {}}
             all_station_stats = {'10min': {}, '60min': {}}
 
-        ###############################################################################
-        # Initialize outputs
-        ###############################################################################
-        for model in modelnames:
-            all_scores['10min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
-                         'test':  {'solid':[],'liquid':[],'all':[]}}
-            all_scores['60min'][model] = {'train': {'solid':[],'liquid':[],'all':[]},
-                         'test':  {'solid':[],'liquid':[],'all':[]}}
-
-            all_stats['10min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
-                         'test':  {'solid':{},'liquid':{},'all':{}}}
-
-            all_stats['60min'][model] = {'train': {'solid':{},'liquid':{},'all':{}},
-                         'test':  {'solid':{},'liquid':{},'all':{}}}
-
-            if station_scores == True:
-                # for station scores we will limit the output to test data only
-                for timeagg in all_station_scores.keys():
-                    all_station_scores[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
-                    all_station_stats[timeagg][model] = {'solid':{},'liquid':{},'all':{}}
-
-
-        for k in K:
-            logging.info('Run {:d}/{:d}-{:d} of cross-validation'.format(k,np.nanmin(K),np.nanmax(K)))
-
-            test = idx_testtrain == k
-            train = idx_testtrain != k
-
-            if cross_val_type == 'years':
-                logging.info('Time range for testing set: {} - {} with {:3.2f}% of datapoints'.format(
-                                datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].min()),
-                                datetime.datetime.utcfromtimestamp(gaugetab['TIMESTAMP'][test].max()),
-                                gaugetab['TIMESTAMP'][test].count()/ gaugetab['TIMESTAMP'].count()*100))
-
-            # Get reference values
-            R_test_60 = np.squeeze(np.array(pd.DataFrame(R[test])
-                            .groupby(grp_hourly[test]).mean()))
-
-            R_train_60 = np.squeeze(np.array(pd.DataFrame(R[train])
-                            .groupby(grp_hourly[train]).mean()))
-
-            T_test_60 = np.squeeze(np.array(pd.DataFrame(T[test])
-                            .groupby(grp_hourly[test]).mean()))
-
-            T_train_60 = np.squeeze(np.array(pd.DataFrame(T[train])
-                            .groupby(grp_hourly[train]).mean()))
-
-
-            liq_10_train = T[train] >= constants.THRESHOLD_SOLID
-            sol_10_train = T[train] < constants.THRESHOLD_SOLID
-            liq_60_train = T_train_60 >= constants.THRESHOLD_SOLID
-            sol_60_train = T_train_60 < constants.THRESHOLD_SOLID
-
-            liq_10_test = T[test] >= constants.THRESHOLD_SOLID
-            sol_10_test = T[test] < constants.THRESHOLD_SOLID
-            liq_60_test = T_test_60 >= constants.THRESHOLD_SOLID
-            sol_60_test = T_test_60 < constants.THRESHOLD_SOLID
-
-            # Fit every regression model
-            for model in modelnames:
-                logging.info('Checking model {:s}'.format(model))
-                logging.info('Evaluating test error')
-                # 10 min
-                logging.info('at 10 min')
-
-                # Performing fit
-                if model not in reference_products:
-                    logging.info('Training model on gauge data')
-
-                    regressors[model].fit(features_VERT_AGG[model][train],R[train])
-                    R_pred_10 = regressors[model].predict(features_VERT_AGG[model][test])
-
-                    if (save_model == True):
-                        regressors[model].variables = features_VERT_AGG[model].columns
-                        out_name = str(Path(output_folder, '{:s}_BETA_{:2.1f}_BC_{:s}_excl_{}.p'.format(model,
-                                                            config[model]['VERT_AGG']['BETA'],
-                                                            config[model]['BIAS_CORR'],k)))
-                        logging.info('Saving model to {:s}'.format(out_name))
-                        pickle.dump(regressors[model], open(out_name, 'wb'))
-
-                else:
-                    R_pred_10 = refertab[model].values[test]
-
-
-                scores_solid = perfscores(R_pred_10[sol_10_test],
-                                          R[test][sol_10_test],
-                                          bounds = bounds10)
-
-                all_scores['10min'][model]['test']['solid'].append(scores_solid)
-
-                scores_liquid = perfscores(R_pred_10[liq_10_test],
-                                                 R[test][liq_10_test],
-                                                 bounds = bounds10)
-                all_scores['10min'][model]['test']['liquid'].append(scores_liquid)
-
-                scores_all = perfscores(R_pred_10,
-                                                 R[test],
-                                                 bounds = bounds10)
-                all_scores['10min'][model]['test']['all'].append(scores_all)
-
-                # 60 min
-                logging.info('at 60 min')
-                R_pred_60 = np.squeeze(np.array(pd.DataFrame(R_pred_10)
-                                    .groupby(grp_hourly[test]).mean()))
-
-                scores_solid = perfscores(R_pred_60[sol_60_test],
-                                                 R_test_60[sol_60_test],
-                                                 bounds = bounds60)
-                all_scores['60min'][model]['test']['solid'].append(scores_solid)
-
-
-                scores_liquid = perfscores(R_pred_60[liq_60_test],
-                                                 R_test_60[liq_60_test],
-                                                 bounds = bounds60)
-                all_scores['60min'][model]['test']['liquid'].append(scores_liquid)
-
-                scores_all = perfscores(R_pred_60,
-                                                 R_test_60,
-                                                 bounds = bounds60)
-                all_scores['60min'][model]['test']['all'].append(scores_all)
-
-                if station_scores == True:
-                    logging.info('Calculating station performances for model {}'.format(model))
-
-                    stations_60 = np.array(gaugetab['STATION'][test]
-                                    .groupby(grp_hourly[test]).first())
-
-                    df = pd.DataFrame(columns=gaugetab['STATION'].unique(),
-                    index = scores_all['all'].keys())
-
-                    for timeagg in all_station_scores.keys():
-                        all_station_scores[timeagg][model]['all'][k] = df.copy()
-                        all_station_scores[timeagg][model]['liquid'][k] = df.copy()
-                        all_station_scores[timeagg][model]['solid'][k] = df.copy()
-
-                    for sta in gaugetab['STATION'].unique():
-                        sta_idx = (gaugetab['STATION'][test] == sta)
-                        sta_idx_60 = (stations_60 == sta)
-
-                        try:
-                            scores_all_10 = perfscores(R_pred_10[sta_idx],
-                                                    R[test][sta_idx])['all']
-                            all_station_scores['10min'][model]['all'][k][sta] = scores_all_10
-
-                            scores_all_60 = perfscores(R_pred_60[sta_idx_60],R_test_60[sta_idx_60])['all']
-                            all_station_scores['60min'][model]['all'][k][sta] = scores_all_60
-
-                            del scores_all_10, scores_all_60
-                        except:
-                            logging.info('No performance score for {}'.format(sta))
-                        try:
-                            scores_liquid_10 = perfscores(R_pred_10[liq_10_test & sta_idx],
-                                                    R[test][liq_10_test & sta_idx])['all']
-                            all_station_scores['10min'][model]['liquid'][k][sta] = scores_liquid_10
-
-                            scores_liquid_60 = perfscores(R_pred_60[liq_60_test & sta_idx_60],
-                                                    R_test_60[liq_60_test & sta_idx_60])['all']
-                            all_station_scores['60min'][model]['liquid'][k][sta] = scores_liquid_60
-                        except:
-                            logging.info('No performance score for liquid precip for {}'.format(sta))
-                        try:
-                            scores_solid_10 = perfscores(R_pred_10[sol_10_test & sta_idx],
-                                                    R[test][sol_10_test & sta_idx])['all']
-                            all_station_scores['10min'][model]['solid'][k][sta] = scores_solid_10
-
-                            scores_solid_60 = perfscores(R_pred_60[sol_60_test & sta_idx_60],
-                                                        R_test_60[sol_60_test & sta_idx_60])['all']
-                            all_station_scores['60min'][model]['solid'][k][sta] = scores_solid_60
-                        except:
-                            logging.info('No performance score for solid precip for {}'.format(sta))
-
-                # train
-                logging.info('Evaluating train error')
-                # 10 min
-                logging.info('at 10 min')
-
-                if model not in reference_products:
-                    R_pred_10 = regressors[model].predict(features_VERT_AGG[model][train])
-                else:
-                    R_pred_10 = refertab[model].values[train]
-
-                scores_solid = perfscores(R_pred_10[sol_10_train],
-                                                 R[train][sol_10_train],
-                                                 bounds = bounds10)
-                all_scores['10min'][model]['train']['solid'].append(scores_solid)
-
-                scores_liquid = perfscores(R_pred_10[liq_10_train],
-                                                 R[train][liq_10_train],
-                                                 bounds = bounds10)
-
-                all_scores['10min'][model]['train']['liquid'].append(scores_liquid)
-
-                scores_all = perfscores(R_pred_10,
-                                                 R[train],
-                                                 bounds = bounds10)
-                all_scores['10min'][model]['train']['all'].append(scores_all)
-
-
-                R_pred_60 = np.squeeze(np.array(pd.DataFrame(R_pred_10)
-                                    .groupby(grp_hourly[train]).mean()))
-
-                # 60 min
-                logging.info('at 60 min')
-                # Evaluate model 10 min
-
-                scores_solid = perfscores(R_pred_60[sol_60_train],
-                                        R_train_60[sol_60_train],
-                                        bounds = bounds60)
-                all_scores['60min'][model]['train']['solid'].append(scores_solid)
-
-                scores_liquid = perfscores(R_pred_60[liq_60_train],
-                                        R_train_60[liq_60_train],
-                                         bounds = bounds60)
-                all_scores['60min'][model]['train']['liquid'].append(scores_liquid)
-
-                scores_all = perfscores(R_pred_60,R_train_60,
-                                        bounds = bounds60)
-                all_scores['60min'][model]['train']['all'].append(scores_all)
-
-
-        # Compute statistics after the 5-fold cross validation
-        for agg in all_scores.keys():
-            for model in all_scores[agg].keys():
-                for veriftype in all_scores[agg][model].keys():
-                    for preciptype in all_scores[agg][model][veriftype].keys():
-                        bounds = list(all_scores[agg][model][veriftype][preciptype][0].keys())
-                        scores =  all_scores[agg][model][veriftype][preciptype][0][bounds[0]].keys()
-                        for bound in bounds:
-                            all_stats[agg][model][veriftype][preciptype][bound] = {}
-                            for score in scores:
-                                data = all_scores[agg][model][veriftype][preciptype]
-                                for d in data:
-                                    if type(d[bound]) != dict:
-                                        d[bound] = {'ME':np.nan,
-                                                    'CORR':np.nan,
-                                                    'STDE':np.nan,
-                                                    'MAE':np.nan,
-                                                    'scatter':np.nan,
-                                                    'bias':np.nan,
-                                                    'ED':np.nan}
-                                datasc = [d[bound][score] for d in data]
-                                all_stats[agg][model][veriftype][preciptype][bound][score] = {}
-
-                                for stat in stats.keys():
-                                    sdata = stats[stat](datasc)
-                                    all_stats[agg][model][veriftype][preciptype][bound][score][stat] = sdata
-
-        if station_scores == True:
-            for agg in all_station_scores.keys():
-                for model in all_station_scores[agg].keys():
-                    for preciptype in all_station_scores[agg][model].keys():
-                        df = pd.DataFrame(columns=gaugetab['STATION'].unique())
-                        perfs = {'RMSE': df.copy(), 'scatter':df.copy(),
-                                 'logBias':df.copy(), 'ED':df.copy(), 'N':df.copy(),
-                                 'mest':df.copy(), 'mref':df.copy()}
-                        all_station_stats[agg][model][preciptype] = {}
-                        for score in perfs.keys():
-                            for kidx in all_station_scores[agg][model][preciptype].keys():
-                                df_dummy = all_station_scores[agg][model][preciptype][kidx].copy()
-                                perfs[score] = perfs[score].append(df_dummy.loc[df_dummy.index == score])
-
-                            all_station_stats[agg][model][preciptype][score] = pd.concat([perfs[score].mean().rename('mean'),
-                                                                                          perfs[score].std().rename('std')],
-                                                                                         axis=1)
-
-
-        if not os.path.exists(output_folder):
-            os.makedirs(output_folder)
-
-        plot_crossval_stats(all_stats, output_folder)
-        name_file = str(Path(output_folder, 'all_scores.p'))
-        pickle.dump(all_scores, open(name_file, 'wb'))
-        name_file = str(Path(output_folder, 'all_scores_stats.p'))
-        pickle.dump(all_stats, open(name_file, 'wb'))
-
-        if station_scores == True:
-            name_file = str(Path(output_folder, 'all_station_scores.p'))
-            pickle.dump(all_station_scores, open(name_file, 'wb'))
-            name_file = str(Path(output_folder, 'all_station_stats.p'))
-            pickle.dump(all_station_stats, open(name_file, 'wb'))
-
-
-        logging.info('Finished script and saved all scores to {}'.format(output_folder))
-        return all_scores, all_stats
+        

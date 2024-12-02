@@ -1,27 +1,32 @@
-n_jobs: 4
-RFO:
-    FILTERING: # conditions to remove some observations
-        STA_TO_REMOVE : ['TIT','GSB','GRH','PIL','SAE','AUB']
-        CONSTRAINT_MIN_ZH : [0.5,5] # min 5 dBZ if R > 0.5 mm/h
-        CONSTRAINT_MAX_ZH : [0,20] # max 20 dBZ if R = 0 mm/h
-    RANDOMFOREST_REGRESSOR: # parameters to sklearn's class
-        max_depth : 20
-        n_estimators : 15
-        max_features : 7
-    VERT_AGG:
-        BETA : -0.5 # weighting factor to use in the exponential weighting
-        VISIB_WEIGHTING : 1 # whether to weigh or not observations by their visib
-    BIAS_CORR : 'spline' # type of bias correction 'raw', 'cdf' or 'spline'
-RFO_hpol:
-    FILTERING: # conditions to remove some observations
-        STA_TO_REMOVE : ['TIT','GSB','GRH','PIL','SAE','AUB']
-        CONSTRAINT_MIN_ZH : [0.5,5] # min 5 dBZ if R > 0.5 mm/h
-        CONSTRAINT_MAX_ZH : [0,20] # max 20 dBZ if R = 0 mm/h
-    RANDOMFOREST_REGRESSOR: # parameters to sklearn's class
-        max_depth : 20
-        n_estimators : 15
-        max_features : 7
-    VERT_AGG:
-        BETA : -0.5 # weighting factor to use in the exponential weighting
-        VISIB_WEIGHTING : 1 # whether to weigh or not observations by their visib
-    BIAS_CORR : 'spline' # type of bias correction 'raw', 'cdf' or 'spline'
+PARAMETERS:
+    n_jobs: 4
+    cv_precip_bounds: [0,2,10,100] # precip bounds used in cross-validation
+MLFLOW:
+    cv_scores_to_log:  ['60min,test,all,all,RMSE', '60min,test,all,all,ED', '60min,test,all,all,logBias', '60min,test,all,all,scatter']
+MODELS:
+    RFO:
+        FILTERING: # conditions to remove some observations
+            sta_to_remove : ['TIT','GSB','GRH','PIL','SAE','AUB']
+            constraint_min_zh : [0.5,5] # min 5 dBZ if R > 0.5 mm/h
+            constraint_max_zh : [0,20] # max 20 dBZ if R = 0 mm/h
+        RANDOMFOREST_REGRESSOR: # parameters to sklearn's class
+            max_depth : 20
+            n_estimators : 15
+            max_features : 7
+        VERT_AGG:
+            beta : -0.5 # weighting factor to use in the exponential weighting
+            visib_weighting : 1 # whether to weigh or not observations by their visib
+        bias_corr : 'spline' # type of bias correction 'raw', 'cdf' or 'spline'
+    RFO_hpol:
+        FILTERING: # conditions to remove some observations
+            sta_to_remove : ['TIT','GSB','GRH','PIL','SAE','AUB']
+            constraint_min_zh : [0.5,5] # min 5 dBZ if R > 0.5 mm/h
+            constraint_max_zh : [0,20] # max 20 dBZ if R = 0 mm/h
+        RANDOMFOREST_REGRESSOR: # parameters to sklearn's class
+            max_depth : 20
+            n_estimators : 15
+            max_features : 7
+        VERT_AGG:
+            beta : -0.5 # weighting factor to use in the exponential weighting
+            visib_weighting : 1 # whether to weigh or not observations by their visib
+        bias_corr : 'spline' # type of bias correction 'raw', 'cdf' or 'spline'
