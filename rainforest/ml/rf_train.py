@@ -53,7 +53,7 @@ def main():
                       default = None, help="Path of the config file, the default will be default_config.yml in the ml module",
                       metavar="CONFIG")
 
-    parser.add_option("-m", "--models", dest = "models", type = str,
+    parser.add_option("-r", "--rfmodels", dest = "rfmodels", type = str,
                       default = None,
                       help='Specify which models you want to use in the form of a json line of a dict, the keys are names you give to the models, the values the input features they require' +
                       ', for example \'{"RF_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","T", "HEIGHT","VISIB_mean"]}\'' +
@@ -75,6 +75,24 @@ def main():
                       help="If set to 1 (default), the input parquet files (homogeneized tables) for the ml routines will be recomputed from the current database rows"+
                       "This takes a bit of time but is needed if you updated the database and want to use the new data in the training",
                       metavar="MODELS")
+    
+    parser.add_option("-l", "--logmlflow", 
+                  type="choice", 
+                  choices=["none", "metrics", "all"],
+                  dest="logmlflow", 
+                  default="none",
+                  help="Specify the logging mode for MLFlow. Choices are:" +
+                       " 'none' (default, no logging), 'metrics' (log metrics only)," +
+                       " or 'all' (log metrics and model)." +
+                       " To log to a remote ML server, the environment variable MLFLOW_TRACKING_URI needs to be set.")
+
+    
+    parser.add_option("-C", "--cv", 
+                      dest="cv", 
+                      default=0,
+                      help = "Number of folds for cross-validation, when running fit function." +
+                      "If set to 0, will not perform cross-validation (i.e. no test error)")
+
 
     (options, args) = parser.parse_args()
 
@@ -90,6 +108,8 @@ def main():
     if not os.path.exists(options.outputfolder):
         os.makedirs(options.outputfolder)
 
+    options.cv = int(options.cv)
+
     logging.info('Output folder will be {:s}'.format(options.outputfolder))
 
     if options.inputfolder == None:
@@ -100,13 +120,13 @@ def main():
     dic_models = {}
 
     only_regenerate = False # Whether or not to only generate new input data (no training)
-    if options.models == None:
+    if options.rfmodels == None:
         only_regenerate = True
     else:
-        if 'default' in options.models:
-            logging.info('Found at least one "default" alias in models {:s}, assuming they are all aliases'.format(options.models))
-            options.models = options.models.split(',')
-            for opt in options.models: # Add aliases here if needed
+        if 'default' in options.rfmodels:
+            logging.info('Found at least one "default" alias in models {:s}, assuming they are all aliases'.format(options.rfmodels))
+            options.rfmodels = options.rfmodels.split(',')
+            for opt in options.rfmodels: # Add aliases here if needed
                 opt = opt.strip()
                 if opt == 'dualpol_default':
                     dic_models['RF_dualpol'] =  ["RADAR", "zh_VISIB_mean",
@@ -132,9 +152,9 @@ def main():
                                               "HEIGHT","VISIB_mean"]
 
         else:
-            dic_models = json.loads(options.models)
+            dic_models = json.loads(options.rfmodels)
 
-    options.models = dic_models
+    options.rfmodels = dic_models
 
     if only_regenerate:
         logging.info('No model was given, only the input parquet files will be regenerated')
@@ -151,11 +171,11 @@ def main():
     logging.info('If not available in this folder, they will be computed and stored there')
 
     rf = RFTraining(options.dbfolder, options.inputfolder,
-                    options.generate_inputs)
+                    options.generate_inputs, options.logmlflow)
 
     if not only_regenerate:
-        rf.fit_models(options.config, options.models, options.start,
-                      options.end)
+        rf.fit_models(options.config, options.rfmodels, options.start,
+                      options.end, cv = options.cv)
 
 
 if __name__ == '__main__':
