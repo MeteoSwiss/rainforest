@@ -46,6 +46,13 @@ def main():
                       ', the models must be in the folder /ml/rf_models/, for example \'{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p}\'' +
                       ', please note the double and single quotes, which are required',
                       metavar="MODELS")
+    
+    parser.add_option("-M", "--mlflow_model", 
+                    action="store_true", 
+                    dest="mlflow_model", 
+                    default=False, 
+                    help="Defines whether the given model(s) is/are stored on MLflow. If true, the value passed to -m is/are the \
+                    run ID(s) of Mlflow.")
 
     parser.add_option("-p", "--modelpath", dest = "modelpath", type=str,
                       default = None,
@@ -61,7 +68,9 @@ def main():
 
     options.models = json.loads(options.models)
     for k in options.models.keys():
-        if options.modelpath == None:
+        if options.mlflow_model:
+            options.models[k] = read_rf(mlflow_runid=options.models[k])
+        elif options.modelpath == None:
             options.models[k] = read_rf(options.models[k])
         else:
             options.models[k] = read_rf(options.models[k], filepath=options.modelpath)
