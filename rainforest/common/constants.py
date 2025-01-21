@@ -258,6 +258,7 @@ elif 'balfrin' in socket.gethostname() or 'nid' in socket.gethostname():
     FOLDER_DATABASE = '/store_new/mch/msrad/radar/radar_database_v2/'
     FOLDER_RADAR = '/store_new/mch/msrad/radar/swiss/data/'
     FOLDER_RADARH = '/store_new/mch/msrad/radar/polarHR/data/'
+    FOLDER_RADAR_HDF5 = '/store_new/mch/msrad/radar/swiss/data/hdf5/'
     FOLDER_CPCCV = '/store_new/mch/msrad/radar/cpc_validation/daily/'
 
     FOLDER_ISO0 = '/store_new/mch/msrad/radar/swiss/data/'
