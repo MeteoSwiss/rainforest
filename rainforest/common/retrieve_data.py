@@ -492,14 +492,13 @@ def retrieve_prod(start_time, end_time, product_name, folder_out = None,
     if product_name == 'ZZW' or product_name == 'ZZP': # no vpr for PPM and WEI
         product_name = 'ZZA'
 
-    if product_name == 'CPC':
-        folder_out = folder_out + '/CPC'
-    if product_name == 'CPCH':
-        folder_out = folder_out + '/CPCH'
-
     if folder_out:
         if not os.path.exists(folder_out):
             os.makedirs(folder_out)
+        if product_name == 'CPC':
+            folder_out = os.path.join(folder_out, 'CPC')
+        if product_name == 'CPCH':
+            folder_out = os.path.join(folder_out, 'CPCH')
 
     # Check if times are aware or naive
     if start_time.tzinfo is None:
