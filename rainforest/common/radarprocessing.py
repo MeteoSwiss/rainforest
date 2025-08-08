@@ -519,7 +519,7 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
 
     # Get the incremental difference for e.g. 5min steps (divided by 12):
     dt = datetime.timedelta(minutes=tsteps_min)
-    ndt = np.arange(1,int(60/tsteps_min))
+    ndt = np.arange(1, int(60/tsteps_min))
     deltaHZT = (hzt[tstamp_hzt1]-hzt[tstamp_hzt0])/ (len(ndt)+1)
 
     # Loop through all min increments and add the calculated increment of deltaHZT
