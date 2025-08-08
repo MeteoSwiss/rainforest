@@ -15,7 +15,7 @@ December 2022
 
 import warnings
 warnings.filterwarnings('ignore')
-
+import time
 import pickle
 import numpy as np
 import datetime
@@ -325,21 +325,18 @@ class QPEProcessor_RT(object):
                 filepath += '.h5'
                 write_odim_grid_h5(filepath, grid)
 
-    def compute(self, output_folder, t0, t1, timestep = 5,
+    def compute(self, output_folder, timestep = 5,
                 basename = 'RFO%y%j%H%MVH'):
         """
-        Computes QPE values for a given time range and stores them in a
-        folder, in a binary format
+        Computes QPE values in real-time mode and stores them in a
+        folder, in a binary format.
+        Real-time mode will run forever and keep processing new data on the fly.
 
         Parameters
         ----------
         output_folder : str
             Folder where to store the computed QPE fields, note that subfolders
             for every model will be created in this folder
-        t0 : datetime
-            Start time of the timerange in datetime format
-        t1 : datetime
-            End time of the timerange in datetime format
         timestep : int (optional)
             In case you don't to generate a new product every 5 minute, you can
             change the time here, f.ex. 10 min, will compute the QPE only every
@@ -354,30 +351,27 @@ class QPEProcessor_RT(object):
         for model in self.models.keys():
             if self.config['ADVECTION_CORRECTION']:
                 model += '_AC'
-            if not os.path.exists(str(Path(output_folder, model))):
-                os.makedirs(str(Path(output_folder, model)))
-
-        # Retrieve one timestamp before beginning for lead time
-        tL = t0-datetime.timedelta(minutes=timestep)
-
-        # Get all timesteps in time range
-        n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
-        timeserie = tL + np.array([datetime.timedelta(minutes=timestep*i)
-                            for i in range(n_incr + 1)])
+            if not os.path.exists(Path(output_folder, model)):
+                Path(output_folder, model).mkdir(parents=True, exist_ok=True)
 
         qpe_prev = {}
         X_prev = {}
-
-        for i, t in enumerate(timeserie): # Loop on timesteps
+        hzt_cosmo_fields = {}
+        
+        first_it = True
+        while True: # infinite loop
+            now = datetime.datetime.now()
+            ct = now - datetime.timedelta(minutes=now.minute % 5, seconds = now.second, microseconds=now.microsecond) # latest 5min time-period
+        
             logging.info('====')
             
             # Get lead time file
-            if i == 0 :
+            if first_it :
                 for k in self.models.keys():
                     tL_x_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
-                                datetime.datetime.strftime(t, basename)+'_xprev.npy'
+                                datetime.datetime.strftime(ct, basename)+'_xprev.npy'
                     tL_qpe_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
-                                datetime.datetime.strftime(t, basename)+'_qpeprev.npy'
+                                datetime.datetime.strftime(ct, basename)+'_qpeprev.npy'
                     one_file_missing = False
                     try:
                         X_prev[k] = np.load(tL_x_file)
@@ -385,17 +379,18 @@ class QPEProcessor_RT(object):
                     except:
                         one_file_missing = True
                 # If all the files could be loaded, go directly to current timestep
-                if one_file_missing == False:
-                    logging.info('Already available: LEAD time '+str(t))
+                if not one_file_missing:
+                    logging.info(f'Already available: LEAD time {ct}')
                     continue
                 else:
-                    logging.info('Processing LEAD time '+str(t))
+                    logging.info(f'Processing LEAD time {ct}')
+                    
+                first_it = False
             else:
-                logging.info('Processing time '+str(t))
-            
+                logging.info(f'Processing time {ct}')
 
             # Retrieve data for time range
-            self.fetch_data_RT(t)
+            self.fetch_data_RT(ct)
 
             # Log missing radar files
             self.missing_files = {}
@@ -415,17 +410,15 @@ class QPEProcessor_RT(object):
                     if weight not in weights_cart.keys():
                         weights_cart[weight] = np.zeros((NBINS_X, NBINS_Y))
 
-            # Get COSMO temperature for all radars for this timestamp
-            if ('T' in self.cosmo_var) :
-                T_cosmo_fields = get_COSMO_T(t, radar = self.config['RADARS'])
+            # Get HZT temperature for all radars for this timestamp
             if ('ISO0_HEIGHT' in self.cosmo_var) :
-                if ('hzt_cosmo_fields' not in locals()) or (t not in hzt_cosmo_fields):
+                if ct not in hzt_cosmo_fields:
                     try:
-                        hzt_cosmo_fields = HZT_hourly_to_5min(t, self.files_hzt, tsteps_min=timestep)
-                        logging.info('Interpolating HZT fields for timestep {}'.format(t.strftime('%Y%m%d%H%M')))
+                        hzt_cosmo_fields = HZT_hourly_to_5min(ct, self.files_hzt, tsteps_min=timestep)
+                        logging.info(f'Interpolating HZT fields for timestep {ct}')
                     except:
-                        hzt_cosmo_fields = { t : np.ma.array(np.empty([640,710]))*np.nan }
-                        logging.info('HZT fields for timestep {} missing, creating empty one'.format(t.strftime('%Y%m%d%H%M')))
+                        hzt_cosmo_fields[ct] = hzt_cosmo_fields[min(hzt_cosmo_fields, key=lambda k: abs(k - ct))]
+                        logging.info(f'HZT fields for timestep {ct} missing, using data from the previous valid one')
 
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
@@ -433,22 +426,22 @@ class QPEProcessor_RT(object):
             for rad in self.config['RADARS']:                
                 # if radar does not exist, add to missing file list
                 if (rad not in self.radar_files) or (self.radar_files[rad] == None):
-                    self.missing_files[rad] = t
+                    self.missing_files[rad] = ct
                     continue
 
                 # if file does not exist, add to missing file list
-                if (t not in self.radar_files[rad]) or (self.radar_files[rad][t] == None):
-                    self.missing_files[rad] = t
+                if (ct not in self.radar_files[rad]) or (self.radar_files[rad][ct] == None):
+                    self.missing_files[rad] = ct
                     continue
                 
                 # Read raw radar file and create a RADAR object
-                radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                                        self.status_files[rad][t])
+                radobjects[rad] = Radar(rad, self.radar_files[rad][ct],
+                                        self.status_files[rad][ct])
                 
                 # if problem with radar file, exclude it and add to missing files list
-                if len(radobjects[rad].radarfields) == 0:
-                    self.missing_files[rad] = t
-                    logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                if not len(radobjects[rad].radarfields):
+                    self.missing_files[rad] = ct
+                    logging.info(f'Removing timestep {cr} of radar {rad}')
                     continue                
 
                 # Process the radar data
@@ -458,34 +451,32 @@ class QPEProcessor_RT(object):
                 try:
                     radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
                 except Exception as e:
-                    self.missing_files[rad] = t
+                    self.missing_files[rad] = ct
                     logging.info(e)
-                    logging.info('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    logging.info(f'Removing timestep {ct} of radar {rad}')
                     continue
                 
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
                 # Add temperature indication to radar object
-                if 'T' in self.cosmo_var:
-                    radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
                 if 'ISO0_HEIGHT' in self.cosmo_var:
-                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])
+                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[ct])
                                                        
             for sweep in self.config['SWEEPS']: # Loop on sweeps
                 logging.info('---')
-                logging.info('Processing sweep ' + str(sweep))
+                logging.info(f'Processing sweep {sweep}')
 
                 for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
                     
                     # If there is no radar file for the specific radar, continue to next radar
                     if rad not in radobjects.keys():
-                        logging.info('Processing radar {} - no data for this timestep!'.format(rad))
+                        logging.info(f'Processing radar {rad} - no data for this timestep!')
                         continue
                     elif sweep not in radobjects[rad].radsweeps.keys():
-                        logging.info('Processing sweep {} of {} - no data for this timestep!'.format(sweep, rad))
+                        logging.info(f'Processing sweep {sweep} of {rad} - no data for this timestep!')
                         continue
                     else:
-                        logging.info('Processing radar ' + str(rad))
+                        logging.info('Processing radar {rad}')
                     
                     try:
                         """Part two - retrieve radar data at every sweep"""
@@ -519,7 +510,7 @@ class QPEProcessor_RT(object):
                                         (lut_elev[:,4] - np.min(X_QPE_CENTERS)),
                                         lut_elev[:,3] -  np.min(Y_QPE_CENTERS))).T
 
-                        idx_ch = idx_ch.astype(int)
+                        idx_ch = int(idx_ch)
                         idx_polar = [lut_elev[:,1], lut_elev[:,2]]
 
                         # Compute VISIB at a given sweep/radar integrated over QPE grid
@@ -644,7 +635,7 @@ class QPEProcessor_RT(object):
                 if (i == 0) or (k not in qpe_prev.keys()):
                     qpe_prev[k] = qpe
                     # Because this is only the lead time, we go out here:
-                    logging.info('Processing time '+str(t)+' was only used as lead time and the final QPE map will not be saved')
+                    logging.info(f'Processing time {ct} was only used as lead time and the final QPE map will not be saved')
                     continue
 
                 """ for advection correction use separate path """
@@ -656,17 +647,17 @@ class QPEProcessor_RT(object):
                         logging.error("Pysteps is not available, no qpe disaggregation will be performed!")
                     qpe_ac = _disaggregate(comp)
 
-                    tstr = datetime.datetime.strftime(t, basename)
+                    tstr = datetime.datetime.strftime(ct, basename)
                     filepath = output_folder + '/' + k +'_AC/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    self.save_output(qpe_ac, t, filepath + tstr)
+                    self.save_output(qpe_ac, ct, filepath + tstr)
                     
                 """Part six - Save main output"""
-                tstr = datetime.datetime.strftime(t, basename)
+                tstr = datetime.datetime.strftime(ct, basename)
                 filepath = output_folder + '/' + k                
                 filepath += '/' + tstr
-                self.save_output(qpe, t, filepath)
+                self.save_output(qpe, ct, filepath)
                 
                 if self.config['SAVE_NON_POSTPROCESSED_DATA']:
                     # Coding of folders (0 not applied, 1 applied)
@@ -674,30 +665,34 @@ class QPEProcessor_RT(object):
                     # O: outlier removal
                     # G: Gaussian smoothing
                     
-                    tstr = datetime.datetime.strftime(t, basename)
+                    tstr = datetime.datetime.strftime(ct, basename)
                     filepath = output_folder + '/' + k +'_T0O0G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    self.save_output(qpe_no_temp, t, filepath+tstr)                    
+                    self.save_output(qpe_no_temp, ct, filepath+tstr)                    
                     
-                    tstr = datetime.datetime.strftime(t, basename)
+                    tstr = datetime.datetime.strftime(ct, basename)
                     filepath = output_folder + '/' + k +'_T1O0G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    self.save_output(qpe_no_pp, t, filepath+tstr)
+                    self.save_output(qpe_no_pp, ct, filepath+tstr)
                     
                     # With outlier removal (O1), but without Gaussian smoothing (G0)
-                    tstr = datetime.datetime.strftime(t, basename)
+                    tstr = datetime.datetime.strftime(ct, basename)
                     filepath = output_folder + '/' + k +'_T1O1G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
                     qpe_temp = _outlier_removal(qpe_no_pp)
-                    self.save_output(qpe_temp, t, filepath+tstr)
+                    self.save_output(qpe_temp, ct, filepath+tstr)
                     
                     # Without outlier removal (O0), but without Gaussian smoothing (G1)
-                    tstr = datetime.datetime.strftime(t, basename)
+                    tstr = datetime.datetime.strftime(ct, basename)
                     filepath = output_folder + '/' + k +'_T1O0G1/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
                     qpe_temp = gaussian_filter(qpe_no_pp, self.config['GAUSSIAN_SIGMA'])
-                    self.save_output(qpe_temp, t, filepath+tstr)
+                    self.save_output(qpe_temp, ct, filepath+tstr)
+
+            # Sleep to one minute after the next 05 period
+            sec_to_sleep = ((ct + datetime.timedelta(minutes = 6)) - datetime.datetime.now()).total_seconds()
+            time.sleep(sec_to_sleep)
