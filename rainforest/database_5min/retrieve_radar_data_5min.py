@@ -15,7 +15,6 @@ so you should never have to call it manually
 import numpy as np
 import pandas as pd
 import dask
-dask.config.set({'dataframe.query-planning': False})
 import dask.dataframe as dd
 import datetime
 import logging
@@ -29,9 +28,9 @@ from optparse import OptionParser
 from rainforest.common import constants
 from rainforest.common.lookup import get_lookup
 from rainforest.common.utils import split_by_time, read_task_file, envyaml
-from rainforest.common.utils import aggregate_multi, nested_dict_values
+from rainforest.common.utils import nested_dict_values
 from rainforest.common.radarprocessing import HZT_hourly_to_5min, Radar, hydroClass_single, hydroClass_single_over_iso
-from rainforest.common.retrieve_data import retrieve_hzt_prod, retrieve_prod, get_COSMO_T, get_COSMO_variables
+from rainforest.common.retrieve_data import retrieve_hzt_prod, retrieve_prod
 
 IGNORE_ERRORS = True
                    
@@ -71,8 +70,8 @@ class Updater(object):
         self.radars = self.radar_cfg['RADARS']
         self.radar_variables = self.radar_cfg['RADAR_VARIABLES']
         self.radar_variables.append('TCOUNT')
-        self.cosmo_variables = self.radar_cfg['COSMO_VARIABLES']
-        self.other_variables = self.radar_cfg['OTHER_VARIABLES']
+        self.cosmo_variables = self.radar_cfg.get('COSMO_VARIABLES', [])
+        self.other_variables = self.radar_cfg.get('OTHER_VARIABLES', [])
         self.temp_ref = self.radar_cfg['TEMP_REF']
         self.agg_methods = self.radar_cfg['AGGREGATION_METHODS']
         self.neighb_x = self.radar_cfg['NEIGHBOURS_X']
@@ -132,10 +131,10 @@ class Updater(object):
             files_rad['vpr'] = {}
 
         try:
-            files_r = retrieve_prod(self.config['TMP_FOLDER'], 
-                                            start_time, end_time, 
-                                            product_name = 'ML' + radar,
-                                            sweeps = sweeps)
+            files_r = retrieve_prod(start_time, end_time, 
+                                    product_name = 'ML' + radar,
+                                    sweeps = sweeps,
+                                    folder_out=self.config['TMP_FOLDER'])
             files_rad['radar'] = files_r
             
             if include_vpr:
@@ -145,9 +144,9 @@ class Updater(object):
                     radar_vpr = 'A'
                     
                 # Take only one out of two since we work at 5 min
-                files_v = retrieve_prod(self.config['TMP_FOLDER'], 
-                                            start_time, end_time, 
-                                            product_name = 'ZZ' + radar_vpr)
+                files_v = retrieve_prod(start_time, end_time, 
+                                            product_name = 'ZZ' + radar_vpr,
+                                            folder_out=self.config['TMP_FOLDER'])
 
                 # Take only the start- and end time since they are 5min apart:
                 if len(files_v) > 2:
@@ -175,10 +174,10 @@ class Updater(object):
                 files_rad['vpr'] = files_v
                 
             if include_status:
-               files_s = retrieve_prod(self.config['TMP_FOLDER'], 
-                                        start_time, end_time, 
+               files_s = retrieve_prod(start_time, end_time, 
                                         product_name = 'ST' + radar,
-                                        pattern = 'ST*')
+                                        pattern = 'ST*',
+                                        folder_out=self.config['TMP_FOLDER'])
                files_rad['status'] = files_s
 
             files_rad = split_by_time(files_rad)
@@ -186,7 +185,6 @@ class Updater(object):
             # Update list of downloaded files
             self.downloaded_files.extend(nested_dict_values(files_rad))
         except:
-            raise
             logging.error("""Retrieval for radar {:s} at timesteps {:s}-{:s} 
                       failed""".format(radar, str(start_time), str(end_time)))
         return files_rad
@@ -202,7 +200,6 @@ class Updater(object):
         end_time : datetime.datetime instance
             end time of the time range
         """
-      
         try:
             files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],
                                             start_time, end_time)
@@ -210,14 +207,14 @@ class Updater(object):
             self.downloaded_files.extend(nested_dict_values(files_hzt))
 
         except:
-            raise
             logging.error("""Retrieval of hzt files at timesteps {:s}-{:s} 
                       failed""".format(str(start_time), str(end_time)))
-
+            return []
+        
         return files_hzt
 
 
-    def process_single_timestep(self, list_stations, radar_object, tidx):
+    def process_single_timestep(self, list_stations, radar_object):
         """
         Processes a single 5 min timestep for a set of stations
         
@@ -228,9 +225,6 @@ class Updater(object):
             data
         radar_object : Radar object instance as defined in common.radarprocessing
             a radar object which contains all radar variables in polar format
-        tidx : int
-            indicates if a radar 5 min timestep is the first or the second
-            in the corresponding 10 min gauge period, 1 = first, 2 = second     
         """
         
         # Some global parameters
@@ -263,7 +257,7 @@ class Updater(object):
                     continue
                 for x in self.neighb_x:
                     for y in self.neighb_y:
-                        strneighb = str(x)+str(y)
+                        strneighb = f"{x}{y}"
                         if strneighb not in lut_coords[sta][sweep].keys():
                             continue
                         if not len(lut_coords[sta][sweep][strneighb]):
@@ -361,10 +355,10 @@ class Updater(object):
                     for x in self.neighb_x:
                         for y in self.neighb_y:
                             strneighb = str(x)+str(y)
-                            if strneighb not in lut_coords[sta][sweep].keys():
-                                continue
+                            idx = lut_coords[sta][sweep].get(strneighb)
                             if not len(lut_coords[sta][sweep][strneighb]):
                                 continue
+
                             idx = lut_coords[sta][sweep][strneighb]
                             # Note that we need to use i and not sweep
                             # in get_field from pyart, because pyart
@@ -372,8 +366,7 @@ class Updater(object):
                             tmp = _data_at_station(radsweeps[sweep], 
                                                    self.radar_variables,
                                                    idx,
-                                                   methods = self.agg_methods,
-                                                   tidx = tidx)
+                                                   methods = self.agg_methods)
                             all_data[j, idx0_col: idx0_col + len(tmp)] = tmp
                                  
                             idx0_col += len(tmp)
@@ -385,6 +378,13 @@ class Updater(object):
                     logging.info('Ignoring exception in process_single_timestep...')
         return all_data
 
+    def get_row_length(self):
+        length = (
+            len(self.other_variables) +
+            len(self.cosmo_variables) +
+            len(self.neighb_x) * len(self.neighb_y) * len(self.radar_variables) * len(self.agg_methods)
+        ) * len(self.sweeps)
+        return length
 
     def process_all_timesteps(self):
         """
@@ -412,69 +412,68 @@ class Updater(object):
         else:
             only_cosmo_T = False
             
-        current_hour = None # Initialize current cour
-        colnames = None # Initialize column nates
-
-        # Create list of aggregation methods to use for aggregation in time 10 min
-        # for every radar
-        temp_agg_op = self.get_agg_operators()
+        current_hour = None # Initialize current hour
+        colnames = None # Initialize column names
 
         all_timesteps = list(self.tasks.keys())
         all_data_daily = []
+        
+        len_row = self.get_row_length()
         for i, tstep in enumerate(all_timesteps):
             
             logging.info('Processing timestep '+str(tstep))
-            # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
-            tstart = datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc) - datetime.timedelta(minutes=5)
-            tend= datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc)
+            # At 5 minutes, tstart is equal to tend (we get data for an exact timestep)
+            dtime = datetime.datetime.fromtimestamp(float(tstep), tz=datetime.timezone.utc)
             
             stations_to_get = self.tasks[tstep]
             # Change to the timestep where the data is logged
-            hour_of_year = datetime.datetime.strftime(tend,'%Y%m%d%H')
+            hour_of_year = datetime.datetime.strftime(dtime,'%Y%m%d%H')
             day_of_year = hour_of_year[0:-2]
             
             # set current_day
             current_day = day_of_year
   
             logging.info('---')
-                
-            if len(self.cosmo_variables):
-                if hour_of_year != current_hour:
-                    current_hour = hour_of_year
-                    try:
-                        if only_cosmo_T :
-                            cosmo_data = get_COSMO_T(tstart, self.sweeps)
-                        else:
-                            cosmo_data = get_COSMO_variables(tstart, 
-                                     self.cosmo_variables, 
-                                     self.sweeps, 
-                                     tmp_folder = self.config['TMP_FOLDER'])
+            
+            # TODO adapt to ICON 
+            # if len(self.cosmo_variables):
+            #     if hour_of_year != current_hour:
+            #         current_hour = hour_of_year
+            #         try:
+            #             if only_cosmo_T :
+            #                 cosmo_data = get_COSMO_T(tstart, self.sweeps)
+            #             else:
+            #                 cosmo_data = get_COSMO_variables(tstart, 
+            #                          self.cosmo_variables, 
+            #                          self.sweeps, 
+            #                          tmp_folder = self.config['TMP_FOLDER'])
                           
-                    except Exception as e:
-                        logging.error(e)
-                        logging.info('Ignoring exception with COSMO data...')
-                        if IGNORE_ERRORS:
-                            pass # can fail if only missing data 
-                        else:
-                            raise
-            else:
-                cosmo_data = None
+            #         except Exception as e:
+            #             logging.error(e)
+            #             logging.info('Ignoring exception with COSMO data...')
+            #             if IGNORE_ERRORS:
+            #                 pass # can fail if only missing data 
+            #             else:
+            #                 raise
+            # else:
+            #     cosmo_data = None
 
             if (self.temp_ref == 'ISO0_HEIGHT') or ("ISO0_HEIGHT" in self.other_variables):
                 logging.info('Getting HZT files')
                 # First timestep (already extracts fields over an hour)
                 if (i == 0):
-                    hzt_files = self.retrieve_iso0_files(tstart, tend)
+                    hzt_files = self.retrieve_iso0_files(dtime, dtime)
                     # Interpolate between timesteps
-                    hztfields = HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)
-                elif (tstart > np.max(list(hztfields.keys()))):
-                    hzt_files = self.retrieve_iso0_files(tstart, tend)
+                    hztfields = HZT_hourly_to_5min(dtime, hzt_files, tsteps_min=5)
+                elif (dtime > np.max(list(hztfields.keys()))):
+                    hzt_files = self.retrieve_iso0_files(dtime, dtime)
                     # Interpolate between timesteps
-                    hztfields.update(HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5))
+                    hztfields.update(HZT_hourly_to_5min(dtime, hzt_files, tsteps_min=5))
 
             # Create array for one timestep  
             data_one_tstep = np.empty((len(stations_to_get),0), 
                                       dtype = np.float32)
+                    
             # MAIN LOOP
             for r in self.radars:
                 # Check if we need to process the radar
@@ -487,58 +486,49 @@ class Updater(object):
                 logging.info('Processing radar ' + r)
 
                 try:
-                    data_one_rad = []
-                    
-                    rad_files = self.retrieve_radar_files(r, tstart, tend, 
+                    rad_files = self.retrieve_radar_files(r, dtime, dtime, 
                                                           include_vpr,
                                                           include_status)
+                    tstamp = list(rad_files['radar'].keys())[0]
+                    # Create radar object
 
-                    for tidx, tstamp in enumerate(rad_files['radar'].keys()): # 2 timesteps to make 10 min
-                        # Create radar object
+                    # Handle case of non available status and vpr files
+                    if include_vpr:
+                        vpr_file = rad_files['vpr'][tstamp]
+                    else:
+                        vpr_file = None
+                    
+                    status_file = rad_files['status'][tstamp]
 
-                        # Handle case of non available status and vpr files
-                        if include_vpr:
-                            vpr_file = rad_files['vpr'][tstamp]
-                        else:
-                            vpr_file = None
+                    radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file,
+                                temp_ref=self.temp_ref, metranet_reader="python")
+
+                    # Add ISO0_HEIGHT and height_over_iso0 to radar object
+                    if (self.temp_ref == "ISO0_HEIGHT") or ("ISO0_HEIGHT" in self.other_variables):
+                        radar.add_hzt_data(hztfields[tstamp])
+                        radar.add_height_over_iso0()
+
+                    # TODO: adapt to ICON
+                    # if len(self.cosmo_variables):
+                    #     radar.add_cosmo_data(cosmo_data[r])
+
+                    # Process a single timestep                     
+                    tmp = self.process_single_timestep(stations_to_get, radar)
+                    # and add to the data_one_rad list
+                    data_one_tstep = np.append(data_one_tstep, tmp, axis = 1)
+
+                    # free memory (gc = garbage collector)
+                    del radar
+                    gc.collect()
                         
-                        status_file = rad_files['status'][tstamp]
-
-                        radar = Radar(r, rad_files['radar'][tstamp], status_file, vpr_file,
-                                    temp_ref=self.temp_ref)
-
-                        # Add ISO0_HEIGHT and height_over_iso0 to radar object
-                        if (self.temp_ref == "ISO0_HEIGHT") or ("ISO0_HEIGHT" in self.other_variables):
-                            radar.add_hzt_data(hztfields[tstamp])
-                            radar.add_height_over_iso0()
-  
-                        if len(self.cosmo_variables):
-                            radar.add_cosmo_data(cosmo_data[r])
-
-                        # Process a single timestep                     
-                        tmp = self.process_single_timestep(stations_to_get,
-                                                                  radar, tidx + 1)
-                        # and add to the data_one_rad list
-                        data_one_rad.append(tmp)
-
-                        # free memory (gc = garbage collector)
-                        del radar
-                        gc.collect()
-                        
-                    # Now we aggregate in time over two periods of 5 min
-                    # and add it in column direction
-                    data_one_tstep = np.append(data_one_tstep, 
-                                           aggregate_multi(np.array(data_one_rad),
-                                                           temp_agg_op),
-                                           axis = 1)
                 except Exception as e:
-                    logging.error(e)
                     logging.error("""Data retrieval for radar {:s} and timestep
                                     {:s} failed, assigning missing data
                                     """.format(r, str(tstep)))
-                    
+                    logging.error(f"Error is {e}")
+                                        
                     empty =  np.zeros((len(stations_to_get),
-                                       len(temp_agg_op)),
+                                       len_row),
                                        dtype = np.float32) + np.nan
                     
                     data_one_tstep = np.append(data_one_tstep, empty, axis = 1)
@@ -586,7 +576,7 @@ class Updater(object):
             if (i == len(all_timesteps) - 1):
                 save_output = True
             else: 
-                next_tstep = datetime.datetime.utcfromtimestamp(all_timesteps[i+1])
+                next_tstep = datetime.datetime.fromtimestamp(all_timesteps[i+1], datetime.timezone.utc)
                 next_tstep_day = datetime.datetime.strftime(next_tstep,'%Y%m%d%H')[0:-2]
                 if current_day != next_tstep_day:
                     save_output = True
@@ -627,14 +617,15 @@ class Updater(object):
                                                  
                     df = pd.DataFrame(dic)
 
-                    # Remove duplicate rows
+                    # TCOUNT are the same for all agg methods
+                    # so we remove duplicates
                     idx = 0
-                    for m in self.agg_methods:
+                    for idx, m in enumerate(self.agg_methods):
                         if idx == 0:
                             df['TCOUNT'] = df['TCOUNT_' + m] 
                         del df['TCOUNT_' + m]
                         
-                    if file_exists == False:
+                    if not file_exists:
                         logging.info('Saving file ' + name)
                         df.to_parquet(name, compression = 'gzip', index = False)
                     else:
@@ -645,7 +636,8 @@ class Updater(object):
                         # Read dask DataFrame and convert it to Pandas DataFrame
                         df_old = dd.read_parquet(name_old).compute()
                         # Merge the old and new one and drop duplicate rows
-                        df_join = df_old._append(df).drop_duplicates()
+                        df_join = df_old._append(df).drop_duplicates(subset=["TIMESTAMP", "STATION", "NX", "NY"],
+                                                                 keep="last")
                         # Save the new file and delete the old one
                         df_join.to_parquet(name, compression = 'gzip', index = False)
                         os.remove(name_old)
@@ -788,41 +780,7 @@ class Updater(object):
                               """)
                 raise # it will be caught later on
         return rearranged, cols
-                
-    def get_agg_operators(self):
-        '''
-        Returns all aggregation operators codes needed to aggregate all columns to
-        10 min resolution, 0 = mean, 1 = log mean
-        '''
-
-        operators = []
-        
-        for o in self.other_variables:
-            if o in constants.AVG_BY_VAR:
-                operators.append(constants.AVG_BY_VAR[o])
-            else:
-                operators.append(0)
-    
-        for c in self.cosmo_variables:
-            if c in constants.AVG_BY_VAR:
-                operators.append(constants.AVG_BY_VAR[c])
-            else:
-                operators.append(0)
-                
-        operators_per_neighb = []
-        for n1 in self.neighb_x:
-            for n2 in self.neighb_y:
-                for r in self.radar_variables:
-                    for m in self.agg_methods:
-                        if r in constants.AVG_BY_VAR:
-                            operators_per_neighb.append(constants.AVG_BY_VAR[r])
-                        else:
-                             operators_per_neighb.append(0)
-        operators.extend(operators_per_neighb)
-        operators = operators * len(self.sweeps)
-        
-        return operators
-    
+                    
     def final_cleanup(self):
         """
         Performs a final cleanup by checking if all files in downloaded_files 
@@ -860,28 +818,24 @@ def _data_at_station(radar_object, variables, idx, methods = ['mean'], tidx = No
     
     out = []
 
-    if 'TCOUNT' in variables:
-        # Get first variable to compute TCOUNT (number of valid obs used in aggregation)
-        firstvar = list(radar_object.fields.values())[0]['data']
-        firstvar =  firstvar[idx[:,0],idx[:,1]]
-    
+    ix, iy = idx[:, 0], idx[:, 1]
     if 'max' in methods or 'min' in methods:
-         kdp = radar_object.get_field(0, 'KDP')[idx[:,0],idx[:,1]]
-         zh =  radar_object.get_field(0, 'ZH')[idx[:,0],idx[:,1]]
-         locmaxzh = np.ma.argmax(zh)
-         locminzh = np.ma.argmin(zh)
-         locmaxkdp = np.ma.argmax(kdp)
-         locminkdp = np.ma.argmin(kdp)
-         
+        kdp = radar_object.get_field(0, 'KDP')[ix,iy]
+        zh =  radar_object.get_field(0, 'ZH')[ix,iy]
+        locmaxzh = np.ma.argmax(zh)
+        locminzh = np.ma.argmin(zh)
+        locmaxkdp = np.ma.argmax(kdp)
+        locminkdp = np.ma.argmin(kdp)
+                
     for v in variables:
         if v == 'HYDRO':
              continue # skip hydro is computed only after aggregation
         
         if v == 'TCOUNT':
             for m in methods:
-                out.append(int(tidx * (firstvar.count() > 0)))
+                out.append(np.sum(~zh.mask))
         else:
-            data = np.ma.filled(radar_object.get_field(0,v)[idx[:,0],idx[:,1]],     
+            data = np.ma.filled(radar_object.get_field(0,v)[ix,iy],     
                                 fill_value  = np.nan)
             for m in methods:
                 if m == 'mean':
@@ -892,7 +846,6 @@ def _data_at_station(radar_object, variables, idx, methods = ['mean'], tidx = No
                         
                     tmp = avg_method(data, axis = None)
                     out.append(float(tmp))
-            
                 if m == 'max':
                     if v == 'KDP':
                         out.append(float(data[locmaxkdp]))

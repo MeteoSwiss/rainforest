@@ -1,0 +1,57 @@
+NO_DATA_FILL: -9999
+TMP_FOLDER: '/scratch/mch/${USER}/temp/'
+SLURM_HEADER: |
+    #!/bin/sh
+    #SBATCH -N 1     # nodes requested
+    #SBATCH -c 1      # cores requested
+    #SBATCH --mem-per-cpu 64g # memory in mbytes
+    #SBATCH -t 23:59:59  # time requested in hour:minute:second
+    #SBATCH --partition=postproc
+    #SBATCH --mail-type=END,FAIL
+    #SBATCH --mail-user=daniel.wolfensberger@meteowiss.ch
+    #SBATCH --output='db_{:s}_%A_%a.out'
+    #SBATCH --error='db_{:s}_%A_%a.err'
+    #SBATCH --job-name=DB_{:s}
+
+PYTHON_HEADER: | 
+    source /store_new/mch/msrad/utils/miniconda-wolfensb/etc/profile.d/conda.sh
+    conda activate rainforest
+    export RAINFOREST_DATAPATH=/store_new/mch/msrad/radar/rainforest_data/
+
+GAUGE_RETRIEVAL:
+    VARIABLES : ['tre200s0','prestas0','ure200s0','dkl010z0','fkl010z0','rre005r0', 'rre005r0_adj']
+    STATIONS : 'all'
+    MIN_R_HOURLY : 0.01
+    MAX_NB_SLURM_JOBS: 10
+    
+REFERENCE_RETRIEVAL:
+    PRODUCTS : ['RZC','CPC','CPCH','CPC.CV','BZC','MZC','MVRZC','MVCPCH']
+    MV_METHOD: 'lucaskanade' # see https://pysteps.readthedocs.io/en/latest/generated/pysteps.motion.interface.get_method.html
+    NEIGHBOURS_X : [-1,0,1] # not applied to CPC.CV, CPC_XLS and AQC_XLS
+    NEIGHBOURS_Y : [-1,0,1] # not applied to CPC.CV, CPC_XLS and AQC_XLS
+    MAX_SIMULTANEOUS_JOBS: 20
+    MAX_NB_SLURM_JOBS: 100
+    
+RADAR_RETRIEVAL:
+    RADARS: ['A','D','L','W','P']
+    RADAR_VARIABLES : ['ZH','ZV','ZH_VISIB','ZV_VISIB','ZDR','KDP','RHOHV','SW','RVEL','AH','ZH_CORR','ZV_CORR','ZDR_CORR','VISIB','NH','NV'] #,'HYDRO']
+    COSMO_VARIABLES: ['T','U','V','W','P','QV'] # Only at center pixel
+    OTHER_VARIABLES: ['HEIGHT','VPR','RADPRECIP','ISO0_HEIGHT','height_over_iso0'] # Only at center pixel
+    TEMP_REF: 'ISO0_HEIGHT' # or 'TAIR'
+    AGGREGATION_METHODS: ['max','min','mean'] # value at max/min of kdp for kdp and max/min of zh for all other variables
+    SWEEPS: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    NEIGHBOURS_X : [-1,0,1]
+    NEIGHBOURS_Y : [-1,0,1]
+    KDP_PARAMETERS:
+        RMIN : 1000.
+        RMAX : 50000.
+        RCELL : 1000.
+        ZMIN : 20.
+        ZMAX : 40.
+        RWIND : 6000.
+    SNR_THRESHOLD: 3
+    VISIB_CORR:
+        MIN_VISIB: 37
+        MAX_CORR: 2
+    MAX_SIMULTANEOUS_JOBS: 20
+    MAX_NB_SLURM_JOBS: 100

@@ -137,7 +137,7 @@ def read_polar(polar_files, physic_value = True):
     merged :  a pyart Radar instance
     '''
         
-    if type(polar_files) == str:
+    if isinstance(polar_files, str):
         if '*' in polar_files:
             all_files = np.sort(glob.glob(polar_files.split('.')[0]+'*'))
         else:
@@ -152,7 +152,7 @@ def read_polar(polar_files, physic_value = True):
     radar = None
     for f in all_files:
         try:
-            r = read_metranet(f, physic_value = True)
+            r = read_metranet(f, reader="python", physic_value = True)
 
             if not radar:
                 radar = r

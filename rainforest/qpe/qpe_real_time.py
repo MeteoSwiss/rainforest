@@ -39,7 +39,7 @@ from pyart.aux_io.odim_h5 import proj4_to_dict
 logging.getLogger().setLevel(logging.INFO)
 
 from ..common import constants
-from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod
+from ..common.retrieve_data import retrieve_prod, retrieve_hzt_prod
 from ..common.lookup import get_lookup
 from ..common.utils import split_by_time, nanadd_at, envyaml
 from ..common.radarprocessing import Radar, HZT_hourly_to_5min

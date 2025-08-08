@@ -35,7 +35,7 @@ from pyart.aux_io.odim_h5 import proj4_to_dict
 from ..common.utils import get_version
 from ..common.logger import logger
 from ..common import constants
-from ..common.retrieve_data import retrieve_prod, get_COSMO_T, retrieve_hzt_prod, retrieve_prod_RT, retrieve_hzt_RT
+from ..common.retrieve_data import retrieve_prod, retrieve_hzt_prod, retrieve_prod_RT, retrieve_hzt_RT
 from ..common.lookup import get_lookup
 from ..common.utils import split_by_time, nanadd_at, envyaml
 from ..common.radarprocessing import Radar, HZT_hourly_to_5min
@@ -648,8 +648,6 @@ class QPEProcessor(object):
 
             # Get COSMO temperature for all radars for this timestamp
             if not test_mode:
-                if ('T' in self.cosmo_var) :
-                    T_cosmo_fields = get_COSMO_T(t, radar = self.config['RADARS'])
                 if ('ISO0_HEIGHT' in self.cosmo_var) :
                     if ('hzt_cosmo_fields' not in locals()) or (t not in hzt_cosmo_fields):
                         try:
@@ -714,14 +712,10 @@ class QPEProcessor(object):
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
                 if test_mode:
-                    if 'T' in self.cosmo_var :
-                        T_cosmo_fields = pickle.load(open(self.T_files[rad][t1], 'rb'))
                     if 'ISO0_HEIGHT' in self.cosmo_var:
                         hzt_cosmo_fields = pickle.load(open(self.files_hzt[t1], 'rb'))
                         
                 # Add temperature indication to radar object
-                if 'T' in self.cosmo_var:
-                    radobjects[rad].add_cosmo_data(T_cosmo_fields[rad])
                 if 'ISO0_HEIGHT' in self.cosmo_var:
                     radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])
 
