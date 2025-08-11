@@ -534,6 +534,7 @@ class QPEProcessor(object):
                     logger.error('Invalid file format with data format float, using ODIM HDF5 output instead')
                 grid = _qpe_to_chgrid(qpe, t, missing_files=self.missing_files)
                 filepath += '.h5'
+                logger.info(f"Writing file {filepath}")
                 write_odim_grid_h5(filepath, grid, time_ref = 'end', undefined_value = 0,
                     odim_convention = 'ODIM_H5/V2_3')
 
@@ -541,6 +542,7 @@ class QPEProcessor(object):
         grid = _features_to_chgrid(features, features_labels, t, 
              missing_files=self.missing_files)
         filepath += '.h5'
+        logger.info(f"Writing file {filepath}")
         write_odim_grid_h5(filepath, grid, time_ref = 'end', undefined_value = 0,
             odim_convention = 'ODIM_H5/V2_3')
 

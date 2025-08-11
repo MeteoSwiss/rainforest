@@ -24,8 +24,6 @@ from pathlib import Path
 import os
 import fnmatch
 import re
-import logging
-logging.basicConfig(level=logging.INFO)
 from pathlib import Path
 import pandas as pd
 from scipy.ndimage import gaussian_filter
@@ -36,8 +34,7 @@ from pyart.testing import make_empty_grid
 from pyart.aux_io.odim_h5_writer import write_odim_grid_h5
 from pyart.aux_io.odim_h5 import proj4_to_dict
 
-logging.getLogger().setLevel(logging.INFO)
-
+from ..common.logger import logger
 from ..common import constants
 from ..common.retrieve_data import retrieve_prod, retrieve_hzt_prod
 from ..common.lookup import get_lookup
@@ -84,7 +81,7 @@ class QPEProcessor_RT(object):
         try:
             config = envyaml(config_file)
         except:
-            logging.warning('Using default config as no valid config file was provided')
+            logger.warning('Using default config as no valid config file was provided')
             config_file = dir_path + '/default_config.yml'
 
         config = envyaml(config_file)
@@ -161,7 +158,7 @@ class QPEProcessor_RT(object):
     
         # Derive datetime of each file
         times_zip = np.array([datetime.datetime.strptime(c[3:12],
-                    '%y%j%H%M') for c in content_zip])
+                    '%y%j%H%M').replace(tzinfo=datetime.timezone.utc) for c in content_zip])
     
         # Get a list of all files to retrieve
         conditions = (times_zip == time)
@@ -172,7 +169,6 @@ class QPEProcessor_RT(object):
                 # Get a list of all files to retrieve
             conditions_sweep = np.array([s in sweeps for s in sweeps_zip])
             conditions = np.logical_and(conditions, conditions_sweep)
-
         if not np.any(conditions):
             msg = '''
             No file was found corresponding to this format, verify pattern and product_name
@@ -181,7 +177,7 @@ class QPEProcessor_RT(object):
         
         files = sorted(np.array([folder_in + c for c in
                                 np.array(content_zip)[conditions]]))
-
+        
         return files    
 
     def _retrieve_hzt_RT(self, tstep):
@@ -214,14 +210,15 @@ class QPEProcessor_RT(object):
         try:            
             # Sort filelist to most recent prediction
             content_filt = np.array([c for c in content_zip if c.endswith('800')])
-            times_filt = np.array([datetime.datetime.strptime(c[3:12],
-                                '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_filt])
+            times_filt = np.array([(datetime.datetime.strptime(c[3:12],
+                                '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::]))).replace(tzinfo=datetime.timezone.utc)
+                                   for c in content_filt])
             conditions = np.array([np.logical_and((t >= start_time), (t <= end_time)) for t in times_filt])
             
             content_filt = content_filt[conditions]
             times_filt = times_filt[conditions]
         except:
-            logging.error('HZT data does not exist for '+start_time.strftime('%d-%b-%y'))
+            logger.error('HZT data does not exist for '+start_time.strftime('%d-%b-%y'))
             files = None
             return
             
@@ -229,8 +226,9 @@ class QPEProcessor_RT(object):
         all_hours = pd.date_range(start=start_time, end=end_time, freq='H')
         
         if len(all_hours) != len(times_filt):
-            content_times = np.array([datetime.datetime.strptime(c[3:12],
-                    '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::])) for c in content_zip])
+            content_times = np.array([(datetime.datetime.strptime(c[3:12],
+                    '%y%j%H%M')+datetime.timedelta(hours=int(c[-2::]))).replace(tzinfo=datetime.timezone.utc)
+                                      for c in content_zip])
             # Find time that is missing:
             for hh in all_hours:
                 if not hh in times_filt:
@@ -270,7 +268,7 @@ class QPEProcessor_RT(object):
 
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
-            logging.info('Retrieving data for radar '+rad)
+            logger.info('Retrieving data for radar '+rad)
             try:
                 radfiles = self._retrieve_prod_RT(tstep, product_name = 'ML'+rad,
                                                   sweeps = self.config['SWEEPS'])
@@ -279,7 +277,7 @@ class QPEProcessor_RT(object):
                                                     pattern = 'ST*.xml', sweeps = None)
                 self.status_files[rad] = split_by_time(statfiles)
             except:
-                logging.error('Failed to retrieve data for radar {:s}'.format(rad))
+                logger.error('Failed to retrieve data for radar {:s}'.format(rad))
         
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
@@ -288,7 +286,7 @@ class QPEProcessor_RT(object):
                 self.files_hzt = split_by_time(files_hzt)
             except:
                 self.files_hzt = {}
-                logging.error('Failed to retrieve hzt data')
+                logger.error('Failed to retrieve hzt data')
 
     def save_output(self, qpe, t, filepath):
         """ Saves output as defined in config file
@@ -308,7 +306,7 @@ class QPEProcessor_RT(object):
                 qpe.tofile(filepath)
             else:
                 if (self.config['FILE_FORMAT'] != 'gif'):
-                    logging.error('Invalid file_format with data format DN, using gif output instead')
+                    logger.error('Invalid file_format with data format DN, using gif output instead')
                 qpe[constants.MASK_NAN] = -99
                 filepath += '.gif'
                 save_gif(filepath, qpe)
@@ -320,9 +318,10 @@ class QPEProcessor_RT(object):
                 qpe.astype(np.float32).tofile(filepath)
             else:
                 if (self.config['FILE_FORMAT'] != 'ODIM'):
-                    logging.error('Invalid file format with data format float, using ODIM HDF5 output instead')
-                grid = _qpe_to_chgrid(qpe, t, radar_list=self.missing_files)
+                    logger.error('Invalid file format with data format float, using ODIM HDF5 output instead')
+                grid = _qpe_to_chgrid(qpe, t, missing_files=self.missing_files)
                 filepath += '.h5'
+                logger.info(f"Writing file {filepath}")
                 write_odim_grid_h5(filepath, grid)
 
     def compute(self, output_folder, timestep = 5,
@@ -358,15 +357,21 @@ class QPEProcessor_RT(object):
         X_prev = {}
         hzt_cosmo_fields = {}
         
-        first_it = True
+        it = 0
         while True: # infinite loop
-            now = datetime.datetime.now()
-            ct = now - datetime.timedelta(minutes=now.minute % 5, seconds = now.second, microseconds=now.microsecond) # latest 5min time-period
+            now = datetime.datetime.now(datetime.timezone.utc)
+            delta_min = minutes=now.minute % 5 
+            ct = now - datetime.timedelta(minutes=now.minute % 5, 
+                    seconds = now.second, microseconds=now.microsecond) # latest 5min time-period
+            if delta_min <= 1:
+                # If we are less than 2 min after the last 5 min period, we process the 
+                # one before because the data has not arrived yet.
+                ct -= datetime.timedelta(minutes=5)
         
-            logging.info('====')
+            logger.info('====')
             
             # Get lead time file
-            if first_it :
+            if it == 0 :
                 for k in self.models.keys():
                     tL_x_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
                                 datetime.datetime.strftime(ct, basename)+'_xprev.npy'
@@ -380,18 +385,15 @@ class QPEProcessor_RT(object):
                         one_file_missing = True
                 # If all the files could be loaded, go directly to current timestep
                 if not one_file_missing:
-                    logging.info(f'Already available: LEAD time {ct}')
+                    logger.info(f'Already available: LEAD time {ct}')
                     continue
                 else:
-                    logging.info(f'Processing LEAD time {ct}')
-                    
-                first_it = False
+                    logger.info(f'Processing LEAD time {ct}')
             else:
-                logging.info(f'Processing time {ct}')
+                logger.info(f'Processing time {ct}')
 
             # Retrieve data for time range
             self.fetch_data_RT(ct)
-
             # Log missing radar files
             self.missing_files = {}
 
@@ -415,10 +417,10 @@ class QPEProcessor_RT(object):
                 if ct not in hzt_cosmo_fields:
                     try:
                         hzt_cosmo_fields = HZT_hourly_to_5min(ct, self.files_hzt, tsteps_min=timestep)
-                        logging.info(f'Interpolating HZT fields for timestep {ct}')
+                        logger.info(f'Interpolating HZT fields for timestep {ct}')
                     except:
                         hzt_cosmo_fields[ct] = hzt_cosmo_fields[min(hzt_cosmo_fields, key=lambda k: abs(k - ct))]
-                        logging.info(f'HZT fields for timestep {ct} missing, using data from the previous valid one')
+                        logger.info(f'HZT fields for timestep {ct} missing, using data from the previous valid one')
 
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
@@ -441,7 +443,7 @@ class QPEProcessor_RT(object):
                 # if problem with radar file, exclude it and add to missing files list
                 if not len(radobjects[rad].radarfields):
                     self.missing_files[rad] = ct
-                    logging.info(f'Removing timestep {cr} of radar {rad}')
+                    logger.info(f'Removing timestep {cr} of radar {rad}')
                     continue                
 
                 # Process the radar data
@@ -452,8 +454,8 @@ class QPEProcessor_RT(object):
                     radobjects[rad].snr_mask(self.config['SNR_THRESHOLD'])
                 except Exception as e:
                     self.missing_files[rad] = ct
-                    logging.info(e)
-                    logging.info(f'Removing timestep {ct} of radar {rad}')
+                    logger.info(e)
+                    logger.info(f'Removing timestep {ct} of radar {rad}')
                     continue
                 
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
@@ -461,22 +463,22 @@ class QPEProcessor_RT(object):
                 # Add temperature indication to radar object
                 if 'ISO0_HEIGHT' in self.cosmo_var:
                     radobjects[rad].add_hzt_data(hzt_cosmo_fields[ct])
-                                                       
-            for sweep in self.config['SWEEPS']: # Loop on sweeps
-                logging.info('---')
-                logging.info(f'Processing sweep {sweep}')
+                     
+            for sweep in self.config['SWEEPS']: # Loop on sweepsF
+                logger.info('---')
+                logger.info(f'Processing sweep {sweep}')
 
                 for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
                     
                     # If there is no radar file for the specific radar, continue to next radar
                     if rad not in radobjects.keys():
-                        logging.info(f'Processing radar {rad} - no data for this timestep!')
+                        logger.info(f'Processing radar {rad} - no data for this timestep!')
                         continue
                     elif sweep not in radobjects[rad].radsweeps.keys():
-                        logging.info(f'Processing sweep {sweep} of {rad} - no data for this timestep!')
+                        logger.info(f'Processing sweep {sweep} of {rad} - no data for this timestep!')
                         continue
                     else:
-                        logging.info('Processing radar {rad}')
+                        logger.info(f'Processing radar {rad}')
                     
                     try:
                         """Part two - retrieve radar data at every sweep"""
@@ -508,9 +510,8 @@ class QPEProcessor_RT(object):
                         # Convert from Swiss-coordinates to array index
                         idx_ch = np.vstack((len(X_QPE_CENTERS)  -
                                         (lut_elev[:,4] - np.min(X_QPE_CENTERS)),
-                                        lut_elev[:,3] -  np.min(Y_QPE_CENTERS))).T
+                                        lut_elev[:,3] -  np.min(Y_QPE_CENTERS))).astype(int)
 
-                        idx_ch = int(idx_ch)
                         idx_polar = [lut_elev[:,1], lut_elev[:,2]]
 
                         # Compute VISIB at a given sweep/radar integrated over QPE grid
@@ -555,8 +556,9 @@ class QPEProcessor_RT(object):
                             # Do a weighted update of the sum of vertical weights, only where radar measures are available (ZH)
                             weights_cart[weight] = np.nansum(np.dstack((weights_cart[weight], 
                                 W * (isvalidzh_radsweep == 1))),2)
-                    except:
-                        logging.error('Could not compute sweep {:d}'.format(sweep))
+                    except Exception as err:
+                        logger.error('Could not compute sweep {:d}'.format(sweep))
+                        logger.error(err)
                         pass
 
 
@@ -575,7 +577,7 @@ class QPEProcessor_RT(object):
 
                 X = np.array(X).T
                 
-                if (i == 0) or (k not in X_prev.keys()):
+                if (it == 0) or (k not in X_prev.keys()):
                     X_prev[k] = X
 
                 # Take average between current timestep and t-5min
@@ -583,7 +585,7 @@ class QPEProcessor_RT(object):
                 X_prev[k]  = X
                 
                 # Save files in a temporary format
-                np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
+                np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(ct, basename)+\
                             '_xprev', X)
 
                 # Remove axis with only zeros
@@ -595,7 +597,7 @@ class QPEProcessor_RT(object):
                 try:
                     qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
                 except:
-                    logging.error('Model failed!')
+                    logger.error('Model failed!')
                     pass
 
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
@@ -629,22 +631,25 @@ class QPEProcessor_RT(object):
                        self.config['GAUSSIAN_SIGMA'])
                 
                 # Save files in a temporary format
-                np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
+                np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(ct, basename)+\
                             '_qpeprev', qpe)
 
-                if (i == 0) or (k not in qpe_prev.keys()):
+                if (it == 0) or (k not in qpe_prev.keys()):
                     qpe_prev[k] = qpe
                     # Because this is only the lead time, we go out here:
-                    logging.info(f'Processing time {ct} was only used as lead time and the final QPE map will not be saved')
+                    logger.info(f'Processing time {ct} was only used as lead time and the final QPE map will not be saved')
+                    leadtime = True
                     continue
-
+                else:
+                    leadtime = False
+                    
                 """ for advection correction use separate path """
                 comp = np.array([qpe_prev[k].copy(), qpe.copy()])
                 qpe_prev[k] = qpe
                 
                 if self.config['ADVECTION_CORRECTION'] and i > 0:
                     if not _PYSTEPS_AVAILABLE:
-                        logging.error("Pysteps is not available, no qpe disaggregation will be performed!")
+                        logger.error("Pysteps is not available, no qpe disaggregation will be performed!")
                     qpe_ac = _disaggregate(comp)
 
                     tstr = datetime.datetime.strftime(ct, basename)
@@ -693,6 +698,10 @@ class QPEProcessor_RT(object):
                     qpe_temp = gaussian_filter(qpe_no_pp, self.config['GAUSSIAN_SIGMA'])
                     self.save_output(qpe_temp, ct, filepath+tstr)
 
-            # Sleep to one minute after the next 05 period
-            sec_to_sleep = ((ct + datetime.timedelta(minutes = 6)) - datetime.datetime.now()).total_seconds()
-            time.sleep(sec_to_sleep)
+            if not leadtime:
+                # Sleep to one minute after the next 05 period
+                sec_to_sleep = ((ct + datetime.timedelta(minutes = 6)) - datetime.datetime.now(datetime.timezone.utc)).total_seconds()
+                if sec_to_sleep > 0:
+                    time.sleep(sec_to_sleep)
+            
+            it += 1
