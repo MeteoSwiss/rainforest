@@ -18,3 +18,4 @@ PyYAML==6.0.2
 scikit_learn==1.7.1
 setuptools==69.1.0
 xmltodict==0.14.2
+cartopy
