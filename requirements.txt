@@ -11,7 +11,6 @@ prompt_toolkit==3.0.43
 pyart_mch==2.1.2
 pyshp==2.3.1
 pyspark==3.5.1
-pysteps==1.8.0
 pysteps==1.18.1
 python_dateutil==2.9.0.post0
 pytz==2025.2
