@@ -23,9 +23,10 @@ import yaml
 import dask.dataframe as dd
 import re
 import numbers
+import logging
 
 # Local imports
-from .logger import logger
+logger = logging.getLogger(__name__)
 from .wgs84_ch1903 import GPSConverter
 from . import constants
 

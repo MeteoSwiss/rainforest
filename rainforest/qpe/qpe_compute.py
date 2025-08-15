@@ -11,7 +11,7 @@ import json
 import os
 import datetime
 from pathlib import Path
-from optparse import OptionParser
+import argparse
 
 # Local imports
 from rainforest.qpe.qpe import QPEProcessor
@@ -22,66 +22,107 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def main():
-    parser = OptionParser()
+    parser = argparse.ArgumentParser(
+        description="Run QPE model predictions for a given time range."
+    )
 
-    parser.add_option("-s", "--start", dest = "start", type = str,
-                      help="Specify the start time in the format YYYYddmmHHMM",
-                      metavar = "START")
+    parser.add_argument(
+        "-s", "--start",
+        dest="start",
+        type=str,
+        help="Specify the start time in the format YYYYddmmHHMM",
+        metavar="START"
+    )
 
-    parser.add_option("-e", "--end", dest = "end", type = str,
-                      help="Specify the end time in the format YYYYddmmHHMM",
-                      metavar = "END")
+    parser.add_argument(
+        "-e", "--end",
+        dest="end",
+        type=str,
+        help="Specify the end time in the format YYYYddmmHHMM",
+        metavar="END"
+    )
 
-    parser.add_option("-o", "--output", dest = "outputfolder", type = str,
-                      help="Path of the output folder, default is current folder",  default = './',
-                      metavar="OUTPUT")
+    parser.add_argument(
+        "-o", "--output",
+        dest="outputfolder",
+        type=str,
+        default="./",
+        help="Path of the output folder, default is current folder",
+        metavar="OUTPUT"
+    )
 
-    parser.add_option("-c", "--config", dest = "config", type = str,
-                      default = None, help="Path of the config file, the default will be default_config.yml in the qpe module",
-                      metavar="CONFIG")
+    parser.add_argument(
+        "-c", "--config",
+        dest="config",
+        type=str,
+        default=None,
+        help="Path of the config file. Default is 'default_config.yml' in the qpe module",
+        metavar="CONFIG"
+    )
 
-    parser.add_option("-m", "--models", dest = "models", type = str,
-                      default = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p"}',
-                      help='Specify which models you want to use in the form of a json line' +
-                      ', the models must be in the folder /ml/rf_models/, for example \'{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p}\'' +
-                      ', please note the double and single quotes, which are required',
-                      metavar="MODELS")
-    
-    parser.add_option("-M", "--mlflow_model", 
-                    action="store_true", 
-                    dest="mlflow_model", 
-                    default=False, 
-                    help="Defines whether the given model(s) is/are stored on MLflow. If true, the value passed to -m is/are the \
-                    run ID(s) of Mlflow.")
+    parser.add_argument(
+        "-m", "--models",
+        dest="models",
+        type=str,
+        default='{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p"}',
+        help=(
+            "Specify which models you want to use in JSON format. "
+            "Models must be in /ml/rf_models/ unless overridden by --modelpath. "
+            "Example: '{\"RF_dualpol\":\"RF_dualpol_BETA_-0.5_BC_spline.p\"}'. "
+            "Note: keep the double and single quotes as shown."
+        ),
+        metavar="MODELS"
+    )
 
-    parser.add_option("-p", "--modelpath", dest = "modelpath", type=str,
-                      default = None,
-                      help ='Specify where the models are stored in case they are not saved under /ml/rf_models/',
-                      metavar='MODELPATHS')
+    parser.add_argument(
+        "-M", "--mlflow_model",
+        dest="mlflow_model",
+        action="store_true",
+        default=False,
+        help=(
+            "Defines whether the given model(s) is/are stored on MLflow. "
+            "If true, the value passed to -m is/are the run ID(s) of MLflow."
+        )
+    )
 
+    parser.add_argument(
+        "-p", "--modelpath",
+        dest="modelpath",
+        type=str,
+        default=None,
+        help="Specify where the models are stored if not in /ml/rf_models/",
+        metavar="MODELPATHS"
+    )
 
-    (options, args) = parser.parse_args()
+    parser.add_argument(
+        "-v", "--verbose",
+        dest="verbose",
+        action="store_true",
+        help="Enable verbose output"
+    )
 
-    if options.config == None:
+    args = parser.parse_args()
+
+    if args.config == None:
         script_path = os.path.dirname(os.path.realpath(__file__))
-        options.config = str(Path(script_path, 'default_config.yml'))
+        args.config = str(Path(script_path, 'default_config.yml'))
 
-    options.models = json.loads(options.models)
-    for k in options.models.keys():
-        if options.mlflow_model:
-            options.models[k] = read_rf(mlflow_runid=options.models[k])
-        elif options.modelpath == None:
-            options.models[k] = read_rf(options.models[k])
+    args.models = json.loads(args.models)
+    for k in args.models.keys():
+        if args.mlflow_model:
+            args.models[k] = read_rf(mlflow_runid=args.models[k])
+        elif args.modelpath == None:
+            args.models[k] = read_rf(args.models[k])
         else:
-            options.models[k] = read_rf(options.models[k], filepath=options.modelpath)
+            args.models[k] = read_rf(args.models[k], filepath=args.modelpath)
 
-    if not os.path.exists(options.outputfolder):
-        os.makedirs(options.outputfolder)
+    if not os.path.exists(args.outputfolder):
+        os.makedirs(args.outputfolder)
 
-    options.start = datetime.datetime.strptime(options.start, '%Y%m%d%H%M')
-    options.end = datetime.datetime.strptime(options.end, '%Y%m%d%H%M')
-    qpe = QPEProcessor(options.config, options.models)
-    qpe.compute(options.outputfolder, options.start, options.end)
+    args.start = datetime.datetime.strptime(args.start, '%Y%m%d%H%M')
+    args.end = datetime.datetime.strptime(args.end, '%Y%m%d%H%M')
+    qpe = QPEProcessor(args.config, args.models, args.verbose)
+    qpe.compute(args.outputfolder, args.start, args.end)
 
 if __name__ == '__main__':
     main()

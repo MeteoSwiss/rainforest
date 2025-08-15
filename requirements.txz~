@@ -16,4 +16,6 @@ python_dateutil==2.9.0.post0
 pytz==2025.2
 PyYAML==6.0.2
 scikit_learn==1.7.1
+setuptools==69.1.0
 xmltodict==0.14.2
+cartopy

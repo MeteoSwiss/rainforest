@@ -11,6 +11,7 @@ from scipy.spatial import KDTree
 from scipy.spatial.distance import cdist
 from textwrap import  dedent
 import datetime
+import logging
 
 from pyart.retrieve import kdp_leastsquare_single_window
 from pyart.retrieve import hydroclass_semisupervised
@@ -21,7 +22,7 @@ from pyart.aux_io import read_metranet, read_cartesian_metranet
 from pyart.testing import make_empty_ppi_radar
 from pyart.core.transforms import antenna_vectors_to_cartesian
 
-from .logger import logger
+logger = logging.getLogger(__name__)
 from .utils import sweepnumber_fromfile, rename_fields
 from .io_data import read_status, read_vpr
 from . import constants
