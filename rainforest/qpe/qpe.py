@@ -115,12 +115,6 @@ class QPEProcessor(object):
                 if (var == 'T') or (var == 'ISO0_HEIGHT'):
                     self.cosmo_var.append(var)
 
-        if self.rt:
-            import socket
-            if 'balfrin' in socket.gethostname() or 'nid' in socket.gethostname():
-                constants.FOLDER_RADAR = '/scratch/rgugerli/rainforest_debug/output/output_RT/temp/'
-                constants.FOLDER_ISO0 = '/scratch/rgugerli/rainforest_debug/output/output_RT/temp/HZT/'
-
     def fetch_data(self, t0, t1 = None):
         """
         Retrieves and add new polar radar and status data to the QPEProcessor
@@ -138,23 +132,15 @@ class QPEProcessor(object):
         self.radar_files = {}
         self.status_files = {}
 
-        if self.rt:
-            tstep = t0
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
             self.logger.info('Retrieving data for radar '+rad)
             try:
-                if self.rt:
-                    radfiles = retrieve_prod_RT(tstep, product_name = 'ML'+rad,
-                                                  sweeps = self.config['SWEEPS'])
-                    statfiles = retrieve_prod_RT(tstep, product_name = 'ST' + rad,
-                                                    pattern = 'ST*.xml', sweeps = None)
-                else:
-                    radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
-                                    product_name = 'ML' + rad,
-                                    sweeps = self.config['SWEEPS'])
-                    statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
-                                   product_name = 'ST' + rad, pattern = 'ST*.xml')
+                radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
+                        product_name = 'ML' + rad,
+                        sweeps = self.config['SWEEPS'])
+                statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
+                        product_name = 'ST' + rad, pattern = 'ST*.xml')
 
                 self.radar_files[rad] = split_by_time(radfiles)
                 self.status_files[rad] = split_by_time(statfiles)
@@ -165,10 +151,7 @@ class QPEProcessor(object):
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
             try:
-                if self.rt:
-                    files_hzt = retrieve_hzt_RT(tstep)
-                else:
-                    files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],t0,t1)
+                files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],t0,t1)
                 self.files_hzt = split_by_time(files_hzt)
             except:
                 self.files_hzt = {}
@@ -307,13 +290,12 @@ class QPEProcessor(object):
 
         # Retrieve one timestamp before beginning for lead time
         tL = t0-datetime.timedelta(minutes=timestep)
-        
-        if not self.rt:
-            # Retrieve data for whole time range
-            if test_mode:
-                self.fetch_data_test(tL, t1)
-            else:    
-                self.fetch_data(tL, t1)
+ 
+        # Retrieve data for whole time range
+        if test_mode:
+            self.fetch_data_test(tL, t1)
+        else:    
+            self.fetch_data(tL, t1)
 
         # Get all timesteps in time range
         n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
@@ -328,32 +310,6 @@ class QPEProcessor(object):
             self.logger.info('Processing time '+str(t))
             
             tstr = datetime.datetime.strftime(t, basename)
-
-            # Get lead time file in RT mode
-            if i == 0 and self.rt:
-                for k in self.models.keys():
-                    tL_x_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
-                                datetime.datetime.strftime(t, basename)+'_xprev.npy'
-                    tL_qpe_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
-                                datetime.datetime.strftime(t, basename)+'_qpeprev.npy'
-                    one_file_missing = False
-                    try:
-                        X_prev[k] = np.load(tL_x_file)
-                        qpe_prev[k] = np.load(tL_qpe_file)
-                    except:
-                        one_file_missing = True
-                # If all the files could be loaded, go directly to current timestep
-                if one_file_missing == False:
-                    self.logger.info('Already available: LEAD time '+str(t))
-                    continue
-                else:
-                    self.logger.info('Processing LEAD time '+str(t))
-            else:
-                self.logger.info('Processing time '+str(t))
-
-            if self.rt:
-                # Retrieve data for timestep
-                self.fetch_data(t)
 
             # Log missing radar files
             self.missing_files = {}
@@ -473,9 +429,8 @@ class QPEProcessor(object):
             
             self.logger.info('Processing all sweeps of all radars')
             for sweep in self.config['SWEEPS']: # Loop on sweeps
-                if not self.rt:
-                    self.logger.info('---')
-                    self.logger.info('Processing sweep ' + str(sweep))
+                self.logger.info('---')
+                self.logger.info('Processing sweep ' + str(sweep))
 
                 for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
                     # If there is no radar file for the specific radar, continue to next radar
@@ -486,8 +441,7 @@ class QPEProcessor(object):
                         self.logger.info('Processing sweep {} of {} - no data for this timestep!'.format(sweep, rad))
                         continue
                     else:
-                        if not self.rt:
-                            self.logger.info('Processing radar ' + str(rad) + '; sweep '+str(sweep))
+                        self.logger.info('Processing radar ' + str(rad) + '; sweep '+str(sweep))
                         
                     try:
                         """Part two - retrieve radar data at every sweep"""
@@ -588,17 +542,12 @@ class QPEProcessor(object):
                     X.append(dat.ravel())
 
                 X = np.array(X).T
-                if i == 0 or (self.rt and (k not in X_prev.keys())):
+                if i == 0:
                     X_prev[k] = X
 
                 # Take average between current timestep and t-5min
                 Xcomb = np.nanmean((X_prev[k] , X),axis = 0)
                 X_prev[k]  = X
-
-                if self.rt:
-                    # Save files in a temporary format
-                    np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
-                                '_xprev', X)
 
                 if self.config['SAVE_FEATURES']:
                     filepath = output_folder + '/' + k +'_FEATURES/'
@@ -648,11 +597,6 @@ class QPEProcessor(object):
                 if self.config['GAUSSIAN_SIGMA'] > 0:
                     qpe = gaussian_filter(qpe,
                        self.config['GAUSSIAN_SIGMA'])
-
-                if self.rt:
-                    # Save files in a temporary format
-                    np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(t, basename)+\
-                                '_qpeprev', qpe)
 
                 if i == 0 or (k not in X_prev.keys()):
                     qpe_prev[k] = qpe
