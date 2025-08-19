@@ -387,7 +387,7 @@ def retrieve(args: Dict[str, str], cfg: Dict[str, str], return_body: bool = Fals
                 try:
                     num_records = int(f.headers.get('RECORDS'))
                 except TypeError:
-                    stripped_body = body.strip()
+                    
                     num_records = len(stripped_body.split(b'\n')) if stripped_body else 0
                     if not params.get('headerDisabled'):
                         num_records -= 2

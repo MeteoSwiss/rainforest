@@ -49,38 +49,36 @@ class TableDict(dict):
     calls createOrReplaceTempView once a table has been added to the dict """
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
-        self[key].createOrReplaceTempView(key)
+        self[key].df.createOrReplaceTempView(key)
         
-class DataFrameWithInfo(DataFrame):
-     def __init__(self, name, df):
+class DataFrameWithInfo:
+    def __init__(self, name, df):
+        self.name = name
+        self.df = df
+        self._info = None  # Use _info to avoid triggering property
 
-         super(self.__class__, self).__init__(df._jdf, df.sql_ctx)
-         self.info = None
-         self.name = name
-     
-     @property
-     def info(self):
-         if self.__info == None:
-             cols = self.columns
-             rows = self.count()
-             times = self.select('TIMESTAMP').collect()
-             t0 = datetime.utcfromtimestamp(np.min(times))
-             t1 = datetime.utcfromtimestamp(np.max(times))
-             
-             self.__info = '''
-             Table {:s} info
-             ----------------
-             Dimension: {:d} x {:d}
-             Time interval: {:s} - {:s}
-             Columns: {:s}
-             '''.format(self.name, rows, len(cols), str(t0),str(t1),
-             ','.join(cols))
-         return self.__info
+    @property
+    def info(self):
+        if self._info is None:
+            cols = self.df.columns
+            rows = self.df.count()
+            times = self.df.select('TIMESTAMP').rdd.flatMap(lambda r: r).collect()
+            t0 = datetime.fromtimestamp(np.min(times), timezone.utc)
+            t1 = datetime.fromtimestamp(np.max(times), timezone.utc)
             
-     @info.setter
-     def info(self, value):
-         self.__info = value
+            self._info = f'''
+            Table {self.name} info
+            ------------------------
+            Dimension: {rows} x {len(cols)}
+            Time interval: {t0} - {t1}
+            Columns: {', '.join(cols)}
+            '''
+        return self._info
 
+    @info.setter
+    def info(self, value):
+        self._info = value
+    
 class Database(object):
     def __init__(self, config_file = None):
         """
@@ -131,12 +129,11 @@ class Database(object):
         """
         for table in filepaths_dic:   
             pattern = filepaths_dic[table]
-
             self.tables[table] = DataFrameWithInfo(table, read_df(pattern,
                        dbsystem = 'spark', sqlContext = self.sqlContext))
            
             # Register as table
-            self.tables[table].createOrReplaceTempView(table)
+            self.tables[table].df.createOrReplaceTempView(table)
             
             # Below is experimental
             
@@ -339,8 +336,8 @@ class Database(object):
                     covered by the old data ({:s} - {:s}) and rerun the radar retrieval
                     
                     Press enter to continue, q to quit ...
-                    """.format(str(datetime.utcfromtimestamp(tstamp_start_old)),
-                               str(datetime.utcfromtimestamp(tstamp_end_old)))
+                    """.format(str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
+                               str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)))
                     userinput = input(textwrap.dedent(warning))
                     if userinput == 'q':
                         raise KeyboardInterrupt()                                     
@@ -367,7 +364,7 @@ class Database(object):
             logging.info('Writing task file {:s}'.format(fname))
             file.write(self.config['SLURM_HEADER'].format('gauge','gauge','GAUGE'))
             file.write(self.config['PYTHON_HEADER'])
-            file.write('python {:s}/retrieve_dwh_data.py "{:s}" "{:s}" {:f} "{:s}" "{:s}" {:s} {:d} {:d}'.format(
+            file.write('python -u {:s}/retrieve_dwh_data_5min.py "{:s}" "{:s}" {:f} "{:s}" "{:s}" {:s} {:d} {:d}'.format(
                        cwd,
                        t0,
                        t1,
@@ -427,8 +424,7 @@ class Database(object):
         try:
             # Try to read old data
             current_tab = read_df(output_folder + '*.parquet',
-                                       dbsystem = 'spark',
-                                       sqlContext = self.sqlContext)
+                                       dbsystem = 'dask')
             old_data_ok = True # valid data present
         except:
             old_data_ok = False
@@ -449,13 +445,13 @@ class Database(object):
                 tstamp_start = int(t0.timestamp())
                 tstamp_end = int(t1.timestamp())
                 
-            tab = self.tables[gauge_table_name].filter(\
-                    (self.tables[gauge_table_name]['TIMESTAMP']>= tstamp_start) \
-                    & (self.tables[gauge_table_name]['TIMESTAMP']<= tstamp_end)\
+            tab = self.tables[gauge_table_name].df.filter(\
+                    (self.tables[gauge_table_name].df['TIMESTAMP']>= tstamp_start) \
+                    & (self.tables[gauge_table_name].df['TIMESTAMP']<= tstamp_end)\
                     ).select(['STATION','TIMESTAMP']).toPandas()
 
         else:
-            tab = self.tables[gauge_table_name].select(['STATION',
+            tab = self.tables[gauge_table_name].df.select(['STATION',
                 'TIMESTAMP']).toPandas()
 
         tab['TIMESTAMP'] = tab['TIMESTAMP'].astype(float).astype(int)
@@ -501,8 +497,8 @@ class Database(object):
                     covered by the old data ({:s} - {:s}) and rerun the radar retrieval
                     
                     Press enter to continue, q to quit ...
-                    """.format(str(datetime.utcfromtimestamp(tstamp_start_old)),
-                               str(datetime.utcfromtimestamp(tstamp_end_old)))
+                    """.format(str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
+                               str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)))
                     userinput = input(textwrap.dedent(warning))
                     if userinput == 'q':
                         raise KeyboardInterrupt()
@@ -530,7 +526,7 @@ class Database(object):
         # Jobs are split by days, a single day is never split over several jobs
         # because the created output files are day based
         
-        ttuples = [datetime.utcfromtimestamp(float(t)).timetuple()
+        ttuples = [datetime.fromtimestamp(float(t), timezone.utc).timetuple()
             for t in unique_times]
 
         days = [[str(t.tm_year) + str(t.tm_yday)] for t in ttuples]
@@ -553,7 +549,7 @@ class Database(object):
                     logging.warning('Day {:s} was already computed, ignoring it...'.format(f))
                     days_to_process.remove(current_day)
                     
-        days_per_job = max([1,int(np.round(len(days_to_process)/num_jobs))])
+        days_per_job = max([1,len(days_to_process)//num_jobs])
         
         day_counter = 0
         current_job = 0
@@ -608,7 +604,7 @@ class Database(object):
             file.write('#SBATCH --array=0\n\n')
             file.write(self.config['PYTHON_HEADER'])
             # The following two lines are necessary to use the right environment
-            file.write('python {:s}/retrieve_reference_data.py -c {:s} -t {:s} -o {:s} \n'.format(
+            file.write('python -u {:s}/retrieve_reference_data_5min.py -c {:s} -t {:s} -o {:s} \n'.format(
                        cwd,
                        self.config_file,
                        tf,
@@ -628,7 +624,7 @@ class Database(object):
                 file.write(self.config['SLURM_HEADER'].format('ref','ref','REF'))
                 file.write('#SBATCH --array={:d}-{:d}%{:d}\n\n'.format(i,iend,jobmax))
                 file.write(self.config['PYTHON_HEADER'])
-                file.write('python {:s}/retrieve_reference_data.py -c {:s} -t {:s} -o {:s} \n'.format(
+                file.write('python -u {:s}/retrieve_reference_data_5min.py -c {:s} -t {:s} -o {:s} \n'.format(
                         cwd,
                         self.config_file,
                         tf,
@@ -637,10 +633,9 @@ class Database(object):
                 # Set counter to next file that is not included (+1)
                 i = i+1+nfperjob
                 job_files.append(fname)
-
         for fn in job_files:
             logging.info('Submitting job {}'.format(fn))
-            #subprocess.call('sbatch {:s}'.format(fn), shell = True)
+            subprocess.call('sbatch {:s}'.format(fn), shell = True)
               
         
     def update_radar_data(self, gauge_table_name,  output_folder,
@@ -685,7 +680,7 @@ class Database(object):
                           your config file!""")
         
         logging.info('Load data... (may take a moment)')
-        tab = self.tables[gauge_table_name].select(['STATION',
+        tab = self.tables[gauge_table_name].df.select(['STATION',
                         'TIMESTAMP']).toPandas()
 
         tab['TIMESTAMP'] = tab['TIMESTAMP'].astype(float).astype(int)
@@ -756,8 +751,8 @@ class Database(object):
                     covered by the old data ({:s} - {:s}) and rerun the radar retrieval
                     
                     Press enter to continue, q to quit ...
-                    """.format(str(datetime.utcfromtimestamp(tstamp_start_old)),
-                               str(datetime.utcfromtimestamp(tstamp_end_old)))
+                    """.format(str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
+                               str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)))
                     userinput = input(textwrap.dedent(warning))
                     if userinput == 'q':
                         raise KeyboardInterrupt()
@@ -783,7 +778,7 @@ class Database(object):
         # Jobs are split by days, a single day is never split over several jobs
         # because the created output files are day based
         
-        ttuples = [datetime.utcfromtimestamp(float(t)).timetuple()
+        ttuples = [datetime.fromtimestamp(float(t), timezone.utc).timetuple()
             for t in unique_times]
 
         days = [[str(t.tm_year) + str(t.tm_yday)] for t in ttuples]
@@ -807,7 +802,7 @@ class Database(object):
                     logging.warning('Day {:s} was already computed, ignoring it...'.format(f))
                     days_to_process.remove(current_day)
     
-        days_per_job = max([1,int(np.round(len(days_to_process)/num_jobs))])
+        days_per_job = max([1,len(days_to_process)//num_jobs])
 
         day_counter = 0
         current_job = 0
@@ -866,7 +861,7 @@ class Database(object):
             file.write(self.config['SLURM_HEADER'].format('rad','rad','RAD'))
             file.write('#SBATCH --array=0\n\n')
             file.write(self.config['PYTHON_HEADER'])
-            file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} \n'.format(
+            file.write('python -u {:s}/retrieve_radar_data_5min.py -c {:s} -t {:s} -o {:s} \n'.format(
                        cwd,
                        self.config_file,
                        tf,
@@ -886,7 +881,7 @@ class Database(object):
                 file.write(self.config['SLURM_HEADER'].format('rad','rad','RAD'))
                 file.write('#SBATCH --array={:d}-{:d}%{:d}\n\n'.format(i,iend,jobmax))
                 file.write(self.config['PYTHON_HEADER'])
-                file.write('python {:s}/retrieve_radar_data.py -c {:s} -t {:s} -o {:s} \n'.format(
+                file.write('python -u {:s}/retrieve_radar_data_5min.py -c {:s} -t {:s} -o {:s} \n'.format(
                         cwd,
                         self.config_file,
                         tf,

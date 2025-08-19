@@ -20,14 +20,13 @@ from scipy.stats import energy_distance
 from dateutil import parser
 import glob
 import yaml
-import dask
-dask.config.set({'dataframe.query-planning': False})
-import  dask.dataframe as dd
+import dask.dataframe as dd
 import re
 import numbers
+import logging
 
 # Local imports
-from .logger import logger
+logger = logging.getLogger(__name__)
 from .wgs84_ch1903 import GPSConverter
 from . import constants
 
@@ -558,7 +557,7 @@ def read_df(pattern, dbsystem='dask', sqlContext=None):
         raise NotImplementedError('Only dbsystem = "spark" or "dask" are supported!')
     if dbsystem == 'spark' and sqlContext == None:
         raise ValueError('sqlContext must be provided if dbystem = "spark"!')
-        
+    
     files = glob.glob(pattern)
     df = None
     if '.parq' in files[0] or '.parquet' in files[0]:
@@ -569,7 +568,7 @@ def read_df(pattern, dbsystem='dask', sqlContext=None):
             df = dd.read_parquet(pattern) 
     elif '.csv' in files[0]:
         if dbsystem == 'spark':
-            df = sqlContext.read.csv(pattern,
+            df = sqlContext.read.csv(files,
                            header = True, inferSchema = True)
         else:
             if '.gz' in files[0]:

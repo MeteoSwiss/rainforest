@@ -11,6 +11,7 @@ from matplotlib.colors import Normalize
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import OrderedDict
+import os
 
 REFCOLORS = OrderedDict()
 REFCOLORS['RZC'] = 'k'
@@ -373,6 +374,51 @@ def qpe_scatterplot( qpe_est, ref, title_prefix = '', figsize = (10,7.5)):
     fig.subplots_adjust(hspace=0.25)
     cax = fig.add_axes([0.18, 0.15, 0.7, 0.03])
     fig.colorbar(pl, cax, orientation = 'horizontal', label = 'Counts')
+    
+def plot_fit_metrics(metrics, output_folder):
+    """
+    Plots the metrics for a given fit as performed in
+    the rf.py module 
+    
+    Parameters
+    ----------
+    metrics : dict
+        dictionary containing the result statistics as obtained in the 
+        rf.py:fit_models function
+    output_folder : str
+        where to store the plots
+    
+    
+    """ 
+    aggregations = list(metrics.keys())
+    fractions = list(metrics[aggregations[0]].keys())
+    precip_types = list(metrics[aggregations[0]][fractions[0]].keys())
+    intensity_ranges = list(metrics[aggregations[0]][fractions[0]][precip_types[0]].keys())
+    metric_names = list(metrics[aggregations[0]][fractions[0]][precip_types[0]][intensity_ranges[0]].keys())
+
+    list_figures = {} # for mlflow
+    for ag in aggregations:
+        for f in fractions:
+            fig, ax = plt.subplots(len(metric_names), len(intensity_ranges), figsize=(14,14))
+            for i, metric in enumerate(metric_names):
+                for j, ir in enumerate(intensity_ranges):
+                    ax[i,j].bar(precip_types, [metrics[ag][f][p][ir][metric] for p in precip_types], color = 'C0')
+                    ax[i,j].grid()
+                    if i != len(metric_names) - 1:
+                        ax[i,j].set(xticklabels=[])
+                    if j == 0:
+                        ax[i,j].set_ylabel(metric)
+                ax[i,0].tick_params(bottom=False)  # remove the ticks
+                
+                for j in range(len(intensity_ranges)):
+                    ax[-1, j].set_xlabel(intensity_ranges[j])
+            fig.suptitle(f"fraction={f}, aggregation={ag}")
+            nfile = f'metrics_{ag}_{f}.png'
+            list_figures[nfile] = fig
+            plt.savefig(os.path.join(output_folder, nfile), dpi = 300, 
+                            bbox_inches = 'tight')
+    return list_figures
+
     
     
 def plot_crossval_stats(stats, output_folder):

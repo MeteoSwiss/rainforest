@@ -18,7 +18,7 @@ sys.path.append(dir_path)
 from optparse import OptionParser
 
 # Local imports
-from rainforest.database.database import Database
+from rainforest.database_10min.database import Database
 from rainforest.common import constants
 
 def main(): 

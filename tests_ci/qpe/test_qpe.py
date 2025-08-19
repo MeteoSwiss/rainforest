@@ -15,11 +15,9 @@ def test_qpe():
     cwd = os.path.dirname(os.getenv('PYTEST_CURRENT_TEST')) + '/'
     # Get RF model
     filename = {}
-    filename['RF_dualpol'] = 'RF_dualpol_BETA_-0.5_BC_spline.p'
-    filename['RFO'] = 'RFO_BETA_-0.5_BC_spline_trained_2016_2019.p'
+    filename['RFO'] = 'RFO_BETA_-0.5_BC_spline.p'
 
     names = {}
-    names['RF_dualpol'] = 'RFQ'
     names['RFO'] = 'RFO'
 
     t0 = datetime.datetime(2022,9,28,5,10)
@@ -41,7 +39,6 @@ def test_qpe():
         assert 'radar_estimated_rain_rate' in qpe.fields
         assert qpe.fields['radar_estimated_rain_rate']['data'].shape == (1,640, 710)
         assert len(np.unique(qpe.fields['radar_estimated_rain_rate']['data'])) > 2
-
         # Time
         assert qpe.time['units'] == 'seconds since 2022-09-28T05:05:00Z'
         assert qpe.time['data'] == [0, 300]

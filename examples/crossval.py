@@ -7,7 +7,7 @@ reference to rain gauges
 from rainforest.ml.rf import RFTraining
 
 
-rf = RFTraining('/store/msrad/radar/radar_database/')
+rf = RFTraining('/store/msrad/radar/radar_database_v2/')
 
 # Create dictionnary of models to compare
 models = {}

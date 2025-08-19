@@ -12,7 +12,7 @@ import datetime
 import subprocess
 from rainforest.common.constants import SLURM_HEADER_PY
 from rainforest.common.retrieve_data import retrieve_prod
-#  
+#
 days = ['20170725','20180122','20181027']
 # days = ['20180122']
 days.extend([        '20190806','20191015','20200129'])
@@ -20,7 +20,7 @@ days.extend([        '20190806','20191015','20200129'])
 models = '{"RF_dualpol_noS":"RF_dualpol_BETA_-0.5_BC_spline.p","RF_hpol_noS":"RF_hpol_BETA_-0.5_BC_spline.p"}'
 # models = '{"RF_dualpol":"RF_dualpol_BETA_-0.5_BC_spline.p"}'
 outputfolder = '/scratch/wolfensb/qpe_runs/'
-gauge = "'/store/msrad/radar/radar_database/gauge/*.csv.gz'" # beeware of quotes!
+gauge = "'/store/msrad/radar/radar_database_v2/gauge/*.csv.gz'" # beeware of quotes!
 config = '/store/msrad/radar/rainforest/tools/config.yml'
 
 # from rainforest.qpe.qpe import QPEProcessor
@@ -38,30 +38,30 @@ for d in days:
     if not os.path.exists(folder):
         os.makedirs(folder)
     f = open(d + '_job', 'w')
-    f.write(SLURM_HEADER_PY) 
+    f.write(SLURM_HEADER_PY)
     start = d + '0000'
     end = datetime.datetime.strptime(d, '%Y%m%d') + datetime.timedelta(days = 1)
     end = datetime.datetime.strftime(end, '%Y%m%d%H%M')
     f.write("qpe_compute -s {:s} -e {:s} -m '{:s}' -o {:s} -c {:s}".format(start, end, models,folder, config))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
-  
+
 # %%
 # Download RZC, CPC
 for d in days:
     folder_rzc = str(Path(outputfolder, d, 'RZC'))
-    if not os.path.exists(folder_rzc): 
-        os.makedirs(folder_rzc) 
+    if not os.path.exists(folder_rzc):
+        os.makedirs(folder_rzc)
     folder_cpc = str(Path(outputfolder, d, 'CPCH'))
     if not os.path.exists(folder_cpc):
         os.makedirs(folder_cpc)
-        
+
     start = datetime.datetime.strptime(d, '%Y%m%d')
     end = datetime.datetime.strptime(d, '%Y%m%d') + datetime.timedelta(days = 1)
 
     retrieve_prod(folder_rzc, start, end, 'RZC')
-    retrieve_prod(folder_cpc, start, end, 'CPCH', pattern = '*5.801.gif') 
-    
+    retrieve_prod(folder_cpc, start, end, 'CPCH', pattern = '*5.801.gif')
+
 # %%
 # Evaluate QPE
 for d in days:
@@ -69,7 +69,7 @@ for d in days:
     output = str(Path(outputfolder, 'plots_allstaq'))
     if not os.path.exists(output):
         os.makedirs(output)
-        
+
     f = open(d + '_job', 'w')
     f.write(SLURM_HEADER_PY)
     f.write("qpe_evaluation -q {:s} -g {:s} -o {:s} -m {:s} ".format(folder, gauge, output,
@@ -88,4 +88,3 @@ for d in days:
     f.write("qpe_plot -i {:s} -o {:s} -V 20.1 -t 1 -m {:s} -f 10,7 -d 2,2 -c 'vertical'".format(folder, output,'"RZC, CPC, RF_hpol","RF_dualpol"'))
     f.close()
     subprocess.call('sbatch {:s}'.format(d + '_job'), shell = True)
-    

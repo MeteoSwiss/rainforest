@@ -1,2 +1,2 @@
 from .qpe import QPEProcessor
-from .qpe_real_time import QPEProcessor_RT
+from .qpe_rt_daemon import QPEProcessor_RT_daemon

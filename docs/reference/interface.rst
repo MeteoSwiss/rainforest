@@ -25,7 +25,7 @@ The second example shows how to perform a SQL query from a the set of gauge data
     :alt: alternate text
     
     
-The third example shows how to load all three table types *radar*, *reference* and *gauge* at once on Kesch and how to do a more complex SQL query from multiple tables. In this case we retrieve the data from the *reference* and *gauge* tables, where RZC > 5 and where the temperature is positive.
+The third example shows how to load all three table types *radar*, *reference* and *gauge* at once on balfrin and how to do a more complex SQL query from multiple tables. In this case we retrieve the data from the *reference* and *gauge* tables, where RZC > 5 and where the temperature is positive.
 
 .. image:: query_complex.png
     :align: center
