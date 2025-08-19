@@ -34,7 +34,7 @@ Options:
                         be used
   -c CONFIG, --config=CONFIG
                         Path of the config file, the default will be
-                        default_config.yml in the database module
+                        default_config.yml in the ml module
   -m MODELS, --models=MODELS
                         Specify which models you want to use in the form of a
                         json line of a dict, the keys are names you give to
