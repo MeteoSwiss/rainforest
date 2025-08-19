@@ -33,7 +33,6 @@ try:
 except ImportError:
     _PYSTEPS_AVAILABLE = False
 
-
 from ..common.logger import get_logger
 from ..common import constants
 from ..common.retrieve_data import retrieve_prod, retrieve_hzt_prod, retrieve_prod_RT, retrieve_hzt_RT
@@ -55,7 +54,7 @@ NBINS_Y = len(Y_QPE_CENTERS)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class QPEProcessor(object):
-    def __init__(self, config_file, models, verbose=False):
+    def __init__(self, config_file, models, rt = False, verbose = True):
         """
         Creates a QPEProcessor object which can be used to compute QPE
         realizations with the RandomForest Regressors
@@ -70,19 +69,22 @@ class QPEProcessor(object):
             keys in this dictionary are used to store outputs in separate
             folders whereas the values must be valid RF regressor instances
             as stored in the rf_models subfolder
+        rt : bool
+            Whether or not to run the model in real-time mode
         """
         self.logger = get_logger("QPE postproc", verbose)
-
+        
         try:
             config = envyaml(config_file)
         except:
             self.logger.warning('Using default config as no valid config file was provided')
-            config_file = dir_path + '/default_config.yml'
+            config_file = os.path.join(dir_path, '/default_config.yml')
 
         config = envyaml(config_file)
 
         self.config = config
         self.models = models
+        self.rt = rt
 
         if self.config['RADARS'] == 'all':
             self.config['RADARS'] = list(constants.RADARS.Abbrev)
@@ -115,6 +117,13 @@ class QPEProcessor(object):
                 if (var == 'T') or (var == 'ISO0_HEIGHT'):
                     self.cosmo_var.append(var)
 
+        if self.rt:
+            # Used for testing the RT mode on CSCS
+            import socket
+            if 'balfrin' in socket.gethostname() or 'nid' in socket.gethostname():
+                constants.FOLDER_RADAR = '/scratch/rgugerli/rainforest_debug/output/output_RT/temp/'
+                constants.FOLDER_ISO0 = '/scratch/rgugerli/rainforest_debug/output/output_RT/temp/HZT/'
+
     def fetch_data(self, t0, t1 = None):
         """
         Retrieves and add new polar radar and status data to the QPEProcessor
@@ -132,26 +141,37 @@ class QPEProcessor(object):
         self.radar_files = {}
         self.status_files = {}
 
+        if self.rt:
+            tstep = t0
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
-            self.logger.info('Retrieving data for radar '+rad)
+            self.logger.info(f'Retrieving data for radar {rad}')
             try:
-                radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
-                        product_name = 'ML' + rad,
-                        sweeps = self.config['SWEEPS'])
-                statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
-                        product_name = 'ST' + rad, pattern = 'ST*.xml')
+                if self.rt:
+                    radfiles = retrieve_prod_RT(tstep, product_name = 'ML'+rad,
+                                                  sweeps = self.config['SWEEPS'])
+                    statfiles = retrieve_prod_RT(tstep, product_name = 'ST' + rad,
+                                                    pattern = 'ST*.xml', sweeps = None)
+                else:
+                    radfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
+                                    product_name = 'ML' + rad,
+                                    sweeps = self.config['SWEEPS'])
+                    statfiles = retrieve_prod(self.config['TMP_FOLDER'], t0, t1,
+                                   product_name = 'ST' + rad, pattern = 'ST*.xml')
 
                 self.radar_files[rad] = split_by_time(radfiles)
                 self.status_files[rad] = split_by_time(statfiles)
-            except Exception as error:
-                error_msg = 'Failed to retrieve data for radar {:s}.\n'.format(rad)+ str(error)
+            except Exception as err:
+                error_msg = f"Failed to retrieve data for radar {rad}, error is {err}"
                 self.logger.error(error_msg)
                 
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
             try:
-                files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],t0,t1)
+                if self.rt:
+                    files_hzt = retrieve_hzt_RT(tstep)
+                else:
+                    files_hzt = retrieve_hzt_prod(self.config['TMP_FOLDER'],t0,t1)
                 self.files_hzt = split_by_time(files_hzt)
             except:
                 self.files_hzt = {}
@@ -172,7 +192,7 @@ class QPEProcessor(object):
 
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
-            self.logger.info('Retrieving data for radar '+rad)
+            self.logger.info(f'Retrieving data for radar {rad}')
             try:
                 radfiles= []
                 for sweep in self.config['SWEEPS']:
@@ -199,7 +219,7 @@ class QPEProcessor(object):
                 self.status_files[rad] = split_by_time(statfiles)
                 self.T_files[rad] = split_by_time(T_files)
             except:
-                self.logger.error('Failed to retrieve data for radar {:s}'.format(rad))
+                self.logger.error(f'Failed to retrieve data for radar {rad}')
 
         # ISOTHERMAL HEIGHT is independent of radar gate, i.e. this step is done later
         try:
@@ -290,12 +310,13 @@ class QPEProcessor(object):
 
         # Retrieve one timestamp before beginning for lead time
         tL = t0-datetime.timedelta(minutes=timestep)
- 
-        # Retrieve data for whole time range
-        if test_mode:
-            self.fetch_data_test(tL, t1)
-        else:    
-            self.fetch_data(tL, t1)
+        
+        if not self.rt:
+            # Retrieve data for whole time range
+            if test_mode:
+                self.fetch_data_test(tL, t1)
+            else:    
+                self.fetch_data(tL, t1)
 
         # Get all timesteps in time range
         n_incr = int((t1 - tL).total_seconds() / (60 * timestep))
@@ -305,11 +326,37 @@ class QPEProcessor(object):
         qpe_prev = {}
         X_prev = {}
 
-        for i, t in enumerate(timeserie): # Loop on timesteps
+        for i, ct in enumerate(timeserie): # Loop on timesteps
             self.logger.info('====')
-            self.logger.info('Processing time '+str(t))
+            self.logger.info(f'Processing time {ct}')
             
-            tstr = datetime.datetime.strftime(t, basename)
+            tstr = datetime.datetime.strftime(ct, basename)
+
+            # Get lead time file in RT mode
+            if i == 0 and self.rt:
+                for k in self.models.keys():
+                    tL_x_file = f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_xprev.npy"
+                    tL_qpe_file = f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_qpeprev.npy"
+                    one_file_missing = False
+                    try:
+                        X_prev[k] = np.load(tL_x_file)
+                        qpe_prev[k] = np.load(tL_qpe_file)
+                        os.remove(tL_x_file)
+                        os.remove(tL_qpe_file)
+                    except:
+                        one_file_missing = True
+                # If all the files could be loaded, go directly to current timestep
+                if one_file_missing == False:
+                    self.logger.info('Already available: LEAD time '+str(ct))
+                    continue
+                else:
+                    self.logger.info('Processing LEAD time '+str(ct))
+            else:
+                self.logger.info('Processing time '+str(ct))
+
+            if self.rt:
+                # Retrieve data for timestep
+                self.fetch_data(ct)
 
             # Log missing radar files
             self.missing_files = {}
@@ -332,13 +379,21 @@ class QPEProcessor(object):
             # Get COSMO temperature for all radars for this timestamp
             if not test_mode:
                 if ('ISO0_HEIGHT' in self.cosmo_var) :
-                    if ('hzt_cosmo_fields' not in locals()) or (t not in hzt_cosmo_fields):
+                    if ('hzt_cosmo_fields' not in locals()) or (ct not in hzt_cosmo_fields):
                         try:
-                            hzt_cosmo_fields = HZT_hourly_to_5min(t, self.files_hzt, tsteps_min=timestep)
-                            self.logger.info('Interpolating HZT fields for timestep {}'.format(t.strftime('%Y%m%d%H%M')))
-                        except:
-                            hzt_cosmo_fields = { t : np.ma.array(np.empty([640,710]))*np.nan }
-                            self.logger.info('HZT fields for timestep {} missing, creating empty one'.format(t.strftime('%Y%m%d%H%M')))
+                            hzt_cosmo_fields = HZT_hourly_to_5min(ct, self.files_hzt, tsteps_min=timestep)
+                            self.logger.info(f'Interpolating HZT fields for timestep {ct.strftime("%Y%m%d%H%M")}')
+                            self.logger.debug("Saving temporary HZT data to cache")
+                                            
+                            np.save(f"{self.config['TMP_FOLDER']}/{k}_hzt_cached", 
+                                    np.ma.filled(hzt_cosmo_fields[ct], np.nan))
+            
+                        except Exception as err:
+                            # Retrieve latest valid value from cache
+                            self.logger.warning(f"HZT temporal interpolation failed with error {err}, retrieving latest valid value from cache")
+                            hzt_val = np.load(f"{self.config['TMP_FOLDER']}/{k}_hzt_cached")
+                            hzt_val = np.ma.masked_invalid(hzt_val)
+                            hzt_cosmo_fields = {ct: hzt_val}
 
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
@@ -347,38 +402,23 @@ class QPEProcessor(object):
             for rad in self.config['RADARS']:
                 # if radar does not exist, add to missing file list
                 if (rad not in self.radar_files) or (self.radar_files[rad] == None):
-                    self.missing_files[rad] = t
+                    self.missing_files[rad] = ct
                     continue
 
                 # if file does not exist, add to missing file list
-                if (t not in self.radar_files[rad]) or (self.radar_files[rad][t] == None):
-                    self.missing_files[rad] = t
+                if (ct not in self.radar_files[rad]) or (self.radar_files[rad][ct] == None):
+                    self.missing_files[rad] = ct
                     continue
                 
                 # Read raw radar file and create a RADAR object
-                radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                                        self.status_files[rad][t],
-                                        metranet_reader='C')
-                # try:
-                #     radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                #                             self.status_files[rad][t],
-                #                             metranet_reader='C')
-                # except:
-                #     try:
-                #         wrnmsg = 'Could not read polar radar data for radar {:s}'.format(rad)+\
-                #                 ' with c-reader (default), trying with python-reader'
-                #         self.logger.warning(wrnmsg)
-                #         radobjects[rad] = Radar(rad, self.radar_files[rad][t],
-                #             self.status_files[rad][t],
-                #             metranet_reader='python')
-                #     except:
-                #         self.logger.error('Could not read polar radar data of {:s}'.format(rad))
-                        
+                radobjects[rad] = Radar(rad, self.radar_files[rad][ct],
+                                        self.status_files[rad][ct],
+                                        metranet_reader='C')                       
                 
                 # if problem with radar file, exclude it and add to missing files list
                 if len(radobjects[rad].radarfields) == 0:
-                    self.missing_files[rad] = t
-                    self.logger.warning('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    self.missing_files[rad] = ct
+                    self.logger.warning(f'Removing timestep {ct} of radar {rad}')
                     continue
                 
                 # Process the radar data
@@ -390,7 +430,7 @@ class QPEProcessor(object):
                 except Exception as e:
                     self.missing_files[rad] = t
                     self.logger.warning(e)
-                    self.logger.warning('Removing timestep {:s} of radar {:s}'.format(str(t), rad))
+                    self.logger.warning('Removing timestep {t} of radar {rad}')
                     continue
                 radobjects[rad].compute_kdp(self.config['KDP_PARAMETERS'])
 
@@ -400,48 +440,36 @@ class QPEProcessor(object):
                         
                 # Add temperature indication to radar object
                 if 'ISO0_HEIGHT' in self.cosmo_var:
-                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[t])
-
-                # # Check that there is no issue due to calibration (in development)
-                # try:
-                #     for sweep in self.config['SWEEPS']:
-                #         if sweep != 20:
-                #             print(rad, sweep, float(radobjects[rad].status['status']['sweep'][sweep]['RADAR']['STAT']
-                #                     ['CALIB']['noisepower_frontend_h']['@value']))
-                #         if float(radobjects[rad].status['status']['sweep'][constants.STATUS_QC_FLAG_SWEEP]['RADAR']['STAT']
-                #                 ['CALIB']['noisepower_frontend_h']['@value']) <= constants.STATUS_QC_FLAG_TH:
-                #             #del radobjects[rad].radsweeps[sweep]
-                #             self.missing_files[rad] = t
-                #             self.logger.info('Removing timestep {:s} of radar {:s} - erroneous data'.format(str(t), rad))
-                # except:
-                #     self.logger.info('Could not read sweep info')     
+                    radobjects[rad].add_hzt_data(hzt_cosmo_fields[ct])
 
                 # Delete files if config files requires
                 try:
                     if self.config['CLEANUP'] == 'delete_all':
-                        for f in self.radar_files[rad][t]:
+                        for f in self.radar_files[rad][ct]:
                             if os.path.exists(f):
                                 os.remove(f)
-                        if os.path.exists(self.status_files[rad][t]):
-                            os.remove(self.status_files[rad][t])
+                        if os.path.exists(self.status_files[rad][ct]):
+                            os.remove(self.status_files[rad][ct])
                 except:
                     self.logger.error('No cleanup was defined, unzipped files remain in temp-folder')
             
             self.logger.info('Processing all sweeps of all radars')
             for sweep in self.config['SWEEPS']: # Loop on sweeps
-                self.logger.info('---')
-                self.logger.info('Processing sweep ' + str(sweep))
+                if not self.rt:
+                    self.logger.info('---')
+                    self.logger.info('Processing sweep ' + str(sweep))
 
                 for rad in self.config['RADARS']: # Loop on radars, A,D,L,P,W                    
                     # If there is no radar file for the specific radar, continue to next radar
                     if rad not in radobjects.keys():
-                        self.logger.info('Processing radar {} - no data for this timestep!'.format(rad))
+                        self.logger.info(f'Processing radar {rad} - no data for this timestep!')
                         continue
                     elif sweep not in radobjects[rad].radsweeps.keys():
-                        self.logger.info('Processing sweep {} of {} - no data for this timestep!'.format(sweep, rad))
+                        self.logger.info(f'Processing sweep {sweep} of radar {rad} - no data for this timestep!')
                         continue
                     else:
-                        self.logger.info('Processing radar ' + str(rad) + '; sweep '+str(sweep))
+                        if not self.rt:
+                            self.logger.info(f'Processing sweep {sweep} of radar {rad}')
                         
                     try:
                         """Part two - retrieve radar data at every sweep"""
@@ -522,8 +550,7 @@ class QPEProcessor(object):
                                 W * isvalidzh_radsweep)),2)
 
                     except:
-                        raise
-                        self.logger.error('Could not compute sweep {:d}'.format(sweep))
+                        self.logger.error(f'Could not compute sweep {sweep}')
                         pass
 
 
@@ -542,19 +569,22 @@ class QPEProcessor(object):
                     X.append(dat.ravel())
 
                 X = np.array(X).T
-                if i == 0:
+                if i == 0 or (self.rt and (k not in X_prev.keys())):
                     X_prev[k] = X
 
                 # Take average between current timestep and t-5min
                 Xcomb = np.nanmean((X_prev[k] , X),axis = 0)
                 X_prev[k]  = X
 
+                if self.rt:
+                    # Save files in a temporary format
+                    np.save(f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_xprev", X)
                 if self.config['SAVE_FEATURES']:
                     filepath = output_folder + '/' + k +'_FEATURES/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    self.logger.info('Input features to RainForest written to ' + filepath+tstr)
-                    self.save_features(Xcomb, model.variables, t, filepath+tstr)
+                    self.logger.info(f"Input features to RainForest written to {os.path.join(filepath, tstr)}")
+                    self.save_features(Xcomb, model.variables, ct, filepath+tstr)
 
                 # Remove axis with only zeros
                 Xcomb[np.isnan(Xcomb)] = 0
@@ -564,8 +594,8 @@ class QPEProcessor(object):
                 qpe = np.zeros((NBINS_X, NBINS_Y), dtype = np.float32).ravel()
                 try:
                     qpe[validrows] = self.models[k].predict(Xcomb[validrows,:])
-                except:
-                    self.logger.error('Model failed!')
+                except Exception as err:
+                    self.logger.error(f'Model inference failed with error {err}!')
                     pass
                 
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
@@ -598,10 +628,14 @@ class QPEProcessor(object):
                     qpe = gaussian_filter(qpe,
                        self.config['GAUSSIAN_SIGMA'])
 
+                if self.rt:
+                    # Save files in a temporary format
+                    np.save(f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_qpeprev", qpe)
+
                 if i == 0 or (k not in X_prev.keys()):
                     qpe_prev[k] = qpe
                     # Because this is only the lead time, we go out here:
-                    self.logger.info('Processing time '+str(t)+' was only used as lead time and the QPE maps will not be saved')
+                    self.logger.info(f'Processing time {ct} was only used as lead time and the QPE maps will not be saved')
                     continue
 
                 """ for advection correction use separate path """
@@ -617,14 +651,14 @@ class QPEProcessor(object):
                     filepath = output_folder + '/' + k +'_AC/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    self.save_output(qpe_ac, t, filepath + tstr)
+                    self.save_output(qpe_ac, ct, filepath + tstr)
 
                 """Part six - Save main output"""
                 filepath = output_folder + '/' + k
                 if not os.path.exists(filepath):
                     os.mkdir(filepath)                
                 filepath += '/' + tstr
-                self.save_output(qpe, t, filepath)
+                self.save_output(qpe, ct, filepath)
                 
                 if self.config['SAVE_NON_POSTPROCESSED_DATA']:
                     # Coding of folders (0 not applied, 1 applied)
@@ -635,23 +669,23 @@ class QPEProcessor(object):
                     filepath = output_folder + '/' + k +'_T0O0G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    self.save_output(qpe_no_temp, t, filepath+tstr)                    
+                    self.save_output(qpe_no_temp, ct, filepath+tstr)                    
                     
                     filepath = output_folder + '/' + k +'_T1O0G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
-                    self.save_output(qpe_no_pp, t, filepath+tstr)
+                    self.save_output(qpe_no_pp, ct, filepath+tstr)
                     
                     # With outlier removal (O1), but without Gaussian smoothing (G0)
                     filepath = output_folder + '/' + k +'_T1O1G0/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
                     qpe_temp = outlier_removal(qpe_no_pp)
-                    self.save_output(qpe_temp, t, filepath+tstr)
+                    self.save_output(qpe_temp, ct, filepath+tstr)
                     
                     # Without outlier removal (O0), but without Gaussian smoothing (G1)
                     filepath = output_folder + '/' + k +'_T1O0G1/'
                     if not os.path.exists(filepath):
                         os.mkdir(filepath)
                     qpe_temp = gaussian_filter(qpe_no_pp, self.config['GAUSSIAN_SIGMA'])
-                    self.save_output(qpe_temp, t, filepath+tstr)
+                    self.save_output(qpe_temp, ct, filepath+tstr)

@@ -101,6 +101,13 @@ def main():
         help="Enable verbose output"
     )
 
+    parser.add_argument(
+        "-r", "--rt",
+        dest="rt",
+        action="store_true",
+        help="To be set if the code is to run on a server where the input data is available in real-time (uncompressed), as is usually the case on LOM/ZUE servers"
+    )
+    
     args = parser.parse_args()
 
     if args.config == None:
@@ -121,7 +128,7 @@ def main():
 
     args.start = datetime.datetime.strptime(args.start, '%Y%m%d%H%M')
     args.end = datetime.datetime.strptime(args.end, '%Y%m%d%H%M')
-    qpe = QPEProcessor(args.config, args.models, args.verbose)
+    qpe = QPEProcessor(args.config, args.models, args.verbose, rt = args.rt)
     qpe.compute(args.outputfolder, args.start, args.end)
 
 if __name__ == '__main__':

@@ -57,7 +57,7 @@ NBINS_Y = len(Y_QPE_CENTERS)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class QPEProcessor_RT(object):
+class QPEProcessor_RT_daemon(object):
     def __init__(self, config_file, models, log_dir = "/srn/las/log/", verbose=False):
         """
         Creates a QPEProcessor object which can be used to compute QPE
@@ -324,7 +324,7 @@ class QPEProcessor_RT(object):
 
         # Retrieve polar files and lookup tables for all radars
         for rad in self.config['RADARS']:
-            self.logger.info('Retrieving data for radar '+rad)
+            self.logger.info('Retrieving data for radar {rad}')
             try:
                 radfiles = self._retrieve_prod_RT(tstep, product_name = 'ML'+rad,
                                                   sweeps = self.config['SWEEPS'])
@@ -333,7 +333,7 @@ class QPEProcessor_RT(object):
                                                     pattern = 'ST*.xml', sweeps = None)
                 self.status_files[rad] = split_by_time(statfiles)
             except:
-                self.logger.error('Failed to retrieve data for radar {:s}'.format(rad))
+                self.logger.error('Failed to retrieve data for radar {rad}')
         
         # Retrieve iso0 height files
         if 'ISO0_HEIGHT' in self.cosmo_var:
@@ -431,14 +431,14 @@ class QPEProcessor_RT(object):
             # Get lead time file
             if it == 0 :
                 for k in self.models.keys():
-                    tL_x_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
-                                datetime.datetime.strftime(ct, basename)+'_xprev.npy'
-                    tL_qpe_file = self.config['TMP_FOLDER']+'/{}_'.format(k)+\
-                                datetime.datetime.strftime(ct, basename)+'_qpeprev.npy'
+                    tL_x_file = f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_xprev.npy"
+                    tL_qpe_file = f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_qpeprev.npy"
                     one_file_missing = False
                     try:
                         X_prev[k] = np.load(tL_x_file)
                         qpe_prev[k] = np.load(tL_qpe_file)
+                        os.remove(tL_x_file)
+                        os.remove(tL_qpe_file)
                     except:
                         one_file_missing = True
                 # If all the files could be loaded, go directly to current timestep
@@ -615,7 +615,7 @@ class QPEProcessor_RT(object):
                             weights_cart[weight] = np.nansum(np.dstack((weights_cart[weight], 
                                 W * (isvalidzh_radsweep == 1))),2)
                     except Exception as err:
-                        self.logger.error('Could not compute sweep {:d}'.format(sweep))
+                        self.logger.error(f'Could not compute sweep {sweep}')
                         self.logger.error(err)
                         pass
 
@@ -643,8 +643,7 @@ class QPEProcessor_RT(object):
                 X_prev[k]  = X
                 
                 # Save files in a temporary format
-                np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(ct, basename)+\
-                            '_xprev', X)
+                np.save(f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_xprev", X)
 
                 # Remove axis with only zeros
                 Xcomb[np.isnan(Xcomb)] = 0
@@ -689,8 +688,7 @@ class QPEProcessor_RT(object):
                        self.config['GAUSSIAN_SIGMA'])
                 
                 # Save files in a temporary format
-                np.save(self.config['TMP_FOLDER']+'/{}_'.format(k)+datetime.datetime.strftime(ct, basename)+\
-                            '_qpeprev', qpe)
+                np.save(f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_xprev", X)
 
                 if (it == 0) or (k not in qpe_prev.keys()):
                     qpe_prev[k] = qpe

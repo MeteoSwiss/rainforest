@@ -14,7 +14,7 @@ from pathlib import Path
 import argparse
 
 # Local imports
-from rainforest.qpe.qpe_real_time import QPEProcessor
+from rainforest.qpe.qpe_rt_daemon import QPEProcessor_RT_daemon
 from rainforest.ml.rfdefinitions import read_rf
 
 # Suppress certain warnings
@@ -23,7 +23,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run QPE model predictions with optional config and model paths."
+        description="Run real-time QPE model predictions with optional config and model paths in a daemon (continuous) mode"
     )
 
     parser.add_argument(
@@ -92,5 +92,5 @@ def main():
     if not os.path.exists(args.outputfolder):
         os.makedirs(args.outputfolder)
 
-    qpe = QPEProcessor(args.config, args.models, args.verbose)
+    qpe = QPEProcessor_RT_daemon(args.config, args.models, args.verbose)
     qpe.compute(args.outputfolder)
