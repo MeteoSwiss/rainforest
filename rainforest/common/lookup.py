@@ -76,13 +76,10 @@ from .wgs84_ch1903 import GPSConverter
 from .object_storage import ObjectStorage
 ObjStorage = ObjectStorage()
 
-from .constants import data_folder
 from .constants import metadata_folder
 from .constants import lut_folder
 from .constants import lut_boscacci_folder
 from .constants import cosmo_coords_folder
-from .constants import radar_samples_folder
-from .constants import rfmodels_folder
 
 def get_lookup(lookup_type, radar = None):
     """Read a lookup table from the /data/lookup_data folder
@@ -545,7 +542,7 @@ def calc_lookup(lookup_type, radar = None):
         converts them to pickle to be consistent with the other luts'''
         for r in radar:
             lut_name =  Path(lut_folder, 'lut_' + lookup_type+'{:s}.p'.format(r))
-            lut_boscacci = Path(lut_boscacci, 'lut_PL{:s}.csv'.format(r))
+            lut_boscacci = Path(lut_boscacci_folder, 'lut_PL{:s}.csv'.format(r))
             lut_boscacci = ObjStorage.check_file(lut_boscacci)
             lut = np.array(pd.read_csv(str(lut_boscacci)))
 

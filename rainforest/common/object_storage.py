@@ -4,6 +4,13 @@ import readline
 import glob
 from pathlib import Path
 import os
+from botocore.config import Config
+import socket
+
+# These two env variables need to be defined to avoid MissingContentLength error
+os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
+os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
+
 
 ###############
 # S3 ACCESS
@@ -17,21 +24,29 @@ class ObjectStorage(object):
         Creates an ObjectStorage instance
         """
         self.aws_defined = True
-        if aws_key == None:
+        if aws_key is None:
             if 'AWS_KEY' in os.environ:
                 aws_key = os.environ['AWS_KEY']
             else:
                 print('No AWS_KEY environment variable was found, you will not be able to download/upload additional data from the cloud!"')
                 self.aws_defined = False
         
+        hostname = socket.gethostname()
+        if "zuerh" in hostname or "lomrh" in hostname:
+            verify = "/etc/ssl/certs/ca-bundle.crt"
+        elif "zueub" in hostname or "lomub" in hostname:
+            verify = "/etc/ssl/certs/ca-certificates.crt"
+        else:
+            verify = None
+                
         if self.aws_defined:
             self.linode_obj_config = {
             "aws_access_key_id": AWS_ACCESS_KEY_ID,
             "endpoint_url": ENDPOINT_URL,
-            'aws_secret_access_key': aws_key}
+            'aws_secret_access_key': aws_key,
+            'config': Config(s3={'use_expect_header': False})}
+            self.client = boto3.client("s3", **self.linode_obj_config, verify=verify)
 
-            self.client = boto3.client("s3", **self.linode_obj_config)
-        
     def check_file(self, filename):
         """
         Checks if a file exists and if not tries to download it from the cloud
@@ -130,13 +145,12 @@ class ObjectStorage(object):
             Name of the bucket where to upload the file
 
         """
-
-
         key = os.path.basename(filename)
         self.client.upload_file(
                 Bucket=bucket,
                 Key=key,
-                Filename=filename)
+                Filename=filename,
+                Config=boto3.s3.transfer.TransferConfig(use_threads=False))
 
     def rsync_cloud(self, rainforest_data_folder = None, bucket = 'rainforest', overwrite = False):
         """

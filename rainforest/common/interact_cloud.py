@@ -62,4 +62,4 @@ def main():
         print(listfiles)
     elif options.action == 'rsync':
         logging.info('Rsync of local files with bucket {:s}'.format(options.bucket))
-        objstorage.rsync_cloud(bucket = bucket)
+        objstorage.rsync_cloud(bucket = options.bucket)

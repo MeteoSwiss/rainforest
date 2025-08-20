@@ -261,12 +261,12 @@ class QPEProcessor(object):
             self.logger.error("Failed to retrieve hzt data")
             self.logger.error(f"Error is {err}")
 
-    def save_output(self, qpe, t, filepath):
+    def save_output(self, qpe, tstamp, filepath):
         """Saves output as defined in config file
 
         Args:
             qpe (array): Precipitation estimates on grid
-            t (datetime object): timestep of QPE
+            tstamp (datetime object): timestep of QPE
             filepath (str): Destination where file is saved
         """
         # Output in binary data and .gif format
@@ -296,7 +296,7 @@ class QPEProcessor(object):
                     self.logger.error(
                         "Invalid file format with data format float, using ODIM HDF5 output instead"
                     )
-                grid = qpe_to_chgrid(qpe, t, missing_files=self.missing_files)
+                grid = qpe_to_chgrid(qpe, tstamp, missing_files=self.missing_files)
                 filepath += ".h5"
                 self.logger.info(f"Writing file {filepath}")
                 write_odim_grid_h5(
@@ -383,7 +383,6 @@ class QPEProcessor(object):
         for i, ct in enumerate(timeserie):  # Loop on timesteps
             self.logger.info("====")
             self.logger.info(f"Processing time {ct}")
-
             tstr = datetime.datetime.strftime(ct, basename)
 
             # Get lead time file in RT mode

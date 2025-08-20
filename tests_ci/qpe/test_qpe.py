@@ -20,8 +20,8 @@ def test_qpe():
     names = {}
     names['RFO'] = 'RFO'
 
-    t0 = datetime.datetime(2022,9,28,5,10)
-    t1 = datetime.datetime(2022,9,28,5,10)
+    t0 = datetime.datetime(2022,9,28,5,10).replace(tzinfo=datetime.timezone.utc)
+    t1 = datetime.datetime(2022,9,28,5,10).replace(tzinfo=datetime.timezone.utc)
     tstr = '%y%j%H%M'
 
     for model in filename.keys():
