@@ -1,0 +1,16 @@
+# Docs + dependencies
+sphinx<7.2
+pandoc
+ipython
+myst-nb
+sphinx_rtd_theme
+sphinx-gallery
+sphinx-design
+sphinx-copybutton
+nbsphinx
+pre-commit
+xlrd
+pooch
+versioneer
+ablog
+
