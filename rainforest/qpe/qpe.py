@@ -161,17 +161,17 @@ class QPEProcessor(object):
                     )
                 else:
                     radfiles = retrieve_prod(
-                        self.config["TMP_FOLDER"],
                         t0,
                         t1,
                         product_name="ML" + rad,
+                        folder_out=self.config["TMP_FOLDER"],
                         sweeps=self.config["SWEEPS"],
                     )
                     statfiles = retrieve_prod(
-                        self.config["TMP_FOLDER"],
                         t0,
                         t1,
                         product_name="ST" + rad,
+                        folder_out=self.config["TMP_FOLDER"],
                         pattern="ST*.xml",
                     )
 
@@ -444,7 +444,7 @@ class QPEProcessor(object):
                             self.logger.debug("Saving temporary HZT data to cache")
 
                             np.save(
-                                f"{self.config['TMP_FOLDER']}/{k}_hzt_cached",
+                                f"{self.config['TMP_FOLDER']}/hzt_cached",
                                 np.ma.filled(hzt_cosmo_fields[ct], np.nan),
                             )
 
@@ -454,7 +454,7 @@ class QPEProcessor(object):
                                 f"HZT temporal interpolation failed with error {err}, retrieving latest valid value from cache"
                             )
                             hzt_val = np.load(
-                                f"{self.config['TMP_FOLDER']}/{k}_hzt_cached"
+                                f"{self.config['TMP_FOLDER']}/hzt_cached"
                             )
                             hzt_val = np.ma.masked_invalid(hzt_val)
                             hzt_cosmo_fields = {ct: hzt_val}
