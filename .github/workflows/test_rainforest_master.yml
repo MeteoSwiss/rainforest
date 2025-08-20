@@ -31,8 +31,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: dev
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}

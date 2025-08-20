@@ -20,23 +20,17 @@ jobs:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v2
-
-      # Create environment using micromamba
-      - name: Install Conda environment with Micromamba
-        uses: mamba-org/setup-micromamba@v1
+      - uses: actions/setup-python@v2
         with:
-          environment-file: docs/environment.yml
-          environment-name: rainforest-docs
-          cache-downloads: true
-
-      - name: Fetch all history for all tags and branches
-        run: |
-           git fetch --prune --unshallow
-
+          python-version: ${{ matrix.python-version }}
       - name: Install rainforest
+        if: matrix.os != 'macos-latest'
+        working-directory: ${{github.workspace}}
         run: |
-          pip install -e .
-
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r test_requirements.txt
+          pip install .
       # Build the website
       - name: Build the site
         run: |
