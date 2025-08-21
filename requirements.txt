@@ -12,7 +12,7 @@ pyart_mch
 pyarrow
 pandas
 pyshp
-pyspark
+pyspark==3.3.4
 pysteps
 python_dateutil
 pytz
