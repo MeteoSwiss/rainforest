@@ -99,7 +99,7 @@ def main():
         dest="modelpath",
         type=str,
         default=None,
-        help="Specify where the models are stored if not in /ml/rf_models/",
+        help="Specify where the models are stored if not in $RAINFOREST_DATAPATH/rf_models/",
         metavar="MODELPATHS",
     )
 

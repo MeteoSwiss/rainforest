@@ -238,7 +238,6 @@ SCALE_CPC_OLD = np.array([0,0.000000e+00,3.526497e-02,7.177341e-02,1.095694e-01,
 ###############
 # Graphics
 ###############
-
 path_shp = ObjStorage.check_file(str(Path(metadata_folder,'swiss_border_shp', 'Border_CH.shp')))
 BORDER_SHP = shapefile.Reader(str(path_shp))
 

@@ -264,7 +264,7 @@ def read_rf(rf_name='', filepath='', mlflow_runid=None):
     ----------
     rf_name : str
         Name of the randomForest model, it must be stored in the folder
-        /ml/rf_models and computed with the rf:RFTraining.fit_model function
+        $RAINFOREST_DATAPATH/rf_models and computed with the rf:RFTraining.fit_model function
 
     filepath: str
         Path to the model files, if not in default folder

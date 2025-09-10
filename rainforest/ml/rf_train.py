@@ -19,13 +19,11 @@ sys.path.append(script_path)
 from optparse import OptionParser
 
 # Local imports
-from rainforest.ml.rf import RFTraining
+from rainforest.ml.trainer import RFTraining
 from rainforest.common import constants
 
 def main():
     parser = OptionParser()
-
-
     parser.add_option("-o", "--outputfolder", dest = "outputfolder", type = str,
                       default = None,
                       help="Path of the output folder, default is the ml/rf_models folder in the current library",
@@ -86,7 +84,6 @@ def main():
                        " or 'all' (log metrics and model)." +
                        " To log to a remote ML server, the environment variable MLFLOW_TRACKING_URI needs to be set.")
 
-    
     parser.add_option("-C", "--cv", 
                       dest="cv", 
                       default=0,
@@ -97,12 +94,12 @@ def main():
     (options, args) = parser.parse_args()
 
 
-    if options.start != None:
+    if options.start is not None:
         options.start = datetime.datetime.strptime(options.start, '%Y%m%d%H%M')
-    if options.end != None:
+    if options.end is not None:
         options.end = datetime.datetime.strptime(options.end, '%Y%m%d%H%M')
 
-    if options.outputfolder == None:
+    if options.outputfolder is None:
         options.outputfolder = str(Path(script_path, 'rf_models' ))
 
     if not os.path.exists(options.outputfolder):
@@ -112,7 +109,7 @@ def main():
 
     logging.info('Output folder will be {:s}'.format(options.outputfolder))
 
-    if options.inputfolder == None:
+    if options.inputfolder is None:
         options.inputfolder = str(Path(options.dbfolder, 'rf_input_data'))
 
     logging.info('Folder with RF input data will be {:s}'.format(options.inputfolder))
@@ -120,7 +117,7 @@ def main():
     dic_models = {}
 
     only_regenerate = False # Whether or not to only generate new input data (no training)
-    if options.rfmodels == None:
+    if options.rfmodels is None:
         only_regenerate = True
     else:
         if 'default' in options.rfmodels:
@@ -160,7 +157,7 @@ def main():
         logging.info('No model was given, only the input parquet files will be regenerated')
 
 
-    if options.config == None:
+    if options.config is None:
         default_config_path = str(Path(script_path, 'default_config.yml'))
         options.config = default_config_path
 

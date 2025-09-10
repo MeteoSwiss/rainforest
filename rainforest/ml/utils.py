@@ -8,6 +8,7 @@ Utility functions for the ML submodule
 import pandas as pd
 import numpy as np
 import logging
+import uuid
 import datetime
 
 # Local imports
@@ -152,3 +153,39 @@ def split_years(timestamps, years=[2016,2017,2018,2019,2020,2021]):
         split_idx[np.where(tstamps_years == year)] = year
     
     return tstamps_years
+
+
+
+def time_station_aggregation(df, aggregation_min, time_res_min=None):
+    """
+    Creates the aggregation array for every station for a period of time
+    
+    Parameters
+    ----------
+    df : dataframe
+        dataframe that contains the STATION and TIMESTAMP columns
+    aggregation_min: int
+        aggregation time to use in minutes
+        time_res_min: int 
+        time in min between two consecutive timestamps, if not provided will be found from the data
+    Returns
+    ---------
+    agg : numpy str array
+        the aggregation array which contains values such as ABO1619866800
+        (station followed by aggregated UNIX timestamp)
+    """
+    if not time_res_min:
+        unique_tstamps = df["TIMESTAMP"].unique()
+        # Get reference temporal resolution in minutes
+        time_res_min = (unique_tstamps[1] - unique_tstamps[0]) // 60
+    agg = np.array(df['STATION'] + 
+                   ((df['TIMESTAMP'] - time_res_min * 60 ) - 
+                    ((df['TIMESTAMP'] - time_res_min * 60) % (aggregation_min * 60)) 
+                    + (aggregation_min * 60)).astype(str)).astype(str)
+    return agg
+    
+    
+def make_run_id():
+    date_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    short_uid = uuid.uuid4().hex[:6]   # short unique suffix
+    return f"{date_str}_{short_uid}"

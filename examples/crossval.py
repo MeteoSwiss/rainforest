@@ -4,7 +4,7 @@
 Performs cross-validation of 3 RF models, and CPC and RZC products with
 reference to rain gauges
 """
-from rainforest.ml.rf import RFTraining
+from rainforest.ml.trainer import RFTraining
 
 
 rf = RFTraining('/store/msrad/radar/radar_database_v2/')

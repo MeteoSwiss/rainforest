@@ -65,6 +65,7 @@ class QPEProcessor(object):
             keys in this dictionary are used to store outputs in separate
             folders whereas the values must be valid RF regressor instances
             as stored in the rf_models subfolder
+        
         rt : bool
             Whether or not to run the model in real-time mode
         """
@@ -329,6 +330,7 @@ class QPEProcessor(object):
         timestep=5,
         basename="RFO%y%j%H%MVH",
         test_mode=False,
+        use_disag=True
     ):
         """
         Computes QPE values for a given time range and stores them in a
@@ -354,6 +356,10 @@ class QPEProcessor(object):
         test_mode : bool
             Is used only in github actions CI with special data for unit tests, should always be set to
             false
+        use_disag: bool
+            Whether or not to perform QPE disaggregation with R-ZH as proxy
+            If you use a 5-min trained RF model, set it to False.
+            Default is True.
 
         """
 
@@ -716,21 +722,22 @@ class QPEProcessor(object):
                 if self.config["SAVE_NON_POSTPROCESSED_DATA"]:
                     qpe_no_temp = qpe.copy()
 
-                """Temporal disaggregation; Rescale qpe through rproxy"""
-                idx_zh = np.where(np.array(model.variables) == "zh_VISIB")[0][0]
+                if use_disag:
+                    """Temporal disaggregation; Rescale qpe through rproxy"""
+                    idx_zh = np.where(np.array(model.variables) == "zh_VISIB")[0][0]
 
-                rproxy = (X[:, idx_zh] / constants.A_QPE) ** (1 / constants.B_QPE)
-                rproxy[np.isnan(rproxy)] = 0
+                    rproxy = (X[:, idx_zh] / constants.A_QPE) ** (1 / constants.B_QPE)
+                    rproxy[np.isnan(rproxy)] = 0
 
-                rproxy_mean = (Xcomb[:, idx_zh] / constants.A_QPE) ** (
-                    1 / constants.B_QPE
-                )
-                rproxy_mean[np.isnan(rproxy_mean)] = 0
+                    rproxy_mean = (Xcomb[:, idx_zh] / constants.A_QPE) ** (
+                        1 / constants.B_QPE
+                    )
+                    rproxy_mean[np.isnan(rproxy_mean)] = 0
 
-                disag = rproxy / rproxy_mean
-                disag = np.reshape(disag, (NBINS_X, NBINS_Y))
-                disag[np.isnan(disag)] = 0
-                qpe = qpe * disag
+                    disag = rproxy / rproxy_mean
+                    disag = np.reshape(disag, (NBINS_X, NBINS_Y))
+                    disag[np.isnan(disag)] = 0
+                    qpe = qpe * disag
 
                 if self.config["SAVE_NON_POSTPROCESSED_DATA"]:
                     qpe_no_pp = qpe.copy()

@@ -189,7 +189,7 @@ def read_cart(cart_file):
          odim_dummy = read_odim_grid_h5(cart_file, undetect=np.nan, nodata=np.nan)
          data = odim_dummy.fields[list(odim_dummy.fields.keys())[0]]['data']
          if len(np.shape(data)) == 3:
-             data = np.flipud(np.squeeze(data))
+             data = np.squeeze(data)
     elif 'RFQ' in cart_file:
         # Get from filesize if it is DN or float
          size = os.path.getsize(cart_file)
@@ -208,7 +208,6 @@ def read_cart(cart_file):
         data = read_cartesian_metranet(cart_file, physic_value = True)
         data = list(data.fields.values())[0]['data'].data.copy()
         data[data < constants.MIN_RZC_VALID] = 0
-        data = np.flipud(np.squeeze(data))
     return data
 
 def read_NWP_HZT_cart(cart_file):

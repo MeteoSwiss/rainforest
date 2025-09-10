@@ -6,8 +6,7 @@ Set of functions to display QPE precipitation data and verification scores
 """
 # Global imports
 import matplotlib as mpl
-mpl.use('Agg')
-from matplotlib.colors import Normalize
+from matplotlib.colors import Normalize, ListedColormap, BoundaryNorm
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import OrderedDict
@@ -80,6 +79,39 @@ class QPE_cmap( mpl.colors.LinearSegmentedColormap):
              
         mpl.colors.LinearSegmentedColormap.__init__(self, 'qpe', cdict, 256)
 
+def meteoswiss_cmap():
+    c={}
+    c[  0]=[255, 255, 255, 1]
+    c[  1]=[156, 126, 148, 1]
+    c[  2]=[100,   0, 100, 1]
+    c[  3]=[175,   0, 175, 1]
+    c[  4]=[ 50,  50, 200, 1]
+    c[  5]=[  0, 100, 255, 1]
+    c[  6]=[  0, 150, 150, 1]
+    c[  7]=[  0, 200,  50, 1]
+    c[  8]=[100, 255,   0, 1]
+    c[  9]=[150, 255,   0, 1]
+    c[ 10]=[200, 255,  50, 1]
+    c[ 11]=[255, 255,   0, 1]
+    c[ 12]=[255, 200,   0, 1]
+    c[ 13]=[255, 160,   0, 1]
+    c[ 14]=[255, 125,   0, 1]
+    c[ 15]=[225,  25,   0, 1]
+    c[ 16]=[192,   0,   0, 1]
+    c[ 17]=[159,   0,   0, 1]
+    c[ 18]=[246, 246, 246, 1]
+
+    # your break values
+    bounds = [0., 0.25, 0.4, 0.63, 1., 1.6, 2.5, 4., 6.3, 10., 16., 25.,
+            40., 63., 100., 160., 250.]
+
+    # build the colormap
+    colors = np.array([c[i] for i in range(len(bounds))], dtype=float)
+    colors[:, :3] /= 255.0  # normalize RGB to 0-1
+    cmap = ListedColormap(colors[:-1])  # last color reserved for over-range
+    norm = BoundaryNorm(bounds, cmap.N)
+    return cmap, norm
+
 def qpe_plot(data, subplots = None, figsize = None,
              vmin = 0.04, vmax = 120, transition = 10, ch_border = True,
              xlim = None, ylim = None, cbar_orientation = 'horizontal',
@@ -135,28 +167,29 @@ def qpe_plot(data, subplots = None, figsize = None,
 
     Returns
     -------
-    Nothing
+    fig, ax, the figure and axis handlers
     """
+    #TODO: currently display of colormap ticks not working properly
     
     cmap_qpe = QPE_cmap()
     cmap_qpe.set_under(color = 'w')
     
-    if type(data) != list:
+    if type(data) is not list:
         data = [data]
         
     norm = MidpointNormalize(vmin, vmax, transition)
     
     n = len(data)
-    if subplots == None:
+    if not subplots:
         subplots = (1,n)
     
-    if np.any(figsize == None):
+    if np.any(figsize is None):
         figsize = (4 * subplots[1], 3 * subplots[0]+1)
         
     fig,ax = plt.subplots(subplots[0], subplots[1], sharex = True,
                           sharey = True, figsize = figsize)
     
-    if type(ax) == np.ndarray:
+    if type(ax) is np.ndarray:
         ax = ax.ravel()
     else:
         ax = [ax]
@@ -178,11 +211,11 @@ def qpe_plot(data, subplots = None, figsize = None,
                 x = [i[0]/1000. for i in shape.shape.points[:]]
                 y = [i[1]/1000. for i in shape.shape.points[:]]
                 ax[i].plot(x,y,'k',linewidth=1.)
-    if xlim != None:
+    if xlim is not None:
         plt.xlim(xlim)
     else:
         plt.xlim([400,900])
-    if ylim != None:
+    if ylim is not None:
         plt.ylim(ylim)
     else:
         plt.ylim([0,350])
@@ -195,16 +228,15 @@ def qpe_plot(data, subplots = None, figsize = None,
         fig.subplots_adjust(bottom = 0.2)
         cbar_ax = fig.add_axes([0.18, 0.15, 0.7, 0.03])
         cbar=plt.colorbar(m,format='%.2f',orientation='horizontal', cax=cbar_ax,
-                          norm = norm, extend = 'max')
+                          extend = 'max')
         cbar.ax.set_xticklabels(cbar.ax.get_xticklabels(),
                                 rotation='vertical')
     else:
         fig.subplots_adjust(right = 0.8)
         cbar_ax = fig.add_axes([0.85, 0.2, 0.04, 0.6])
         cbar=plt.colorbar(m,format='%.2f',orientation='vertical', cax=cbar_ax,
-                          norm = norm, extend = 'max')
+                          extend = 'max')
 
-        
     if vmax <= 50:
         ticks = np.array([vmin,5,10,15,20,25,30,35,40,45,50, 
                           transition, vmax])
@@ -213,10 +245,124 @@ def qpe_plot(data, subplots = None, figsize = None,
                           transition, vmax])
         
     ticks = ticks[ticks < vmax]
-    cbar.set_ticks(ticks)
+    if cbar_orientation == "horizontal":
+        cbar.ax.set_xticks(ticks)
+        cbar.ax.set_xticklabels(ticks)
+    else:
+        cbar.ax.set_yticks(ticks)
+        cbar.ax.set_yticklabels(ticks)        
     cbar.set_label("Rainfall intensity [mm/hr]")
     return fig, ax
+    
+def qpe_plot_mch(data, subplots = None, figsize = None,
+             ch_border = True, xlim = None, ylim = None, cbar_orientation = 'horizontal',
+             **kwargs):
+    
+    """Plots one or multiple QPE realizations using the default MCH color map
+
+    If multiple QPE realizations are given, they will be displayed as subplots
+    
+    Parameters
+    ----------
+    data : list of numpy arrays or numpy array
+        the set of QPE realizations to display
         
+    subplots: 2-element tuple (optional)
+        Tuple indicating the number of subplots in each direction,
+        the product of its elements must be equal to the number of QPE realizations
+        If not provided, the default will be (1,n) where n is the number of 
+        realizations
+    
+    figsize: 2-element tuple (optional)
+        Tuple indicating the size of the figure in inches in both directions 
+        (w,h)
+    
+    ch_border: bool (optiona)
+        Whether to overlay the shapefile of the Swiss borders
+    
+    xlim: 2 element tuple (optional)
+        limits of the plots in the west-east direction (in Swiss coordinates)
+        
+    ylim: 2 element tuple (optional)
+        limits of the plots in the south-north direction (in Swiss coordinates)
+    
+    cbar_orientation : str (optional)
+        colorbar orientation, either 'horizontal' or 'vertical'
+        
+    **kwargs:
+        All additional arguments that can be passed to imshow
+
+    Returns
+    -------
+    fig, ax, the figure and axis handlers
+    """
+    
+    
+    if type(data) is not list:
+        data = [data]
+        
+    cmap, norm = meteoswiss_cmap()
+    
+    n = len(data)
+    if not subplots:
+        subplots = (1,n)
+    
+    if np.any(figsize is None):
+        figsize = (4 * subplots[1], 3 * subplots[0]+1)
+        
+    fig,ax = plt.subplots(subplots[0], subplots[1], sharex = True,
+                          sharey = True, figsize = figsize)
+    
+    if type(ax) is np.ndarray:
+        ax = ax.ravel()
+    else:
+        ax = [ax]
+    
+    if len(ax) < n:
+        raise ValueError('The total number of subplots is smaller than the number of QPE models to plot!')
+        
+    x = 0.5 * (constants.X_QPE[1:] + constants.X_QPE[0:-1])
+    y = 0.5 * (constants.Y_QPE[1:] + constants.Y_QPE[0:-1])
+    extent = [np.min(y),np.max(y),
+              np.min(x),np.max(x)]
+
+    for i,dd in enumerate(data):
+        m = ax[i].imshow(dd, extent = extent,
+              cmap = cmap,  norm = norm, **kwargs)
+        
+        if ch_border:
+            for shape in constants.BORDER_SHP.shapeRecords():
+                x = [i[0]/1000. for i in shape.shape.points[:]]
+                y = [i[1]/1000. for i in shape.shape.points[:]]
+                ax[i].plot(x,y,'k',linewidth=1.)
+    if xlim is not None:
+        plt.xlim(xlim)
+    else:
+        plt.xlim([400,900])
+    if ylim is not None:
+        plt.ylim(ylim)
+    else:
+        plt.ylim([0,350])
+        
+        
+    fig.subplots_adjust(wspace=0.1, hspace=0.1)
+    if cbar_orientation == 'horizontal':
+        fig.subplots_adjust(bottom = 0.2)
+        cbar_ax = fig.add_axes([0.18, 0.15, 0.7, 0.03])
+        cbar=plt.colorbar(m,format='%.2f',orientation='horizontal', cax=cbar_ax,
+                          boundaries=norm.boundaries, ticks=norm.boundaries, extend = 'max')
+        cbar.ax.set_xticklabels(cbar.ax.get_xticklabels(),
+                                rotation='vertical')
+    else:
+        fig.subplots_adjust(right = 0.8)
+        cbar_ax = fig.add_axes([0.85, 0.2, 0.04, 0.6])
+        cbar=plt.colorbar(m,format='%.2f',orientation='vertical', cax=cbar_ax,
+                          boundaries=norm.boundaries, ticks=norm.boundaries, extend = 'max')
+
+
+    cbar.set_label("Rainfall intensity [mm/hr]")
+    return fig, ax
+
 def score_plot(scores, title_prefix = '', figsize = (10,5)):
     """Plots a series of QPE verification scores in the form of stacked
     barplots, for different ranges of precipitation
