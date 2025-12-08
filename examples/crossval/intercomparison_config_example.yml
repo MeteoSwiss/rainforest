@@ -1,0 +1,36 @@
+RF_hpol:
+    FILTERING: # conditions to remove some observations
+        STA_TO_REMOVE : ['TIT','GSB','GRH','PIL','SAE','AUB']
+        CONSTRAINT_MIN_ZH : [0.5,20] # min 20 dBZ if R > 0.5 mm/h
+        CONSTRAINT_MAX_ZH : [0,20] # max 20 dBZ if R = 0 mm/h
+    RANDOMFORESTREGRESSOR: # parameters to sklearn's class
+        max_depth : 20
+        n_estimators : 10
+    VERT_AGG:
+        BETA : -0.5 # weighting factor to use in the exponential weighting
+        VISIB_WEIGHTING : 1 # whether to weigh or not observations by their visib
+    BIAS_CORR : 'raw' # type of bias correction 'raw', 'cdf' or 'spline'
+RF_vpol:
+    FILTERING: # conditions to remove some observations
+        STA_TO_REMOVE : ['TIT','GSB','GRH','PIL','SAE','AUB']
+        CONSTRAINT_MIN_ZH : [0.5,20] # min 20 dBZ if R > 0.5 mm/h
+        CONSTRAINT_MAX_ZH : [0,20] # max 20 dBZ if R = 0 mm/h
+    RANDOMFORESTREGRESSOR: # parameters to sklearn's class
+        max_depth : 20
+        n_estimators : 10
+    VERT_AGG:
+        BETA : -0.5 # weighting factor to use in the exponential weighting
+        VISIB_WEIGHTING : 1 # whether to weigh or not observations by their visib
+    BIAS_CORR : 'raw' # type of bias correction 'raw', 'cdf' or 'spline'
+RF_dualpol:
+    FILTERING: # conditions to remove some observations
+        STA_TO_REMOVE : ['TIT','GSB','GRH','PIL','SAE','AUB']
+        CONSTRAINT_MIN_ZH : [0.5,20] # min 20 dBZ if R > 0.5 mm/h
+        CONSTRAINT_MAX_ZH : [0,20] # max 20 dBZ if R = 0 mm/h
+    RANDOMFORESTREGRESSOR: # parameters to sklearn's class
+        max_depth : 30
+        n_estimators : 10
+    VERT_AGG:
+        BETA : -0.5 # weighting factor to use in the exponential weighting
+        VISIB_WEIGHTING : 1 # whether to weigh or not observations by their visib
+    BIAS_CORR : 'spline' # type of bias correction 'raw', 'cdf' or 'spline'
