@@ -297,10 +297,17 @@ class QPEProcessor(object):
                     self.logger.error(
                         "Invalid file format with data format float, using ODIM HDF5 output instead"
                     )
+
+                # If used_hzt_files is available, pass it to qpe_to_chgrid
+                if hasattr(self, "used_hzt_files"):
+                    used_hzt_files = self.used_hzt_files
+                else:
+                    used_hzt_files = None
+
                 grid = qpe_to_chgrid(
                     qpe,
                     tstamp,
-                    used_hzt_files=self.used_hzt_files,
+                    used_hzt_files=used_hzt_files,
                     missing_files=self.missing_files,
                 )
                 filepath += ".h5"
@@ -470,8 +477,6 @@ class QPEProcessor(object):
 
                             hzt_val = np.ma.masked_invalid(hzt_val)
                             hzt_cosmo_fields = {ct: hzt_val}
-
-                        self.used_hzt_files = used_hzt_files
 
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
