@@ -531,7 +531,8 @@ def HZT_hourly_to_5min(time,filelist,tsteps_min=5):
             deltaHZT_temp += deltaHZT
         hzt[tstamp_hzt0+dt*idx] = hzt[tstamp_hzt0]+deltaHZT_temp
 
-    return hzt
+    files_used = f"{filelist[tstamp_hzt0]},{filelist[tstamp_hzt1]}"
+    return hzt, files_used
 
 def HZT_cartesian_to_polar(hzt, radar, sweeps=range(0, 20)):
     """
