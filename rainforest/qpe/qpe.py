@@ -77,7 +77,7 @@ class QPEProcessor(object):
             self.logger.warning(
                 "Using default config as no valid config file was provided"
             )
-            config_file = os.path.join(dir_path, "/default_config.yml")
+            config_file = os.path.join(dir_path, "default_config.yml")
             self.logger.warning(f"Error is {err}")
 
         config = envyaml(config_file)
@@ -297,7 +297,12 @@ class QPEProcessor(object):
                     self.logger.error(
                         "Invalid file format with data format float, using ODIM HDF5 output instead"
                     )
-                grid = qpe_to_chgrid(qpe, tstamp, missing_files=self.missing_files)
+                grid = qpe_to_chgrid(
+                    qpe,
+                    tstamp,
+                    used_hzt_files=self.used_hzt_files,
+                    missing_files=self.missing_files,
+                )
                 filepath += ".h5"
                 self.logger.info(f"Writing file {filepath}")
                 write_odim_grid_h5(
@@ -440,7 +445,7 @@ class QPEProcessor(object):
                 if "ISO0_HEIGHT" in self.cosmo_var:
                     if ct not in hzt_cosmo_fields:  # check if not none
                         try:
-                            hzt_cosmo_fields = HZT_hourly_to_5min(
+                            hzt_cosmo_fields, used_hzt_files = HZT_hourly_to_5min(
                                 ct, self.files_hzt, tsteps_min=timestep
                             )
                             self.logger.info(
@@ -448,9 +453,10 @@ class QPEProcessor(object):
                             )
                             self.logger.debug("Saving temporary HZT data to cache")
 
-                            np.save(
-                                f"{self.config['TMP_FOLDER']}/hzt_cached",
-                                np.ma.filled(hzt_cosmo_fields[ct], np.nan),
+                            np.savez(
+                                f"{self.config['TMP_FOLDER']}/hzt_cached.npz",
+                                data=np.ma.filled(hzt_cosmo_fields[ct], np.nan),
+                                used_hzt_files=used_hzt_files,
                             )
 
                         except Exception as err:
@@ -458,9 +464,14 @@ class QPEProcessor(object):
                             self.logger.warning(
                                 f"HZT temporal interpolation failed with error {err}, retrieving latest valid value from cache"
                             )
-                            hzt_val = np.load(f"{self.config['TMP_FOLDER']}/hzt_cached")
+                            data = np.load(f"{self.config['TMP_FOLDER']}/hzt_cached")
+                            hzt_val = data["data"]
+                            used_hzt_files = data["used_hzt_files"]
+
                             hzt_val = np.ma.masked_invalid(hzt_val)
                             hzt_cosmo_fields = {ct: hzt_val}
+
+                        self.used_hzt_files = used_hzt_files
 
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject

@@ -149,7 +149,7 @@ def features_to_chgrid(features, features_labels, time, missing_files):
     return grid
 
 
-def qpe_to_chgrid(qpe, time, missing_files, precision=2):
+def qpe_to_chgrid(qpe, time, missing_files, used_hzt_files=None, precision=2):
     """
     Creates a pyart grid object from a QPE array
 
@@ -161,6 +161,9 @@ def qpe_to_chgrid(qpe, time, missing_files, precision=2):
         Start time of the scan
     missing_files : dict
         Containing all radars with corresponding timestamps that are missing
+    used_hzt_files : str or None
+        Path to the NWP file used for the QPE estimation. This info
+        is stored in how/MeteoSwiss/user_used_hzt_files, default is None
     precision : int
         Precision to use when storing the QPE data in the grid, default is 2
         (0.01)
@@ -205,6 +208,9 @@ def qpe_to_chgrid(qpe, time, missing_files, precision=2):
     grid.fields["radar_estimated_rain_rate"]["prodname"] = "CHRFO"
     grid.metadata["source"] = b"ORG:215, CTY:644, CMT:MeteoSwiss (Switzerland)"
     grid.metadata["version"] = b"H5rad 2.3"
+    if used_hzt_files:
+        grid.metadata["usr_nwp_file"] = used_hzt_files.encode()
+
     grid.metadata["sw_version"] = get_version()
     # Add missing radar information
     quality = "ADLPW"

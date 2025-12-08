@@ -139,7 +139,7 @@ def main():
 
     args.start = datetime.datetime.strptime(args.start, "%Y%m%d%H%M")
     args.end = datetime.datetime.strptime(args.end, "%Y%m%d%H%M")
-    qpe = QPEProcessor(args.config, args.models, args.verbose, rt=args.rt)
+    qpe = QPEProcessor(args.config, args.models, rt=args.rt, verbose=args.verbose)
     qpe.compute(args.outputfolder, args.start, args.end)
 
 
