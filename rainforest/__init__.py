@@ -1,8 +1,2 @@
-from . import qpe
-from . import common
-from . import database_10min
-from . import database_5min
-from . import ml
-from . import performance
-
-__version__ = common.utils.get_version()
+from .qpe import QPEProcessor as QPEProcessor
+from .qpe_rt_daemon import QPEProcessor_RT_daemon as QPEProcessor_RT_daemon
