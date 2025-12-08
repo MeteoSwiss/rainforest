@@ -8,7 +8,7 @@ The *database* submodule has only a command-line tool to populate (update) the d
 *db_populate*
 -----------------
 
-Updates any of the three tables of the database *gauge*, *radar* and *reference* with new data. 
+Updates any of the three tables of the database *gauge*, *radar* and *reference* with new data.
 
 **db_populate [options]**
 
@@ -36,7 +36,7 @@ Options:
                         '/store/msrad/radar/radar_database/gauge/*.csv.gz',
                         IMPORTANT you have to put this statement into quotes
                         (due to wildcard)
-                        
+
 See ::doc::`db_options` to see how to define the configuration file.
 
 
@@ -46,4 +46,3 @@ See ::doc::`db_options` to see how to define the configuration file.
 .. code-block:: console
 
     db_populate -t "reference" -g "/store/msrad/radar/radar_database/gauge/*.csv.gz" -o "/store/msrad/radar/radar_database/reference/"
-    

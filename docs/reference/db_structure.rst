@@ -20,9 +20,9 @@ All tables share two attributes **STATION** (the identifier of the SwissMetNet/P
    :file: gauge.csv
    :widths: 10, 80, 10
    :header-rows: 1
-   
-   
-.. _reftab:   
+
+
+.. _reftab:
 
 *Reference table*
 -----------------
@@ -30,10 +30,10 @@ All tables share two attributes **STATION** (the identifier of the SwissMetNet/P
    :file: reference.csv
    :widths: 10, 80, 10
    :header-rows: 1
-   
-  
-   
-.. _radtab:   
+
+
+
+.. _radtab:
 
 *Radar table*
 -----------------
@@ -43,5 +43,3 @@ In the radar table if different :doc:`aggregation methods <db_options>` have bee
    :file: radar.csv
    :widths: 10,10, 80, 10
    :header-rows: 1
-   
-   

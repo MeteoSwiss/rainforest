@@ -8,7 +8,7 @@ The *ml* submodule has only a command-line tool to update the input data for the
 *rf_train*
 -----------------
 
-Updates any of the three tables of the database *gauge*, *radar* and *reference* with new data. 
+Updates any of the three tables of the database *gauge*, *radar* and *reference* with new data.
 
 **rf_train [options]**
 
@@ -63,8 +63,8 @@ Options:
                         recomputed from the current database rowsThis takes a
                         bit of time but is needed if you updated the database
                         and want to use the new data in the training
-                        
-                        
+
+
 
 The configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/YAML/>`_, the default file has the following structure:
 
@@ -89,7 +89,7 @@ The parameters are the following
 
     -   **STA_TO_REMOVE** : list of problematic stations to remove
     -   **CONSTRAINT_MIN_ZH** : constraint on minimum reflectivity, the first value if the precip. intensity, the second the minimum value required value of ZH. For example for [0.5,20] all rows where ZH < 20 dBZ if R >= 0.5 mm/h will be removed. This is to reduce the effect of large spatial and temporal offset between radar and gauge.
-    -   **CONSTRAINT_MAX_ZH** : constraint on maximum reflectivity, the first value if the precip. intensity, the second the minimum value required value of ZH. 
+    -   **CONSTRAINT_MAX_ZH** : constraint on maximum reflectivity, the first value if the precip. intensity, the second the minimum value required value of ZH.
 -   **RANDOMFORESTREGRESSOR_PARAMS** : set of parameters for the `sklearn random forest regressor <https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html>`_ . You can add as many as you want, as long as they are valid parameters for this class
 
     -   **max_depth** : max depth of the threes
@@ -99,6 +99,3 @@ The parameters are the following
     -   **BETA** : the parameter used in the exponential weighting :math:`\exp(-\beta \cdot h)`, where *h* is the height of every observation. *BETA* should be negative, since lower observation should have a larger weight.
     -   **VISIB_WEIGHTING** : if set to 1, the observations will also be weighted proportionally to their visibility
 -   **BIAS_CORR** : type of bias-correction to be applied *a-posteriori*. It can be either 'raw' in which case a simple linear regression of prediction vs observation is used, 'cdf' in which a simple linear regression on *sorted* prediction vs *sorted* observation is used and 'spline' which is the same as 'cdf' except that a 1D spline is used instead.
-
-
-

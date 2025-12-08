@@ -452,9 +452,7 @@ class QPEProcessor(object):
                             self.logger.warning(
                                 f"HZT temporal interpolation failed with error {err}, retrieving latest valid value from cache"
                             )
-                            hzt_val = np.load(
-                                f"{self.config['TMP_FOLDER']}/hzt_cached"
-                            )
+                            hzt_val = np.load(f"{self.config['TMP_FOLDER']}/hzt_cached")
                             hzt_val = np.ma.masked_invalid(hzt_val)
                             hzt_cosmo_fields = {ct: hzt_val}
 
@@ -716,7 +714,7 @@ class QPEProcessor(object):
                 if self.config["SAVE_NON_POSTPROCESSED_DATA"]:
                     qpe_no_temp = qpe.copy()
                     qpe_no_pp = qpe.copy()
-                    
+
                 """Part five - Postprocessing"""
                 if self.config["OUTLIER_REMOVAL"]:
                     qpe = outlier_removal(qpe)

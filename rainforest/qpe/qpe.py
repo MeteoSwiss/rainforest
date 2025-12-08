@@ -65,7 +65,7 @@ class QPEProcessor(object):
             keys in this dictionary are used to store outputs in separate
             folders whereas the values must be valid RF regressor instances
             as stored in the rf_models subfolder
-        
+
         rt : bool
             Whether or not to run the model in real-time mode
         """
@@ -330,7 +330,7 @@ class QPEProcessor(object):
         timestep=5,
         basename="RFO%y%j%H%MVH",
         test_mode=False,
-        use_disag=True
+        use_disag=True,
     ):
         """
         Computes QPE values for a given time range and stores them in a
@@ -458,9 +458,7 @@ class QPEProcessor(object):
                             self.logger.warning(
                                 f"HZT temporal interpolation failed with error {err}, retrieving latest valid value from cache"
                             )
-                            hzt_val = np.load(
-                                f"{self.config['TMP_FOLDER']}/hzt_cached"
-                            )
+                            hzt_val = np.load(f"{self.config['TMP_FOLDER']}/hzt_cached")
                             hzt_val = np.ma.masked_invalid(hzt_val)
                             hzt_cosmo_fields = {ct: hzt_val}
 

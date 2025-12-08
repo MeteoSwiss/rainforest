@@ -589,7 +589,6 @@ class QPEProcessor_RT_daemon(object):
                 self.logger.info(f"Processing sweep {sweep}")
 
                 for rad in self.config["RADARS"]:  # Loop on radars, A,D,L,P,W
-
                     # If there is no radar file for the specific radar, continue to next radar
                     if rad not in radobjects.keys():
                         self.logger.info(
@@ -659,7 +658,6 @@ class QPEProcessor_RT_daemon(object):
                         )
 
                         for weight in rf_features_cart.keys():
-
                             beta, visibweighting = weight
 
                             # Compute altitude weighting

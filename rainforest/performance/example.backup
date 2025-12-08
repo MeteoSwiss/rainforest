@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Example to compile a full performance assessment of a precipitation event 
+Example to compile a full performance assessment of a precipitation event
 The performance assessment is based on QPE maps
 
 """

@@ -23,4 +23,4 @@ RF_hpol:
     VERT_AGG:
         BETA : -0.5 # weighting factor to use in the exponential weighting
         VISIB_WEIGHTING : 1 # whether to weigh or not observations by their visib
-    BIAS_CORR : 'spline' # type of bias correction 'raw', 'cdf' or 'spline' 
+    BIAS_CORR : 'spline' # type of bias correction 'raw', 'cdf' or 'spline'

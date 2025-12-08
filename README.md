@@ -16,4 +16,3 @@ Please see the [![Ref doc](https://img.shields.io/badge/docs-users-4088b8.svg)](
 
 Daniel Wolfensberger, Rebecca Gugerli, MeteoSwiss-MDRS - EPFL
 February 2023
-

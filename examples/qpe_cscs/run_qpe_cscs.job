@@ -1,7 +1,7 @@
 #%/bin/bash
 #SBATCH -N 1                # nodes requested
 #SBATCH -c 1                # cores requested
-#SBATCH -t 23:0:00          # time requested in hour:minute:second          
+#SBATCH -t 23:0:00          # time requested in hour:minute:second
 export PATH=/scratch/mch/wolfensb/rainforest_venv/bin/:$PATH
 export RAINFOREST_DATAPATH=/store_new/mch/msrad/radar/rainforest_data/
 START_TIME=202512070800

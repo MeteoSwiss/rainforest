@@ -4,6 +4,7 @@ import os
 import sys
 from datetime import datetime
 
+
 class DailyGzipFileHandler(logging.Handler):
     def __init__(self, base_dir="/srn/las/log/", log_basename="run_rfo_rt_mode"):
         super().__init__()
@@ -60,7 +61,9 @@ def get_qpe_rt_logger(log_dir="/srn/las/log/", verbose=False):
 
     # Create and configure handler
     handler = DailyGzipFileHandler(log_dir)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     handler.setFormatter(formatter)
 
     # Attach handler to the root logger
@@ -70,6 +73,7 @@ def get_qpe_rt_logger(log_dir="/srn/las/log/", verbose=False):
     root_logger.addHandler(handler)
 
     return logger
+
 
 def get_logger(name=None, log_dir=None, verbose=False):
     """
@@ -94,7 +98,7 @@ def get_logger(name=None, log_dir=None, verbose=False):
         else:
             handler = logging.StreamHandler(sys.stdout)
 
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         root_logger.addHandler(handler)
 
     return logger

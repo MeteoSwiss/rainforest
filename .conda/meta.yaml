@@ -5,7 +5,7 @@ package:
 source:
   # Relative path to the parent directory.
   path: ..
-     
+
 requirements:
   build:
     - git
@@ -22,6 +22,6 @@ requirements:
     - scipy
     - pyshp
     - imageio
- 
+
 about:
   home:

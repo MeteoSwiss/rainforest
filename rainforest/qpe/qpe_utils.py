@@ -301,7 +301,6 @@ def disaggregate(
     Rd = np.zeros((R[0].shape))
 
     for i in range(1 + int(T / t)):
-
         pos1 = (y - i / T * V1[1], x - i / T * V1[0])
         R1 = map_coordinates(R[0], pos1, order=1)
 

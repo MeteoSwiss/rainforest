@@ -14,4 +14,3 @@ PERFORMANCE:
   TIMEAGGREGATION: ['10min','60min']
   DOUBLECONDITIONAL: [0.1, 0.6]
 # Paths of compiled dataset
-

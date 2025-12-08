@@ -11,5 +11,5 @@ MVRZC_x,"X component of the motion vectors derived from two consecutive RZC maps
 MVRZC_y,"Y component of the motion vectors derived from two consecutive RZC maps, using optical flow (Lukas-Kanade)",m / s
 MVCPCH_x,"X component of the motion vectors derived from two consecutive CPCH maps, using optical flow (Lukas-Kanade)",m / s
 MVCPC_y,"Y component of the motion vectors derived from two consecutive CPCH maps, using optical flow (Lukas-Kanade)",m / s
-CPC.CV,"CPC cross-validation product (i.e. CPC obtained by leaving out one station), available only every hour and for 
+CPC.CV,"CPC cross-validation product (i.e. CPC obtained by leaving out one station), available only every hour and for
 NX = NY = 0 (location of gauge)",mm /hr

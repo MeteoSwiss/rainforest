@@ -17,18 +17,14 @@ import datetime
 import glob
 import subprocess
 from io import BytesIO
-import netCDF4
-import logging
 import fnmatch
 import re
 from warnings import warn
-from textwrap import dedent
 
-import pandas as pd # function used in retrieve_hzt_prod
-from . import constants 
-from .lookup import get_lookup
-from .utils import round_to_hour
-from . import io_data as io # avoid circular
+import pandas as pd  # function used in retrieve_hzt_prod
+from . import constants
+from . import io_data as io  # avoid circular
+
 
 def _make_timezone_aware(dt, tz=datetime.timezone.utc):
     """
@@ -78,8 +74,8 @@ def retrieve_hzt_prod(folder_out, start_time, end_time, pattern_type="shell"):
     dates = []
     for t in times:
         dates.append(datetime.datetime(year=t.year, month=t.month, day=t.day))
-    if len(times) == 1 and start_time.hour == 23: # handle special case of time 23
-        dates.append(dates[0] + datetime.timedelta(days=1)) # add tomorrow
+    if len(times) == 1 and start_time.hour == 23:  # handle special case of time 23
+        dates.append(dates[0] + datetime.timedelta(days=1))  # add tomorrow
     dates = np.unique(dates)
 
     t0 = _make_timezone_aware(start_time)
@@ -96,7 +92,10 @@ def retrieve_hzt_prod(folder_out, start_time, end_time, pattern_type="shell"):
             # print('*all other start times', start_time)
         if i == len(dates) - 1:
             end_time = datetime.datetime(
-                year=t1.year, month=t1.month, day=t1.day, hour=t1.hour,
+                year=t1.year,
+                month=t1.month,
+                day=t1.day,
+                hour=t1.hour,
             ) + datetime.timedelta(hours=1)
         else:
             end_time = datetime.datetime(year=d.year, month=d.month, day=d.day, hour=23)
@@ -244,8 +243,10 @@ def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type="she
         content_filt = np.array([c for c in content_zip if c.endswith("800")])
         times_filt = np.array(
             [
-                _make_timezone_aware(datetime.datetime.strptime(c[3:12], "%y%j%H%M")
-                + datetime.timedelta(hours=int(c[-2::])))
+                _make_timezone_aware(
+                    datetime.datetime.strptime(c[3:12], "%y%j%H%M")
+                    + datetime.timedelta(hours=int(c[-2::]))
+                )
                 for c in content_filt
             ]
         )
@@ -370,7 +371,7 @@ def retrieve_prod(
             folder_out = os.path.join(folder_out, "CPCH")
         if not os.path.exists(folder_out):
             os.makedirs(folder_out)
-            
+
     # Check if times are aware or naive
     start_time = _make_timezone_aware(start_time)
     end_time = _make_timezone_aware(end_time)
@@ -415,7 +416,7 @@ def retrieve_prod(
             sweeps,
             hdf5,
         )
-        
+
         all_files.extend(files)
     return all_files
 
@@ -502,14 +503,18 @@ def _retrieve_prod_daily(
     pattern_type="shell",
     sweeps=None,
     hdf5=False,
-    ):
+):
     """Retrieve radar product files for a given day, with an option to store them in RAM."""
 
     if hdf5:
         folder_radar = constants.FOLDER_RADAR_HDF5
         product_suffix = "hdf5" if product_name in ("CPCH", "CPC") else ""
     else:
-        folder_radar = constants.FOLDER_RADARH if product_name.startswith("MH") else constants.FOLDER_RADAR
+        folder_radar = (
+            constants.FOLDER_RADARH
+            if product_name.startswith("MH")
+            else constants.FOLDER_RADAR
+        )
         product_suffix = ""
 
     suffix = f"{start_time.year % 100:02d}{start_time.timetuple().tm_yday:03d}"
@@ -536,10 +541,14 @@ def _retrieve_prod_daily(
                 if pattern_type == "regex" and not pattern_re.match(base):
                     continue
                 if pattern_type not in ("shell", "regex"):
-                    raise ValueError('Unknown pattern_type, must be "shell" or "regex".')
+                    raise ValueError(
+                        'Unknown pattern_type, must be "shell" or "regex".'
+                    )
 
             try:
-                dt = datetime.datetime.strptime(name[3:12], "%y%j%H%M").replace(tzinfo=datetime.timezone.utc)
+                dt = datetime.datetime.strptime(name[3:12], "%y%j%H%M").replace(
+                    tzinfo=datetime.timezone.utc
+                )
             except ValueError:
                 continue  # skip files with bad timestamp format
 
@@ -559,7 +568,9 @@ def _retrieve_prod_daily(
             timestamps.append(dt)
 
         if not selected:
-            warn("No file was found corresponding to this format, verify pattern and product_name")
+            warn(
+                "No file was found corresponding to this format, verify pattern and product_name"
+            )
             return []
 
         if not folder_out:
@@ -571,12 +582,17 @@ def _retrieve_prod_daily(
                 for f in os.listdir(folder_out)
                 if os.path.isfile(os.path.join(folder_out, f))
             }
-            files_to_extract = [f for f in selected if os.path.basename(f) not in existing_files]
+            files_to_extract = [
+                f for f in selected if os.path.basename(f) not in existing_files
+            ]
 
             for file_name in files_to_extract:
                 zipp.extract(file_name, path=folder_out)
 
-            return sorted([os.path.join(folder_out, os.path.basename(f)) for f in selected])
+            return sorted(
+                [os.path.join(folder_out, os.path.basename(f)) for f in selected]
+            )
+
 
 def retrieve_CPCCV(time, stations):
     """Retrieves cross-validation CPC data for a set of stations from
@@ -599,31 +615,36 @@ def retrieve_CPCCV(time, stations):
     def _file_times(fname):
         tformat = "%Y%m%d%H00"
         if "sheet." not in fname:
-            fname=fname.replace("sheet", "sheet.") # handle buggy files
+            fname = fname.replace("sheet", "sheet.")  # handle buggy files
         tstart, tend = os.path.basename(fname).split(".")[1].split("_")
         tstart = _make_timezone_aware(datetime.datetime.strptime(tstart, tformat))
         tend = _make_timezone_aware(datetime.datetime.strptime(tend, tformat))
         return tstart, tend
-    
+
     time = _make_timezone_aware(time)
     year = time.year
-    
+
     # Check if monthly or daily files have to be used
-    all_files = sorted(glob.glob(os.path.join(constants.FOLDER_CPCCV_DAILY, "**", "*.xls"),
-                                 recursive=True))
+    all_files = sorted(
+        glob.glob(
+            os.path.join(constants.FOLDER_CPCCV_DAILY, "**", "*.xls"), recursive=True
+        )
+    )
     first_date, _ = _file_times(all_files[0])
-    
+
     if time < first_date:
-        use_monthly = True 
+        use_monthly = True
     else:
         use_monthly = False
-    
+
     if use_monthly:
         folder = constants.FOLDER_CPCCV_MONTHLY
     else:
         folder = os.path.join(constants.FOLDER_CPCCV_DAILY, str(year))
-        
-    files = sorted([f for f in glob.glob(os.path.join(folder,'*.xls')) if 's.xls' not in f])
+
+    files = sorted(
+        [f for f in glob.glob(os.path.join(folder, "*.xls")) if "s.xls" not in f]
+    )
 
     all_tstart = []
     all_tend = []
@@ -633,14 +654,16 @@ def retrieve_CPCCV(time, stations):
         all_tend.append(tend)
     all_tstart = np.array(all_tstart)
     all_tend = np.array(all_tend)
-    
+
     match = np.where((time <= all_tend) & (time >= all_tstart))[0]
 
     if not len(match):
         print("Could not find CPC.CV file for time {:s}".format(time))
-        return (np.zeros((len(stations))) + np.nan,
-                np.zeros((len(stations))) + np.nan,
-                np.zeros((len(stations))) + np.nan)
+        return (
+            np.zeros((len(stations))) + np.nan,
+            np.zeros((len(stations))) + np.nan,
+            np.zeros((len(stations))) + np.nan,
+        )
 
     data = io.read_xls(files[match[0]])
     hour = int(datetime.datetime.strftime(time, "%Y%m%d%H00"))
@@ -650,8 +673,7 @@ def retrieve_CPCCV(time, stations):
     aqc_values = []
 
     for station in stations:
-        sel_row = data.loc[(data["nat.abbr"] == station) &
-                           (data["time.stamp"] == hour)]
+        sel_row = data.loc[(data["nat.abbr"] == station) & (data["time.stamp"] == hour)]
         if sel_row.empty:
             cpc_cv_values.append(np.nan)
             cpc_values.append(np.nan)
@@ -661,7 +683,7 @@ def retrieve_CPCCV(time, stations):
             cpc_cv_values.append(row["CPC.CV"])
             cpc_values.append(row["CPC"])
             aqc_values.append(row["AQC"])
-            
+
     return (
         np.array(cpc_cv_values),
         np.array(cpc_values),

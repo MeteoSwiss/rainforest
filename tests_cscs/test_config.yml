@@ -5,14 +5,14 @@ GAUGE_RETRIEVAL:
     STATIONS : 'all'
     MIN_R_HOURLY : 0.1
     MAX_NB_SLURM_JOBS: 6
-    
+
 REFERENCE_RETRIEVAL:
     PRODUCTS : ['RZC','CPCH','CPC.CV','BZC','MZC','MVRZC','MVCPCH']
     MV_METHOD: 'lucaskanade' # see https://pysteps.readthedocs.io/en/latest/generated/pysteps.motion.interface.get_method.html
     NEIGHBOURS_X : [-1,0,1] # not applied to CPC.CV
     NEIGHBOURS_Y : [-1,0,1] # not applied to CPC.CV
     MAX_NB_SLURM_JOBS: 20
-    
+
 RADAR_RETRIEVAL:
     RADARS: ['A','D']
     RADAR_VARIABLES : ['ZH','ZV','ZH_VISIB','ZV_VISIB','ZDR','KDP','RHOHV','SW','RVEL','AH','ZH_CORR','ZV_CORR','ZDR_CORR','VISIB','NH','NV']

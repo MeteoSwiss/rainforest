@@ -14,8 +14,10 @@ import datetime
 # Local imports
 from ..common.utils import chunks, check_random_state
 
-def vert_aggregation(radar_data, vert_weights, grp_vertical, 
-                  visib_weight = True, visib = None):
+
+def vert_aggregation(
+    radar_data, vert_weights, grp_vertical, visib_weight=True, visib=None
+):
     """
     Performs vertical aggregation of radar observations aloft to the ground
     using a weighted average. Categorical variables such as 'RADAR',
@@ -23,12 +25,12 @@ def vert_aggregation(radar_data, vert_weights, grp_vertical,
     variables will be aggregated, resulting in columns such as RADAR_propA
     giving the weighted proportion of radar observation aloft that were
     obtained with the Albis radar
-    
+
     Parameters
     ----------
     radar_data : Pandas DataFrame
         A Pandas DataFrame containing all required input features aloft as
-        explained in the rf.py module 
+        explained in the rf.py module
     vert_weights : np.array of float
         vertical weights to use for every observation in radar, must have
         the same len as radar_data
@@ -41,40 +43,44 @@ def vert_aggregation(radar_data, vert_weights, grp_vertical,
         when doing the vertical aggregation to the ground
     visib : np array
         visibily of every observation, required only if visib_weight = True
-    """    
-    if visib_weight and not np.any(visib == None):
-        vert_weights = vert_weights * visib / 100.
+    """
+    if visib_weight and not np.any(visib is None):
+        vert_weights = vert_weights * visib / 100.0
     else:
         vert_weights = pd.DataFrame(vert_weights)
-            
-    X =  pd.DataFrame()  # output
+
+    X = pd.DataFrame()  # output
     sum_wvisib = vert_weights.groupby(grp_vertical).sum()
 
     for v in radar_data.columns:
-        if v not in ['RADAR','HYDRO','TCOUNT']:
-            X[v] = (radar_data[v] * vert_weights).groupby(grp_vertical).sum() / sum_wvisib
+        if v not in ["RADAR", "HYDRO", "TCOUNT"]:
+            X[v] = (radar_data[v] * vert_weights).groupby(
+                grp_vertical
+            ).sum() / sum_wvisib
         else:
             # For these variables we aggregate dummy variables
             vals = np.unique(radar_data[v])
             for val in vals:
-                X[v+'_prop_'+str(val)] = (((radar_data[v] == val).astype(int) * vert_weights).
-                        groupby(grp_vertical).sum() / sum_wvisib)
+                X[v + "_prop_" + str(val)] = (
+                    (radar_data[v] == val).astype(int) * vert_weights
+                ).groupby(grp_vertical).sum() / sum_wvisib
     return X
 
-def nesteddictvalues(d):
-  for v in d.values():
-    if isinstance(v, dict):
-      yield from nesteddictvalues(v)
-    else:
-      yield v
-      
 
-def split_event(timestamps, n = 5, threshold_hr = 12, random_state=None):
+def nesteddictvalues(d):
+    for v in d.values():
+        if isinstance(v, dict):
+            yield from nesteddictvalues(v)
+        else:
+            yield v
+
+
+def split_event(timestamps, n=5, threshold_hr=12, random_state=None):
     """
     Splits the dataset into n subsets by separating the observations into
     separate precipitation events and attributing these events randomly
     to the subsets
-    
+
     Parameters
     ----------
     timestamps : int array
@@ -83,28 +89,28 @@ def split_event(timestamps, n = 5, threshold_hr = 12, random_state=None):
         number of subsets to create
     threshold_hr : int
         threshold in hours to distinguish precip events. Two timestamps are
-        considered to belong to a different event if there is a least 
+        considered to belong to a different event if there is a least
         threshold_hr hours of no observations (no rain) between them.
     random_state: None or int
         Reproducibility of event assignment
 
-    
+
     Returns
     ---------
     split_idx : int array
         array containing the subset grouping, with values from 0 to n - 1
-    """  
-    logging.info('Splitting dataset in {:d} parts using different events'.format(n))
+    """
+    logging.info("Splitting dataset in {:d} parts using different events".format(n))
 
-    tstamps_gau = np.array(timestamps - timestamps%  3600)
+    tstamps_gau = np.array(timestamps - timestamps % 3600)
     order = np.argsort(tstamps_gau)
     revorder = np.argsort(order)
-    
+
     tstamp = tstamps_gau[order]
     hours_elapsed = (tstamp - tstamp[0]) / 3600
     dif = np.diff(hours_elapsed)
-    dif = np.insert(dif,0,0)   
-    
+    dif = np.insert(dif, 0, 0)
+
     # label the events
     jumps = np.zeros((len(dif)))
     jumps[dif > threshold_hr] = 1
@@ -113,24 +119,25 @@ def split_event(timestamps, n = 5, threshold_hr = 12, random_state=None):
     maxlabel = labels[-1]
     allevents = np.arange(maxlabel)
     random_instance = check_random_state(random_state)
-    random_instance.shuffle(allevents) # randomize
-    
+    random_instance.shuffle(allevents)  # randomize
+
     # split events in n groups
     events_split = chunks(allevents, n)
-    
+
     split_idx = np.zeros((len(timestamps)))
-    
+
     for i in range(n):
         split_idx[np.isin(labels, events_split[i])] = i
     split_idx = split_idx[revorder]
-    
+
     return split_idx
 
-def split_years(timestamps, years=[2016,2017,2018,2019,2020,2021]):
+
+def split_years(timestamps, years=[2016, 2017, 2018, 2019, 2020, 2021]):
     """
     Splits the dataset into n subsets by separating the observations into
     separate years
-    
+
     Parameters
     ----------
     timestamps : int array
@@ -142,31 +149,32 @@ def split_years(timestamps, years=[2016,2017,2018,2019,2020,2021]):
     ---------
     split_idx : int array
         array containing the subset grouping, with values from 0 to years-1
-    """  
-    logging.info('Splitting dataset in {:d} years'.format(len(years)))
+    """
+    logging.info("Splitting dataset in {:d} years".format(len(years)))
 
-    tstamps_years = np.array([datetime.datetime.utcfromtimestamp(ti).year for ti in timestamps])
-    
+    tstamps_years = np.array(
+        [datetime.datetime.utcfromtimestamp(ti).year for ti in timestamps]
+    )
+
     split_idx = np.zeros((len(timestamps))) * np.nan
-    
+
     for i, year in enumerate(years):
         split_idx[np.where(tstamps_years == year)] = year
-    
-    return tstamps_years
 
+    return tstamps_years
 
 
 def time_station_aggregation(df, aggregation_min, time_res_min=None):
     """
     Creates the aggregation array for every station for a period of time
-    
+
     Parameters
     ----------
     df : dataframe
         dataframe that contains the STATION and TIMESTAMP columns
     aggregation_min: int
         aggregation time to use in minutes
-        time_res_min: int 
+        time_res_min: int
         time in min between two consecutive timestamps, if not provided will be found from the data
     Returns
     ---------
@@ -178,14 +186,18 @@ def time_station_aggregation(df, aggregation_min, time_res_min=None):
         unique_tstamps = df["TIMESTAMP"].unique()
         # Get reference temporal resolution in minutes
         time_res_min = (unique_tstamps[1] - unique_tstamps[0]) // 60
-    agg = np.array(df['STATION'] + 
-                   ((df['TIMESTAMP'] - time_res_min * 60 ) - 
-                    ((df['TIMESTAMP'] - time_res_min * 60) % (aggregation_min * 60)) 
-                    + (aggregation_min * 60)).astype(str)).astype(str)
+    agg = np.array(
+        df["STATION"]
+        + (
+            (df["TIMESTAMP"] - time_res_min * 60)
+            - ((df["TIMESTAMP"] - time_res_min * 60) % (aggregation_min * 60))
+            + (aggregation_min * 60)
+        ).astype(str)
+    ).astype(str)
     return agg
-    
-    
+
+
 def make_run_id():
     date_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
-    short_uid = uuid.uuid4().hex[:6]   # short unique suffix
+    short_uid = uuid.uuid4().hex[:6]  # short unique suffix
     return f"{date_str}_{short_uid}"

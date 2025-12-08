@@ -13,4 +13,3 @@ xlrd
 pooch
 versioneer
 ablog
-

@@ -13,7 +13,7 @@ SLURM_HEADER: |
     #SBATCH --error='db_{:s}_%A_%a.err'
     #SBATCH --job-name=DB_{:s}
 
-PYTHON_HEADER: | 
+PYTHON_HEADER: |
     source /store_new/mch/msrad/utils/miniconda-wolfensb/etc/profile.d/conda.sh
     conda activate rainforest
     export RAINFOREST_DATAPATH=/store_new/mch/msrad/radar/rainforest_data/
@@ -23,7 +23,7 @@ GAUGE_RETRIEVAL:
     STATIONS : 'all'
     MIN_R_HOURLY : 0.01
     MAX_NB_SLURM_JOBS: 10
-    
+
 REFERENCE_RETRIEVAL:
     PRODUCTS : ['RZC','CPC','CPCH','CPC.CV','BZC','MZC','MVRZC','MVCPCH']
     MV_METHOD: 'lucaskanade' # see https://pysteps.readthedocs.io/en/latest/generated/pysteps.motion.interface.get_method.html
@@ -31,7 +31,7 @@ REFERENCE_RETRIEVAL:
     NEIGHBOURS_Y : [-1,0,1] # not applied to CPC.CV, CPC_XLS and AQC_XLS
     MAX_SIMULTANEOUS_JOBS: 20
     MAX_NB_SLURM_JOBS: 100
-    
+
 RADAR_RETRIEVAL:
     RADARS: ['A','D','L','W','P']
     RADAR_VARIABLES : ['ZH','ZV','ZH_VISIB','ZV_VISIB','ZDR','KDP','RHOHV','SW','RVEL','AH','ZH_CORR','ZV_CORR','ZDR_CORR','VISIB','NH','NV'] #,'HYDRO']
