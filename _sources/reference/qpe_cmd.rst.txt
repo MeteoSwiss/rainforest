@@ -3,9 +3,9 @@ QPE command-line tools
 
 The *QPE* submodule has three easy to use command-line tools
 
-#. :ref:`qpe_compute` 
-#. :ref:`qpe_plot` 
-#. :ref:`qpe_evaluation` 
+#. :ref:`qpe_compute`
+#. :ref:`qpe_plot`
+#. :ref:`qpe_evaluation`
 
 .. _qpe_compute:
 
@@ -32,7 +32,7 @@ Options:
                         /ml/rf_models/, for example
                         '{"RF_dualpol":"dualpol_model_BC_raw.p"}', please note
                         the double and single quotes, which are required
-                    
+
 The files will be written in the output folder, and a subfolder will be created for every model passed with the *-m* flag. For example '{"RF_dualpol":"dualpol_model_BC_raw.p","RF_hpol":"hpol_model_BC_raw.p"', will create two subfolders *RF_dualpol* and *RF_hpol*.
 
 The configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/YAML/>`_, the default file has the following structure:
@@ -63,27 +63,27 @@ The configuration file must be written in `YAML <https://fr.wikipedia.org/wiki/Y
 The parameters are the following
 
 -   **TMP_FOLDER** : A directory where to store intermediate files generated during the processing, this is not important and */tmp/* can be used as well
--   **KDP_PARAMETERS** : set of parameters used in the computation of KDP using the moving least-square method. 
+-   **KDP_PARAMETERS** : set of parameters used in the computation of KDP using the moving least-square method.
 
     -   **RMIN** : minimum range where to look for continuous precipitation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
     -   **RMAX** :  maximum range where to look for continuous precipitation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
     -   **ZMIN**  : minimum reflectivity to consider it a rain cell, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
     -   **ZMAX**  : maximum reflectivity to consider it a rain cell, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/correct/phase_proc.py>`_
     -   **RWIND** : size of the moving window in meters used in the PSIDP filtering and KDP estimation, see `pyart code <https://github.com/meteoswiss-mdr/pyart/blob/master/pyart/retrieve/kdp_proc.py>`_
--   **SNR_THRESHOLD** : minimum SNR in dB below which the radar data is masked 
+-   **SNR_THRESHOLD** : minimum SNR in dB below which the radar data is masked
 -   **ZH_THRESHOLD** : minimum ZH below which radar data is masked
 -   **VISIB_CORR** : set of parameters for visibility correction
 
     -   **MIN_VISIB** : minimum visibility below which the data is masked
     -   **MAX_CORR** : maximum visibility correction for ZH (in linear)
--   **SWEEPS** : which radar sweeps (elevations) to use, e.g. [1,2,3,4] for the 4 first, 'all' uses all 20 sweeps 
+-   **SWEEPS** : which radar sweeps (elevations) to use, e.g. [1,2,3,4] for the 4 first, 'all' uses all 20 sweeps
 -   **RADARS** : which radars to consider, e.g. ['A','D'], 'all' uses all five radars
 -   **OUTLIER_REMOVAL** : if set to 1, a local outlier filtering will be applied (e.g. remove values with z-scores in 3 x 3 window above +3 or below -3)
 -   **GAUSSIAN_SIGMA** : size in pixels of the Gaussian smoothing that is applied on the QPE product, if set to 0 no smoothing is used
 -   **ADVECTION_CORRECTION** : if set to 1, the QPE will be corrected for advection using `this method <https://journals.ametsoc.org/doi/pdf/10.1175/1520-0426%281999%29016%3C0198%3ARTRREP%3E2.0.CO%3B2>`_ with two consecutive timesteps
 -   **FILE_FORMAT** : the format of output files, either 'float', in this case it will be saved in binary format in float, 'DN', binary format but after conversion to bytes using the lookup table in constants.py SCALE_CPC or 'DN_gif', in gif format using the lookup table in constants.py SCALE_RGB
 .. warning::
-    When defining the  configuration file, it is highly advised to be consistent with the :doc:`configuration file <db_options>` used to update the database, since the machine learning model will be trained on this particular setup. If you are not sure how you should setup these parameters always use the default file in */store/msrad/radar/rainforest/rainforest/qpe/default_config.yml*. 
+    When defining the  configuration file, it is highly advised to be consistent with the :doc:`configuration file <db_options>` used to update the database, since the machine learning model will be trained on this particular setup. If you are not sure how you should setup these parameters always use the default file in */store/msrad/radar/rainforest/rainforest/qpe/default_config.yml*.
 
 
 **Example**
@@ -107,8 +107,8 @@ Plots a series of QPE realizations stored in different subfolders within a main 
 
     :height: 300px
     :alt: alternate text
-    
-    
+
+
 **qpe_plot [options]**
 
 Options:
@@ -174,13 +174,13 @@ Plots a series of evaluation scores using gauge as reference for all QPE realiza
     :align: center
     :height: 300px
     :alt: alternate text
-    
+
 .. image:: scores_agg10_201906100010_201906110000.png
     :width: 500px
     :align: center
     :height: 300px
     :alt: alternate text
-    
+
 **qpe_evaluation [options]**
 
 Options:
@@ -221,7 +221,3 @@ Options:
 .. code-block:: console
 
     qpe_evaluation -q /scratch/wolfensb/qpe_runs/20190806 -g '/store/msrad/radar/radar_database/gauge/*.csv.gz' -o /scratch/wolfensb/qpe_runs/plots_allstats -m "RZC, CPC, RF_dualpol, RF_hpol, RF_vpol"
-
-
-
-

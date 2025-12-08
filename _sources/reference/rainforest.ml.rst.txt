@@ -28,7 +28,7 @@ rainforest.ml.rf_train module
    :members:
    :undoc-members:
    :show-inheritance:
-   
+
 rainforest.ml.rfdefinitions module
 ----------------------------------------
 
@@ -45,6 +45,3 @@ rainforest.ml.utils module
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-

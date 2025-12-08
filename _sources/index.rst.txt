@@ -40,8 +40,7 @@ Contents
 ========
 .. toctree::
    :maxdepth: 1
-   
+
    usage
    reference/index
    examples
-   

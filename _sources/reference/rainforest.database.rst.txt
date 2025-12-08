@@ -14,7 +14,7 @@ This module provides routines used for database management.
 :ref:`dwh` : R functions used to add new gauge data to database
 
 
-.. _database_module:   
+.. _database_module:
 rainforest.database.database module
 -----------------------------------------
 
@@ -70,4 +70,3 @@ Options:
 -   **output_folder** (*str*)  -  directory where to store the csv files containing the retrieved data
 -   **output_folder** (*float*)  -  directory where to store the csv files containing the retrieved data
 -   **overwrite** (*bool*)  - whether or not to overwrite already existing data in the output\_folder
-                        
