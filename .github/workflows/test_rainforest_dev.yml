@@ -60,7 +60,3 @@ jobs:
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
         working-directory: ${{github.workspace}}
         run: pytest tests_ci
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ failure() && github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-
