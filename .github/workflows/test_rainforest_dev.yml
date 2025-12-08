@@ -54,6 +54,10 @@ jobs:
         working-directory: /tmp/
         run: |
           python -c "import rainforest; print(rainforest.__file__)"
+      - name: Run Linting
+        shell: bash -l {0}
+        run: |
+          ruff check .
       - name: Run tests
         env:
            AWS_KEY: ${{ secrets.AWS_KEY }}
