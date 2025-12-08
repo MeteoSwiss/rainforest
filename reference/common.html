@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Common submodule &mdash; Rainforest QPE library  documentation</title>
+  <title>Common submodule &mdash; Rainforest QPE library 1.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=66a50015"></script>
       <script src="../_static/doctools.js?v=888ff710"></script>
       <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/js/theme.js"></script>
@@ -111,10 +111,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-rf-module">rainforest.ml.rf module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf_train.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
@@ -126,9 +123,11 @@
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.make_run_id"><code class="docutils literal notranslate"><span class="pre">make_run_id()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.nesteddictvalues"><code class="docutils literal notranslate"><span class="pre">nesteddictvalues()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.split_event"><code class="docutils literal notranslate"><span class="pre">split_event()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.split_years"><code class="docutils literal notranslate"><span class="pre">split_years()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.time_station_aggregation"><code class="docutils literal notranslate"><span class="pre">time_station_aggregation()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.vert_aggregation"><code class="docutils literal notranslate"><span class="pre">vert_aggregation()</span></code></a></li>
 </ul>
 </li>
@@ -185,9 +184,11 @@
 <li class="toctree-l3"><a class="reference internal" href="#module-rainforest.common.graphics">rainforest.common.graphics module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.MidpointNormalize"><code class="docutils literal notranslate"><span class="pre">MidpointNormalize</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.QPE_cmap"><code class="docutils literal notranslate"><span class="pre">QPE_cmap</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.meteoswiss_cmap"><code class="docutils literal notranslate"><span class="pre">meteoswiss_cmap()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.plot_crossval_stats"><code class="docutils literal notranslate"><span class="pre">plot_crossval_stats()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.plot_fit_metrics"><code class="docutils literal notranslate"><span class="pre">plot_fit_metrics()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.qpe_plot"><code class="docutils literal notranslate"><span class="pre">qpe_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.qpe_plot_mch"><code class="docutils literal notranslate"><span class="pre">qpe_plot_mch()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.qpe_scatterplot"><code class="docutils literal notranslate"><span class="pre">qpe_scatterplot()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#rainforest.common.graphics.score_plot"><code class="docutils literal notranslate"><span class="pre">score_plot()</span></code></a></li>
 </ul>
@@ -956,6 +957,11 @@ will be linearly interpolated between <em>y1[i]</em> and <em>y0[i+1]</em>:</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="rainforest.common.graphics.meteoswiss_cmap">
+<span class="sig-prename descclassname"><span class="pre">rainforest.common.graphics.</span></span><span class="sig-name descname"><span class="pre">meteoswiss_cmap</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.meteoswiss_cmap" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="rainforest.common.graphics.plot_crossval_stats">
 <span class="sig-prename descclassname"><span class="pre">rainforest.common.graphics.</span></span><span class="sig-name descname"><span class="pre">plot_crossval_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.plot_crossval_stats" title="Permalink to this definition"></a></dt>
 <dd><p>Plots the results of a crossvalidation intercomparion as performed in
@@ -1018,7 +1024,35 @@ from linear to logarithmic scale</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>Nothing</p>
+<dd class="field-even"><p>fig, ax, the figure and axis handlers</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rainforest.common.graphics.qpe_plot_mch">
+<span class="sig-prename descclassname"><span class="pre">rainforest.common.graphics.</span></span><span class="sig-name descname"><span class="pre">qpe_plot_mch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subplots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ch_border</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'horizontal'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.common.graphics.qpe_plot_mch" title="Permalink to this definition"></a></dt>
+<dd><p>Plots one or multiple QPE realizations using the default MCH color map</p>
+<p>If multiple QPE realizations are given, they will be displayed as subplots</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>list</em><em> of </em><em>numpy arrays</em><em> or </em><em>numpy array</em>) – the set of QPE realizations to display</p></li>
+<li><p><strong>subplots</strong> (<em>2-element tuple</em><em> (</em><em>optional</em><em>)</em>) – Tuple indicating the number of subplots in each direction,
+the product of its elements must be equal to the number of QPE realizations
+If not provided, the default will be (1,n) where n is the number of
+realizations</p></li>
+<li><p><strong>figsize</strong> (<em>2-element tuple</em><em> (</em><em>optional</em><em>)</em>) – Tuple indicating the size of the figure in inches in both directions
+(w,h)</p></li>
+<li><p><strong>ch_border</strong> (<em>bool</em><em> (</em><em>optiona</em><em>)</em>) – Whether to overlay the shapefile of the Swiss borders</p></li>
+<li><p><strong>xlim</strong> (<em>2 element tuple</em><em> (</em><em>optional</em><em>)</em>) – limits of the plots in the west-east direction (in Swiss coordinates)</p></li>
+<li><p><strong>ylim</strong> (<em>2 element tuple</em><em> (</em><em>optional</em><em>)</em>) – limits of the plots in the south-north direction (in Swiss coordinates)</p></li>
+<li><p><strong>cbar_orientation</strong> (<em>str</em><em> (</em><em>optional</em><em>)</em>) – colorbar orientation, either ‘horizontal’ or ‘vertical’</p></li>
+<li><p><strong>**kwargs</strong> – All additional arguments that can be passed to imshow</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>fig, ax, the figure and axis handlers</p>
 </dd>
 </dl>
 </dd></dl>

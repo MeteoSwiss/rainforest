@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ML submodule &mdash; Rainforest QPE library  documentation</title>
+  <title>ML submodule &mdash; Rainforest QPE library 1.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=66a50015"></script>
       <script src="../_static/doctools.js?v=888ff710"></script>
       <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/js/theme.js"></script>
@@ -111,10 +111,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-rf-module">rainforest.ml.rf module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.rf_train.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
@@ -126,9 +123,11 @@
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.make_run_id"><code class="docutils literal notranslate"><span class="pre">make_run_id()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.nesteddictvalues"><code class="docutils literal notranslate"><span class="pre">nesteddictvalues()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.split_event"><code class="docutils literal notranslate"><span class="pre">split_event()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.split_years"><code class="docutils literal notranslate"><span class="pre">split_years()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.time_station_aggregation"><code class="docutils literal notranslate"><span class="pre">time_station_aggregation()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="rainforest.ml.html#rainforest.ml.utils.vert_aggregation"><code class="docutils literal notranslate"><span class="pre">vert_aggregation()</span></code></a></li>
 </ul>
 </li>
@@ -185,9 +184,11 @@
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.MidpointNormalize"><code class="docutils literal notranslate"><span class="pre">MidpointNormalize</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.QPE_cmap"><code class="docutils literal notranslate"><span class="pre">QPE_cmap</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.meteoswiss_cmap"><code class="docutils literal notranslate"><span class="pre">meteoswiss_cmap()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.plot_crossval_stats"><code class="docutils literal notranslate"><span class="pre">plot_crossval_stats()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.plot_fit_metrics"><code class="docutils literal notranslate"><span class="pre">plot_fit_metrics()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_plot"><code class="docutils literal notranslate"><span class="pre">qpe_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_plot_mch"><code class="docutils literal notranslate"><span class="pre">qpe_plot_mch()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_scatterplot"><code class="docutils literal notranslate"><span class="pre">qpe_scatterplot()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.score_plot"><code class="docutils literal notranslate"><span class="pre">score_plot()</span></code></a></li>
 </ul>
@@ -285,7 +286,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rainforest.ml.html">rainforest.ml package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rainforest.ml.html#rainforest-ml-rf-module">rainforest.ml.rf module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.rfdefinitions">rainforest.ml.rfdefinitions module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils module</a></li>

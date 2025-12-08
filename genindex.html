@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; Rainforest QPE library  documentation</title>
+  <title>Index &mdash; Rainforest QPE library 1.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
+      <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=66a50015"></script>
       <script src="_static/doctools.js?v=888ff710"></script>
       <script src="_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="_static/js/theme.js"></script>
@@ -108,10 +108,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="reference/rainforest.ml.html">rainforest.ml package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l4"><a class="reference internal" href="reference/rainforest.ml.html#rainforest-ml-rf-module">rainforest.ml.rf module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.rf_train.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
@@ -123,9 +120,11 @@
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="reference/rainforest.ml.html#module-rainforest.ml.utils">rainforest.ml.utils module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.utils.make_run_id"><code class="docutils literal notranslate"><span class="pre">make_run_id()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.utils.nesteddictvalues"><code class="docutils literal notranslate"><span class="pre">nesteddictvalues()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.utils.split_event"><code class="docutils literal notranslate"><span class="pre">split_event()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.utils.split_years"><code class="docutils literal notranslate"><span class="pre">split_years()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.utils.time_station_aggregation"><code class="docutils literal notranslate"><span class="pre">time_station_aggregation()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/rainforest.ml.html#rainforest.ml.utils.vert_aggregation"><code class="docutils literal notranslate"><span class="pre">vert_aggregation()</span></code></a></li>
 </ul>
 </li>
@@ -182,9 +181,11 @@
 <li class="toctree-l3"><a class="reference internal" href="reference/common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.MidpointNormalize"><code class="docutils literal notranslate"><span class="pre">MidpointNormalize</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.QPE_cmap"><code class="docutils literal notranslate"><span class="pre">QPE_cmap</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.meteoswiss_cmap"><code class="docutils literal notranslate"><span class="pre">meteoswiss_cmap()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.plot_crossval_stats"><code class="docutils literal notranslate"><span class="pre">plot_crossval_stats()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.plot_fit_metrics"><code class="docutils literal notranslate"><span class="pre">plot_fit_metrics()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.qpe_plot"><code class="docutils literal notranslate"><span class="pre">qpe_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.qpe_plot_mch"><code class="docutils literal notranslate"><span class="pre">qpe_plot_mch()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.qpe_scatterplot"><code class="docutils literal notranslate"><span class="pre">qpe_scatterplot()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/common.html#rainforest.common.graphics.score_plot"><code class="docutils literal notranslate"><span class="pre">score_plot()</span></code></a></li>
 </ul>
@@ -365,8 +366,6 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.feature_selection">feature_selection() (rainforest.ml.rf.RFTraining method)</a>
-</li>
       <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor.fetch_data">fetch_data() (rainforest.qpe.qpe.QPEProcessor method)</a>
 </li>
       <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor.fetch_data_test">fetch_data_test() (rainforest.qpe.qpe.QPEProcessor method)</a>
@@ -378,8 +377,6 @@
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit">fit() (rainforest.ml.rfdefinitions.RandomForestRegressorBC method)</a>
 </li>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.fit_bias_correction">fit_bias_correction() (rainforest.ml.rfdefinitions.RandomForestRegressorBC method)</a>
-</li>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.fit_models">fit_models() (rainforest.ml.rf.RFTraining method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -455,11 +452,13 @@
         <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe_plot.main">(in module rainforest.qpe.qpe_plot)</a>
 </li>
       </ul></li>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.utils.make_run_id">make_run_id() (in module rainforest.ml.utils)</a>
+</li>
+      <li><a href="reference/common.html#rainforest.common.graphics.meteoswiss_cmap">meteoswiss_cmap() (in module rainforest.common.graphics)</a>
+</li>
       <li><a href="reference/common.html#rainforest.common.graphics.MidpointNormalize">MidpointNormalize (class in rainforest.common.graphics)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.constants.MODE">MODE() (in module rainforest.common.constants)</a>
-</li>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.model_intercomparison">model_intercomparison() (rainforest.ml.rf.RFTraining method)</a>
 </li>
       <li>
     module
@@ -482,8 +481,6 @@
         <li><a href="reference/common.html#module-rainforest.common.utils">rainforest.common.utils</a>
 </li>
         <li><a href="reference/common.html#module-rainforest.common.wgs84_ch1903">rainforest.common.wgs84_ch1903</a>
-</li>
-        <li><a href="reference/rainforest.ml.html#module-rainforest.ml.rf">rainforest.ml.rf</a>
 </li>
         <li><a href="reference/rainforest.ml.html#module-rainforest.ml.rf_train">rainforest.ml.rf_train</a>
 </li>
@@ -540,8 +537,6 @@
 </li>
       <li><a href="reference/rainforest.ml.html#rainforest.ml.rfdefinitions.RandomForestRegressorBC.predict">predict() (rainforest.ml.rfdefinitions.RandomForestRegressorBC method)</a>
 </li>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining.prepare_input">prepare_input() (rainforest.ml.rf.RFTraining method)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -552,10 +547,12 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.graphics.qpe_plot">qpe_plot() (in module rainforest.common.graphics)</a>
 </li>
-      <li><a href="reference/common.html#rainforest.common.graphics.qpe_scatterplot">qpe_scatterplot() (in module rainforest.common.graphics)</a>
+      <li><a href="reference/common.html#rainforest.common.graphics.qpe_plot_mch">qpe_plot_mch() (in module rainforest.common.graphics)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/common.html#rainforest.common.graphics.qpe_scatterplot">qpe_scatterplot() (in module rainforest.common.graphics)</a>
+</li>
       <li><a href="reference/rainforest.qpe.html#rainforest.qpe.qpe.QPEProcessor">QPEProcessor (class in rainforest.qpe.qpe)</a>
 </li>
       <li><a href="reference/common.html#rainforest.common.utils.quantile">quantile() (in module rainforest.common.utils)</a>
@@ -631,13 +628,6 @@
 
       <ul>
         <li><a href="reference/common.html#module-rainforest.common.wgs84_ch1903">module</a>
-</li>
-      </ul></li>
-      <li>
-    rainforest.ml.rf
-
-      <ul>
-        <li><a href="reference/rainforest.ml.html#module-rainforest.ml.rf">module</a>
 </li>
       </ul></li>
       <li>
@@ -734,8 +724,6 @@
 </li>
       <li><a href="reference/common.html#rainforest.common.retrieve_data.retrieve_prod_RT">retrieve_prod_RT() (in module rainforest.common.retrieve_data)</a>
 </li>
-      <li><a href="reference/rainforest.ml.html#rainforest.ml.rf.RFTraining">RFTraining (class in rainforest.ml.rf)</a>
-</li>
       <li><a href="reference/common.html#rainforest.common.utils.round_to_hour">round_to_hour() (in module rainforest.common.utils)</a>
 </li>
   </ul></td>
@@ -778,6 +766,8 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/rainforest.ml.html#rainforest.ml.utils.time_station_aggregation">time_station_aggregation() (in module rainforest.ml.utils)</a>
+</li>
       <li><a href="reference/common.html#rainforest.common.utils.timefromfilename">timefromfilename() (in module rainforest.common.utils)</a>
 </li>
   </ul></td>

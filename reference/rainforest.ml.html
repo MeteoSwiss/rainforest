@@ -6,14 +6,14 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rainforest.ml package &mdash; Rainforest QPE library  documentation</title>
+  <title>rainforest.ml package &mdash; Rainforest QPE library 1.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=b3ba4146"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=66a50015"></script>
       <script src="../_static/doctools.js?v=888ff710"></script>
       <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
     <script src="../_static/js/theme.js"></script>
@@ -111,10 +111,7 @@
 </ul>
 </li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">rainforest.ml package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.rf">rainforest.ml.rf module</a><ul>
-<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf.RFTraining"><code class="docutils literal notranslate"><span class="pre">RFTraining</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l4"><a class="reference internal" href="#rainforest-ml-rf-module">rainforest.ml.rf module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.rf_train">rainforest.ml.rf_train module</a><ul>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.rf_train.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
@@ -126,9 +123,11 @@
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="#module-rainforest.ml.utils">rainforest.ml.utils module</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.utils.make_run_id"><code class="docutils literal notranslate"><span class="pre">make_run_id()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.utils.nesteddictvalues"><code class="docutils literal notranslate"><span class="pre">nesteddictvalues()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.utils.split_event"><code class="docutils literal notranslate"><span class="pre">split_event()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.utils.split_years"><code class="docutils literal notranslate"><span class="pre">split_years()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.utils.time_station_aggregation"><code class="docutils literal notranslate"><span class="pre">time_station_aggregation()</span></code></a></li>
 <li class="toctree-l5"><a class="reference internal" href="#rainforest.ml.utils.vert_aggregation"><code class="docutils literal notranslate"><span class="pre">vert_aggregation()</span></code></a></li>
 </ul>
 </li>
@@ -185,9 +184,11 @@
 <li class="toctree-l3"><a class="reference internal" href="common.html#module-rainforest.common.graphics">rainforest.common.graphics module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.MidpointNormalize"><code class="docutils literal notranslate"><span class="pre">MidpointNormalize</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.QPE_cmap"><code class="docutils literal notranslate"><span class="pre">QPE_cmap</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.meteoswiss_cmap"><code class="docutils literal notranslate"><span class="pre">meteoswiss_cmap()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.plot_crossval_stats"><code class="docutils literal notranslate"><span class="pre">plot_crossval_stats()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.plot_fit_metrics"><code class="docutils literal notranslate"><span class="pre">plot_fit_metrics()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_plot"><code class="docutils literal notranslate"><span class="pre">qpe_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_plot_mch"><code class="docutils literal notranslate"><span class="pre">qpe_plot_mch()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.qpe_scatterplot"><code class="docutils literal notranslate"><span class="pre">qpe_scatterplot()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="common.html#rainforest.common.graphics.score_plot"><code class="docutils literal notranslate"><span class="pre">score_plot()</span></code></a></li>
 </ul>
@@ -279,170 +280,12 @@
   <section id="rainforest-ml-package">
 <h1>rainforest.ml package<a class="headerlink" href="#rainforest-ml-package" title="Permalink to this heading"></a></h1>
 <p>This submodule deals with the training and evaluation of machine learning QPE methods. It also allows to read them from pickle files stored in the <em>rf_models</em> subfolder.</p>
-<p><a class="reference internal" href="#module-rainforest.ml.rf" title="rainforest.ml.rf"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.rf</span></code></a> : main module used to train RF regressors</p>
+<p><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.rf</span></code> : main module used to train RF regressors</p>
 <p><a class="reference internal" href="#module-rainforest.ml.rfdefinitions" title="rainforest.ml.rfdefinitions"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.rfdefinitions</span></code></a> : reference module that contains definitions of the RF regressors and allows to load them from files</p>
 <p><a class="reference internal" href="#module-rainforest.ml.rf_train" title="rainforest.ml.rf_train"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.rf_train</span></code></a> : command-line utility to train RF models and prepare input features</p>
 <p><a class="reference internal" href="#module-rainforest.ml.utils" title="rainforest.ml.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">rainforest.ml.utils</span></code></a> : small utilities used in this module only (for example for  vertical aggregation)</p>
-<section id="module-rainforest.ml.rf">
-<span id="rainforest-ml-rf-module"></span><h2>rainforest.ml.rf module<a class="headerlink" href="#module-rainforest.ml.rf" title="Permalink to this heading"></a></h2>
-<p>Main module to</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rainforest.ml.rf.</span></span><span class="sig-name descname"><span class="pre">RFTraining</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_location</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_location</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_regenerate_input</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logmlflow</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining" title="Permalink to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>This is the main class that allows to preparate data for random forest
-training, train random forests and perform cross-validation of trained models</p>
-<p>Initializes the class and if needed prepare input data for the training</p>
-<p>Note that when calling this constructor the input data is only
-generated for the central pixel (NX = NY = 0 = loc of gauge), if you
-want to regenerate the inputs for all neighbour pixels, please
-call the function self.prepare_input(only_center_pixel = False)</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>db_location</strong> (<em>str</em>) – Location of the main directory of the database (with subfolders
-‘reference’, ‘gauge’ and ‘radar’ on the filesystem)</p></li>
-<li><p><strong>input_location</strong> (<em>str</em>) – Location of the prepared input data, if this data cannot be found
-in this folder, it will be computed here, default is a subfolder
-called rf_input_data within db_location</p></li>
-<li><p><strong>force_regenerate_input</strong> (<em>bool</em>) – if True the input parquet files will always be regenerated from
-the database even if already present in the input_location folder</p></li>
-<li><p><strong>logmlflow</strong> (<em>str</em><em>, </em><em>default='none'</em>) – Whether to log training metrics to MLFlow. Can be ‘none’ to not log anything, ‘metrics’ to
-only log metrics, or ‘all’ to log metrics and the trained model.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.feature_selection">
-<span class="sig-name descname"><span class="pre">feature_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">featuresel_configfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.feature_selection" title="Permalink to this definition"></a></dt>
-<dd><p>The relative importance of all available input vairables aggregated to
-to the ground and to choose the most important ones, an approach
-from Han et al. (2016) was adpated to for regression.
-See Wolfensberger et al. (2021) for further information.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>features</strong> (<em>dic</em>) – A dictionnary with all eligible features to test</p></li>
-<li><p><strong>feature_sel_config</strong> (<em>str</em>) – yaml file with setup</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em>) – Path to where to store the scores</p></li>
-<li><p><strong>tstart</strong> (<em>str</em><em> (</em><em>YYYYMMDDHHMM</em><em>)</em>) – A date to define a starting time for the input data</p></li>
-<li><p><strong>tend</strong> (<em>str</em><em> (</em><em>YYYYMMDDHHMM</em><em>)</em>) – A date to define the end of the input data</p></li>
-<li><p><strong>K</strong> (<em>int</em><em> or </em><em>None</em>) – Number of splits in iterations do perform in the K fold cross-val</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.fit_models">
-<span class="sig-name descname"><span class="pre">fit_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.fit_models" title="Permalink to this definition"></a></dt>
-<dd><p>Fits a new RF model that can be used to compute QPE realizations and
-saves them to disk in pickle format</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>config_file</strong> (<em>str</em>) – Location of the RF training configuration file, if not provided
-the default one in the ml submodule will be used</p></li>
-<li><p><strong>features_dic</strong> (<em>dict</em>) – A dictionary whose keys are the names of the models you want to
-create (a string) and the values are lists of features you want to
-use. For example {‘RF_dualpol’:[‘RADAR’, ‘zh_VISIB_mean’,
-‘zv_VISIB_mean’,’KDP_mean’,’RHOHV_mean’,’T’, ‘HEIGHT’,’VISIB_mean’]}
-will train a model with all these features that will then be stored
-under the name RF_dualpol_BC_&lt;type of BC&gt;.p in the ml/rf_models dir</p></li>
-<li><p><strong>tstart</strong> (<em>datetime</em>) – the starting time of the training time interval, default is to start
-at the beginning of the time interval covered by the database</p></li>
-<li><p><strong>tend</strong> (<em>datetime</em>) – the end time of the training time interval, default is to end
-at the end of the time interval covered by the database</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em>) – Location where to store the trained models in pickle format,
-if not provided it will store them in the standard location
-&lt;library_path&gt;/ml/rf_models</p></li>
-<li><p><strong>cv</strong> (<em>int</em><em>, </em><em>default=0</em>) – Number of folds for cross-validation, when running fit function.
-If set to 0, will not perform cross-validation (i.e. no test error)</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.model_intercomparison">
-<span class="sig-name descname"><span class="pre">model_intercomparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features_dic</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intercomparison_configfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_products</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['CPCH',</span> <span class="pre">'RZC']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds10</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">2,</span> <span class="pre">10,</span> <span class="pre">100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds60</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0,</span> <span class="pre">2,</span> <span class="pre">10,</span> <span class="pre">100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cross_val_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'years'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">years</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tstart</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">station_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.model_intercomparison" title="Permalink to this definition"></a></dt>
-<dd><p>Does an intercomparison (cross-validation) of different RF models and
-reference products (RZC, CPC, …) and plots the performance plots</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>features_dic</strong> (<em>dict</em>) – A dictionary whose keys are the names of the models you want to
-compare (a string) and the values are lists of features you want to
-use. For example {‘RF_dualpol’:[‘RADAR’, ‘zh_VISIB_mean’,
-‘zv_VISIB_mean’,’KDP_mean’,’RHOHV_mean’,’T’, ‘HEIGHT’,’VISIB_mean’],
-‘RF_hpol’:[‘RADAR’, ‘zh_VISIB_mean’,’T’, ‘HEIGHT’,’VISIB_mean’]}
-will compare a model of RF with polarimetric info to a model
-with only horizontal polarization</p></li>
-<li><p><strong>output_folder</strong> (<em>str</em>) – Location where to store the output plots</p></li>
-<li><p><strong>intercomparison_config</strong> (<em>str</em>) – Location of the intercomparison configuration file, which
-is a yaml file that gives for every model key of features_dic which
-parameters of the training you want to use (see the file
-intercomparison_config_example.yml in this module for an example)</p></li>
-<li><p><strong>reference_products</strong> (<em>list</em><em> of </em><em>str</em>) – Name of the reference products to which the RF will be compared
-they need to be in the reference table of the database</p></li>
-<li><p><strong>bounds10</strong> (<em>list</em><em> of </em><em>float</em>) – list of precipitation bounds for which to compute scores separately
-at 10 min time resolution
-[0,2,10,100] will give scores in range [0-2], [2-10] and [10-100]</p></li>
-<li><p><strong>bounds60</strong> (<em>list</em><em> of </em><em>float</em>) – list of precipitation bounds for which to compute scores separately
-at hourly time resolution
-[0,1,10,100] will give scores in range [0-1], [1-10] and [10-100]</p></li>
-<li><p><strong>cross_val_type</strong> (<em>str</em>) – Define how the split of events is done. Options are “random events”,
-“years” and “seasons” (TODO)</p></li>
-<li><p><strong>K</strong> (<em>int</em><em> or </em><em>None</em>) – Number of splits in iterations do perform in the K fold cross-val</p></li>
-<li><p><strong>years</strong> (<em>list</em><em> or </em><em>None</em>) – List with the years that should be used in cross validation
-Default is [2016,2017,2018,2019,2020,2021]</p></li>
-<li><p><strong>tstart</strong> (<em>str</em><em> (</em><em>YYYYMMDDHHMM</em><em>)</em>) – A date to define a starting time for the input data</p></li>
-<li><p><strong>tend</strong> (<em>str</em><em> (</em><em>YYYYMMDDHHMM</em><em>)</em>) – A date to define the end of the input data</p></li>
-<li><p><strong>station_scores</strong> (<em>True</em><em> or </em><em>False</em><em> (</em><em>Boolean</em><em>)</em>) – If True, performance scores for all stations will be calculated
-If False, only the scores across Switzerland are calculated</p></li>
-<li><p><strong>save_model</strong> (<em>True</em><em> or </em><em>False</em><em> (</em><em>Boolean</em><em>)</em>) – If True, all models of the cross-validation are saved into a pickle file
-This is useful for reproducibility</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="rainforest.ml.rf.RFTraining.prepare_input">
-<span class="sig-name descname"><span class="pre">prepare_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">only_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foldername_radar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'radar'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.rf.RFTraining.prepare_input" title="Permalink to this definition"></a></dt>
-<dd><p>Reads the data from the database  in db_location and processes it to
-create easy to use parquet input files for the ML training and stores
-them in the input_location, the processing steps involve</p>
-<p>For every neighbour of the station (i.e. from -1-1 to +1+1):</p>
-<ul class="simple">
-<li><p>Replace missing flags by nans</p></li>
-<li><p>Filter out timesteps which are not present in the three tables
-(gauge, reference and radar)</p></li>
-<li><p>Filter out incomplete hours (i.e. where less than 6 10 min timesteps
-are available)</p></li>
-<li><p>Add height above ground and height of iso0 to radar data</p></li>
-<li><p>Save a separate parquet file for radar, gauge and reference data</p></li>
-<li><p>Save a grouping_idx pickle file containing <em>grp_vertical</em>
-index (groups all radar rows with same timestep and station),
-<em>grp_hourly</em> (groups all timesteps with same hours) and <em>tstamp_unique</em>
-(list of all unique timestamps)</p></li>
-</ul>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>only_center</strong> (<em>bool</em>) – If set to True only the input data for the central neighbour
-i.e. NX = NY = 0 (the location of the gauge) will be recomputed
-this takes much less time and is the default option since until
-now the neighbour values are not used in the training of the RF
-QPE</p></li>
-<li><p><strong>foldername_radar</strong> (<em>str</em>) – Name of the folder to use for the radar data. Default name is ‘radar’</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<section id="rainforest-ml-rf-module">
+<h2>rainforest.ml.rf module<a class="headerlink" href="#rainforest-ml-rf-module" title="Permalink to this heading"></a></h2>
 </section>
 <section id="module-rainforest.ml.rf_train">
 <span id="rainforest-ml-rf-train-module"></span><h2>rainforest.ml.rf_train module<a class="headerlink" href="#module-rainforest.ml.rf_train" title="Permalink to this heading"></a></h2>
@@ -553,8 +396,7 @@ using MCH lookup tables). If not provided f(x) = x will be applied
 <dt class="sig sig-object py" id="rainforest.ml.rfdefinitions.RandomForestRegressorBC.set_fit_request">
 <span class="sig-name descname"><span class="pre">set_fit_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logmlflow</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC" title="rainforest.ml.rfdefinitions.RandomForestRegressorBC"><span class="pre">RandomForestRegressorBC</span></a></span></span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC.set_fit_request" title="Permalink to this definition"></a></dt>
 <dd><p>Configure whether metadata should be requested to be passed to the <code class="docutils literal notranslate"><span class="pre">fit</span></code> method.</p>
-<blockquote>
-<div><p>Note that this method is only relevant when this estimator is used as a
+<p>Note that this method is only relevant when this estimator is used as a
 sub-estimator within a <span class="xref std std-term">meta-estimator</span> and metadata routing is enabled
 with <code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config()</span></code>).
 Please check the <span class="xref std std-ref">User Guide</span> on how the routing
@@ -572,27 +414,28 @@ parameters and not others.</p>
 <div class="versionadded">
 <p><span class="versionmodified added">New in version 1.3.</span></p>
 </div>
-<dl class="simple">
-<dt>cv<span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">cv</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cv</strong> (<em>str</em><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">cv</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
+<li><p><strong>logmlflow</strong> (<em>str</em><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">logmlflow</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
+<li><p><strong>sample_weight</strong> (<em>str</em><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p></li>
+</ul>
 </dd>
-<dt>logmlflow<span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">logmlflow</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – The updated object.</p>
 </dd>
-<dt>sample_weight<span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">fit</span></code>.</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>self<span class="classifier">object</span></dt><dd><p>The updated object.</p>
-</dd>
-</dl>
-</div></blockquote>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="rainforest.ml.rfdefinitions.RandomForestRegressorBC.set_predict_request">
 <span class="sig-name descname"><span class="pre">set_predict_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round_func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC" title="rainforest.ml.rfdefinitions.RandomForestRegressorBC"><span class="pre">RandomForestRegressorBC</span></a></span></span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC.set_predict_request" title="Permalink to this definition"></a></dt>
 <dd><p>Configure whether metadata should be requested to be passed to the <code class="docutils literal notranslate"><span class="pre">predict</span></code> method.</p>
-<blockquote>
-<div><p>Note that this method is only relevant when this estimator is used as a
+<p>Note that this method is only relevant when this estimator is used as a
 sub-estimator within a <span class="xref std std-term">meta-estimator</span> and metadata routing is enabled
 with <code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config()</span></code>).
 Please check the <span class="xref std std-ref">User Guide</span> on how the routing
@@ -610,25 +453,27 @@ parameters and not others.</p>
 <div class="versionadded">
 <p><span class="versionmodified added">New in version 1.3.</span></p>
 </div>
-<dl class="simple">
-<dt>bc<span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">bc</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bc</strong> (<em>str</em><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">bc</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p></li>
+<li><p><strong>round_func</strong> (<em>str</em><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">round_func</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p></li>
+</ul>
 </dd>
-<dt>round_func<span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">round_func</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">predict</span></code>.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – The updated object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>self<span class="classifier">object</span></dt><dd><p>The updated object.</p>
-</dd>
-</dl>
-</div></blockquote>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="rainforest.ml.rfdefinitions.RandomForestRegressorBC.set_score_request">
 <span class="sig-name descname"><span class="pre">set_score_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'$UNCHANGED$'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC" title="rainforest.ml.rfdefinitions.RandomForestRegressorBC"><span class="pre">RandomForestRegressorBC</span></a></span></span><a class="headerlink" href="#rainforest.ml.rfdefinitions.RandomForestRegressorBC.set_score_request" title="Permalink to this definition"></a></dt>
 <dd><p>Configure whether metadata should be requested to be passed to the <code class="docutils literal notranslate"><span class="pre">score</span></code> method.</p>
-<blockquote>
-<div><p>Note that this method is only relevant when this estimator is used as a
+<p>Note that this method is only relevant when this estimator is used as a
 sub-estimator within a <span class="xref std std-term">meta-estimator</span> and metadata routing is enabled
 with <code class="docutils literal notranslate"><span class="pre">enable_metadata_routing=True</span></code> (see <code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.set_config()</span></code>).
 Please check the <span class="xref std std-ref">User Guide</span> on how the routing
@@ -646,15 +491,17 @@ parameters and not others.</p>
 <div class="versionadded">
 <p><span class="versionmodified added">New in version 1.3.</span></p>
 </div>
-<dl class="simple">
-<dt>sample_weight<span class="classifier">str, True, False, or None,                     default=sklearn.utils.metadata_routing.UNCHANGED</span></dt><dd><p>Metadata routing for <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">score</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sample_weight</strong> (<em>str</em><em>, </em><em>True</em><em>, </em><em>False</em><em>, or </em><em>None</em><em>,                     </em><em>default=sklearn.utils.metadata_routing.UNCHANGED</em>) – Metadata routing for <code class="docutils literal notranslate"><span class="pre">sample_weight</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">score</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>self</strong> – The updated object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>object</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>self<span class="classifier">object</span></dt><dd><p>The updated object.</p>
-</dd>
-</dl>
-</div></blockquote>
 </dd></dl>
 
 </dd></dl>
@@ -669,7 +516,7 @@ must be defined in the script ml/rf_definitions.py</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>rf_name</strong> (<em>str</em>) – Name of the randomForest model, it must be stored in the folder
-/ml/rf_models and computed with the rf:RFTraining.fit_model function</p></li>
+$RAINFOREST_DATAPATH/rf_models and computed with the rf:RFTraining.fit_model function</p></li>
 <li><p><strong>filepath</strong> (<em>str</em>) – Path to the model files, if not in default folder</p></li>
 <li><p><strong>mlflow_runid</strong> (<em>str</em>) – If the model needs to be downloaded from mlflow, this variable
 indicates the run ID that contains the model to use. If this value
@@ -691,6 +538,11 @@ MLFLOW_TRACKING_URI needs to be set.</p></li>
 <section id="module-rainforest.ml.utils">
 <span id="rainforest-ml-utils-module"></span><h2>rainforest.ml.utils module<a class="headerlink" href="#module-rainforest.ml.utils" title="Permalink to this heading"></a></h2>
 <p>Utility functions for the ML submodule</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="rainforest.ml.utils.make_run_id">
+<span class="sig-prename descclassname"><span class="pre">rainforest.ml.utils.</span></span><span class="sig-name descname"><span class="pre">make_run_id</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.make_run_id" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="rainforest.ml.utils.nesteddictvalues">
 <span class="sig-prename descclassname"><span class="pre">rainforest.ml.utils.</span></span><span class="sig-name descname"><span class="pre">nesteddictvalues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.nesteddictvalues" title="Permalink to this definition"></a></dt>
@@ -739,6 +591,29 @@ separate years</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>int array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rainforest.ml.utils.time_station_aggregation">
+<span class="sig-prename descclassname"><span class="pre">rainforest.ml.utils.</span></span><span class="sig-name descname"><span class="pre">time_station_aggregation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregation_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_res_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rainforest.ml.utils.time_station_aggregation" title="Permalink to this definition"></a></dt>
+<dd><p>Creates the aggregation array for every station for a period of time</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>dataframe</em>) – dataframe that contains the STATION and TIMESTAMP columns</p></li>
+<li><p><strong>aggregation_min</strong> (<em>int</em>) – aggregation time to use in minutes
+time_res_min: int
+time in min between two consecutive timestamps, if not provided will be found from the data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>agg</strong> – the aggregation array which contains values such as ABO1619866800
+(station followed by aggregated UNIX timestamp)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy str array</p>
 </dd>
 </dl>
 </dd></dl>
