@@ -57,7 +57,7 @@ jobs:
       - name: Run Linting
         shell: bash -l {0}
         run: |
-          ruff check .
+          ruff check rainforest
       - name: Run tests
         env:
            AWS_KEY: ${{ secrets.AWS_KEY }}
