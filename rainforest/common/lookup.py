@@ -75,7 +75,7 @@ from .wgs84_ch1903 import GPSConverter
 from .object_storage import ObjectStorage
 
 from .constants import metadata_folder, lut_folder, lut_boscacci_folder
-from .constants import cosmo_coords_folder, folder_radar_samples
+from .constants import cosmo_coords_folder, radar_samples_folder
 
 
 ObjStorage = ObjectStorage()
@@ -534,7 +534,7 @@ def calc_lookup(lookup_type, radar=None):
             lut_name = Path(lut_folder, "lut_" + lookup_type + "{:s}.p".format(r))
             logging.info("Creating lookup table {:s}".format(str(lut_name)))
             files = sorted(
-                glob.glob(str(Path(folder_radar_samples, "M{:s}{:s}*".format(res, r))))
+                glob.glob(str(Path(radar_samples_folder, "M{:s}{:s}*".format(res, r))))
             )
             rad_pos = constants.RADARS[constants.RADARS.Abbrev == r]
             x_rad = float(rad_pos.X)
