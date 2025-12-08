@@ -1,5 +1,6 @@
 ./rainforest/common/add_at.c
 *.pyc
+*.out
 build/*
 dist/*
 *egg*
