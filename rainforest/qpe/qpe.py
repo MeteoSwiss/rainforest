@@ -478,6 +478,9 @@ class QPEProcessor(object):
                             hzt_val = np.ma.masked_invalid(hzt_val)
                             hzt_cosmo_fields = {ct: hzt_val}
 
+                        # Store used hzt files for output metadata
+                        self.used_hzt_files = used_hzt_files
+
             """Part one - compute radar variables and mask"""
             # Begin compilation of radarobject
             self.logger.info("Preparing all polar radar data")
