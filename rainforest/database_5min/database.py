@@ -251,8 +251,8 @@ class Database(object):
             appended to the file.
 
         inputs:
-            t0: start time in YYYYMMDD(HHMM) format (HHMM) is optional
-            t1: end time in YYYYMMDD(HHMM) format (HHMM) is optional
+            t0: start time in datetime format
+            t1: end time in datetime format
             output_folder: where the files should be stored. If the directory
                 is not empty, the new data will be merged with existing files
                 if relevant
@@ -306,7 +306,7 @@ class Database(object):
         # Check existence of config file
         mdata_path = output_folder + "/.mdata.yml"
         try:
-            old_config = envyaml(mdata_path)["GAUGE_RETRIEVAL"]
+            old_config = envyaml(mdata_path)
         except Exception:
             old_config = None
             pass
@@ -319,16 +319,19 @@ class Database(object):
             ):
                 # Old data same format as new, don't overwrite
                 overwrite = 0
-            if old_config != self.config:
+            else:
+                import pdb
+
+                pdb.set_trace()
                 # Special case
                 tsteps_proc = np.array(
-                    current_tab.select("timestamp").collect(), dtype=int
+                    current_tab.select("TIMESTAMP").collect(), dtype=int
                 )
                 tstamp_start_old = np.min(tsteps_proc)
                 tstamp_end_old = np.max(tsteps_proc)
 
-                tstamp_start = int(timestamp_from_datestr(t0))
-                tstamp_end = int(timestamp_from_datestr(t1))
+                tstamp_start = int(timestamp_from_datestr(t0.strftime("%Y%m%d%H%M%S")))
+                tstamp_end = int(timestamp_from_datestr(t1.strftime("%Y%m%d%H%M%S")))
 
                 if tstamp_start > tstamp_start_old or tstamp_end < tstamp_end_old:
                     warning = """
@@ -354,7 +357,7 @@ class Database(object):
                         raise KeyboardInterrupt()
 
         # Write metadata file
-        mdata = copy.deepcopy(config_g)
+        mdata = copy.deepcopy(self.config)
         yaml.dump(mdata, open(mdata_path, "w"))
 
         # If timestamp is datetime format, convert to string

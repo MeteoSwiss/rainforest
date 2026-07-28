@@ -517,11 +517,14 @@ class Updater(object):
                 if i == 0:
                     hzt_files = self.retrieve_iso0_files(dtime, dtime)
                     # Interpolate between timesteps
-                    hztfields = HZT_hourly_to_5min(dtime, hzt_files, tsteps_min=5)
+                    hztfields = HZT_hourly_to_5min(dtime, hzt_files, tsteps_min=5)[0]
                 elif dtime > np.max(list(hztfields.keys())):
                     hzt_files = self.retrieve_iso0_files(dtime, dtime)
+
                     # Interpolate between timesteps
-                    hztfields.update(HZT_hourly_to_5min(dtime, hzt_files, tsteps_min=5))
+                    hztfields.update(
+                        HZT_hourly_to_5min(dtime, hzt_files, tsteps_min=5)[0]
+                    )
 
             # Create array for one timestep
             data_one_tstep = np.empty((len(stations_to_get), 0), dtype=np.float32)

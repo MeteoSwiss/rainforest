@@ -178,7 +178,7 @@ def qpe_to_chgrid(qpe, time, missing_files, used_hzt_files=None, precision=2):
         [1, NBINS_X, NBINS_Y],
         [
             [0, 0],
-            [1000 * np.min(X_QPE_CENTERS), 1000 * np.max(X_QPE_CENTERS)],
+            [1000 * np.max(X_QPE_CENTERS), 1000 * np.min(X_QPE_CENTERS)],
             [1000 * np.min(Y_QPE_CENTERS), 1000 * np.max(Y_QPE_CENTERS)],
         ],
     )

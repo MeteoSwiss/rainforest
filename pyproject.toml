@@ -1,36 +1,48 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "Cython", "numpy"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 
 [project]
 name = "rainforest-mch"
-version = "1.5.3"
-description = "RandomForest QPE python library"
+version = "1.6.0"
+description = "RandomForest QPE Python library"
 readme = "README.md"
-license = { text = "GPL-3.0" }
+license = "GPL-3.0-only"
+
 authors = [
-  { name = "Rebecca Gugerli", email = "rebecca.gugerli@epfl.ch" },
-  { name = "Daniel Wolfensberger", email = "daniel.wolfensberger@meteoswiss.ch" }
+    { name = "Rebecca Gugerli", email = "rebecca.gugerli@epfl.ch" },
+    { name = "Daniel Wolfensberger", email = "daniel.wolfensberger@meteoswiss.ch" },
 ]
 
-# If you want pip to read requirements.txt instead of duplicating, use this:
-dynamic = ["dependencies"]
+requires-python = ">=3.10,<3.14"
 
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
-
-[tool.setuptools]
-packages = [
-  "rainforest",
-  "rainforest.common",
-  "rainforest.qpe",
-  "rainforest.ml",
-  "rainforest.database_5min",
-  "rainforest.database_10min",
-  "rainforest.performance",
+dependencies = [
+    "boto3",
+    "Cython",
+    "dask",
+    "imageio",
+    "matplotlib",
+    "mlflow",
+    "mlflow-skinny",
+    "netCDF4",
+    "numba",
+    "prompt-toolkit",
+    "pyart-mch",
+    "pyarrow",
+    "pandas",
+    "pyshp",
+    "pyspark",
+    "pysteps",
+    "python-dateutil",
+    "pytz",
+    "PyYAML",
+    "scikit-learn",
+    "xmltodict",
+    "cartopy",
+    "xlrd",
 ]
-include-package-data = true
-zip-safe = false
+
 
 [project.scripts]
 rainforest_interface = "rainforest.interface:main"
@@ -42,3 +54,15 @@ db_populate_5min = "rainforest.database_5min.db_populate:main"
 rf_train = "rainforest.ml.rf_train:main"
 interact_cloud = "rainforest.common.interact_cloud:main"
 jretrievedwh = "rainforest.common.jretrievedwh:main"
+
+
+[tool.poetry]
+packages = [
+    { include = "rainforest" },
+]
+
+[dependency-groups]
+test = [
+    "pytest",
+    "ruff",
+]

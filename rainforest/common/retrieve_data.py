@@ -20,10 +20,14 @@ from io import BytesIO
 import fnmatch
 import re
 from warnings import warn
+import netCDF4
+from textwrap import dedent
 
 import pandas as pd  # function used in retrieve_hzt_prod
 from . import constants
 from . import io_data as io  # avoid circular
+from .lookup import get_lookup
+from .utils import round_to_hour
 
 
 def _make_timezone_aware(dt, tz=datetime.timezone.utc):
@@ -314,6 +318,214 @@ def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type="she
     )
 
     return files
+
+
+# -----------------------------------------------------------------------------------------
+def get_COSMO_T(time, sweeps=None, radar=None):
+    # TODO update for ICON!
+
+    """Retrieves COSMO temperature data from the CSCS repository, and
+    interpolates them to the radar gates, using precomputed lookup tables
+
+    Parameters
+    ----------
+    time : datetime.datetime instance
+        the time at which to get the COSMO data in datetime format
+    sweeps: list of integers
+         specify which sweeps (elevations) need to be retrieved in the form
+         of a list, if not specified, all 20 will be retrieved
+    radar: list of chars
+        list of radars for which to retrieve COSMO data, if not specified
+        all 5 radars will be used ('A','L','D','W','P')
+
+    Returns
+    -------
+    T_at_radar : dict
+        A dict containing the temperature at the radar gates, in the following form:
+        dict[radar]['T'][sweep_number]
+
+    """
+
+    if np.any(radar is None):
+        radar = constants.RADARS["Abbrev"]
+
+    if np.any(sweeps is None):
+        sweeps = range(1, 21)
+
+    if time > constants.COSMO1E_START and time < constants.TIMES_COSMO1E_T[0]:
+        msg = """No COSMO1E temp file available for this timestep,
+        retrieving COSMO1 temp file instead
+        """
+        warn(dedent(msg))
+
+    if time > constants.COSMO1_START and time < constants.TIMES_COSMO1_T[0]:
+        msg = """No temp file available for this timestep, using the slow
+        more exhaustive function instead
+        """
+        warn(dedent(msg))
+        return get_COSMO_variables(time, ["T"], sweeps, radar)
+
+    elif time < constants.COSMO1_START:
+        msg = """
+        Currently all COSMO-2 files have been archived and it is not possible
+        to retrieve them with this function, sorry
+        """
+        raise ValueError(dedent(msg))
+
+    # Get the closest COSMO-1 or 2 file in time
+    if time < constants.TIMES_COSMO1E_T[0]:
+        times_cosmo = constants.TIMES_COSMO1_T
+        files_cosmo = constants.FILES_COSMO1_T
+    else:
+        times_cosmo = constants.TIMES_COSMO1E_T
+        files_cosmo = constants.FILES_COSMO1E_T
+
+    idx_closest = np.where(time >= times_cosmo)[0][-1]
+    file_COSMO = files_cosmo[idx_closest]
+    (time - times_cosmo[idx_closest]).total_seconds()
+
+    file_COSMO = netCDF4.Dataset(file_COSMO)
+    # old version
+    # idx_time = np.argmin(np.abs(dt - file_COSMO.variables['time'][:]))
+    # new:
+    # The dimension 'time' in the COSMO-1E comes in the unit of hours since filename
+    cosmo_hours = [
+        times_cosmo[idx_closest] + datetime.timedelta(hours=(int(hh)))
+        for hh in file_COSMO.variables["time"][:]
+    ]
+    idx_time = np.argmin(np.abs([(time - hh).total_seconds() for hh in cosmo_hours]))
+
+    T = np.squeeze(file_COSMO.variables["T"][idx_time, :, :, :])
+
+    T_at_radar = {}
+    for r in radar:
+        lut_rad = get_lookup("cosmo1T_to_rad", r)
+        T_at_radar[r] = {"T": {}}
+        for s in sweeps:
+            # Finally get temperature at radar
+            m1 = lut_rad[s]["idx0"]
+            m2 = lut_rad[s]["idx1"]
+            m3 = lut_rad[s]["idx2"]
+            mask = lut_rad[s]["mask"]
+            # Finally get variables at radar
+            T_at_radar[r]["T"][s] = np.ma.array(T[m1, m2, m3], mask=mask)
+    file_COSMO.close()
+
+    return T_at_radar
+
+
+# -----------------------------------------------------------------------------------------
+def get_COSMO_variables(
+    time, variables, sweeps=None, radar=None, tmp_folder="/tmp/", cleanup=True
+):
+    # TODO update for ICON!
+
+    """Retrieves COSMO data from the CSCS repository, and
+    interpolates them to the radar gates, using precomputed lookup tables
+    This is a more generic but much slower function than the previous one,
+    as it reads all COSMO variables directly from the GRIB files
+
+    Parameters
+    ----------
+    time : datetime.datetime instance
+        the time at which to get the COSMO data in datetime format
+    variables: list of strings
+        List of COSMO variables to retrieve, ex. P, T, QV, QR, RH, etc...
+    sweeps: list of integers (optional)
+         specify which sweeps (elevations) need to be retrieved in the form
+         of a list, if not specified, all 20 will be retrieved
+    radar = list of chars (optional)
+        list of radars for which to retrieve COSMO data, if not specified
+        all 5 radars will be used ('A','L','D','W','P')
+    tmp_folder = str (optional)
+        Directory where to store the extracted files
+    cleanup = boolean (optional)
+        If true all extracted files will be deleted before returning the output
+        (recommended)
+
+    Returns
+    -------
+    A dict containing the COSMO variables at the radar gates, in the following
+    form: dict[radar][variables][sweep_number]
+
+    """
+
+    if np.any(radar is None):
+        radar = constants.RADARS["Abbrev"]
+
+    if np.any(sweeps is None):
+        sweeps = range(1, 21)
+
+    if time < constants.COSMO1_START:
+        msg = """
+        Currently all COSMO-2 files have been archived and it is not possible
+        to retrieve them with this function, sorry
+        """
+        raise ValueError(dedent(msg))
+
+    # Round time to nearest hour
+    t_near = round_to_hour(time)
+
+    cosmo_version = None
+    if t_near < constants.COSMO1E_START:
+        folder_cosmo = constants.FOLDER_COSMO1
+        subfolder = ""
+        cosmo_version = "1"
+    else:
+        folder_cosmo = constants.FOLDER_COSMO1E
+        subfolder = "det/"
+        cosmo_version = "1e"
+
+    # Get the closest COSMO-1 or 2 file in time
+    grb = folder_cosmo + "ANA{:s}/{:s}laf{:s}".format(
+        str(t_near.year)[2:], subfolder, datetime.datetime.strftime(t_near, "%Y%m%d%H")
+    )
+
+    # Extract fields and convert to netCDF
+    list_variables = ",".join(variables)
+    tmp_name = tmp_folder + os.path.basename(grb) + "_filtered"
+
+    cmd_filter = {
+        "{:s} {:s} --force -s {:s} -o {:s}".format(
+            constants.FILTER_COMMAND, grb, list_variables, tmp_name
+        )
+    }
+
+    subprocess.call(cmd_filter, shell=True)
+
+    cmd_convert = {
+        "{:s} --force -o {:s} nc {:s}".format(
+            constants.CONVERT_COMMAND, tmp_name + ".nc", tmp_name
+        )
+    }
+
+    subprocess.call(cmd_convert, shell=True)
+
+    # Finally interpolate to radar grid
+    file_COSMO = netCDF4.Dataset(tmp_name + ".nc")
+
+    # Interpolate for all radars and sweeps
+    var_at_radar = {}
+    for r in radar:
+        lut_rad = get_lookup("cosmo{:s}_to_rad".format(cosmo_version), r)
+        var_at_radar[r] = {}
+        for v in variables:
+            data = np.squeeze(file_COSMO.variables[v][:])
+            var_at_radar[r][v] = {}
+            for s in sweeps:
+                m1 = lut_rad[s]["idx0"]
+                m2 = lut_rad[s]["idx1"]
+                m3 = lut_rad[s]["idx2"]
+                mask = lut_rad[s]["mask"]
+                # Finally get variables at radar
+                d = np.ma.array(data[m1, m2, m3], mask=mask)
+                var_at_radar[r][v][s] = d
+    file_COSMO.close()
+    if cleanup:
+        os.remove(tmp_name)
+        os.remove(tmp_name + ".nc")
+
+    return var_at_radar
 
 
 def retrieve_prod(
@@ -672,6 +884,9 @@ def retrieve_CPCCV(time, stations):
     cpc_values = []
     aqc_values = []
 
+    # Row name for AQC changed at some point, check which one is present in the file
+    aqc_rowname = "AQC" if "AQC" in data.columns else "RZC"
+
     for station in stations:
         sel_row = data.loc[(data["nat.abbr"] == station) & (data["time.stamp"] == hour)]
         if sel_row.empty:
@@ -682,7 +897,7 @@ def retrieve_CPCCV(time, stations):
             row = sel_row.iloc[0]
             cpc_cv_values.append(row["CPC.CV"])
             cpc_values.append(row["CPC"])
-            aqc_values.append(row["AQC"])
+            aqc_values.append(row[aqc_rowname])
 
     return (
         np.array(cpc_cv_values),

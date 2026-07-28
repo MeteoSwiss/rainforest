@@ -126,7 +126,7 @@ class RFTraining(object):
             self.prepare_input()
 
     def prepare_input(
-        self, only_center=True, foldername_radar="radar", temporal_aggregation=[10, 60]
+        self, nx=[0], ny=[0], foldername_radar="radar", temporal_aggregation=[10, 60]
     ):
         """
         Reads the data from the database  in db_location and processes it to
@@ -149,14 +149,10 @@ class RFTraining(object):
 
         Parameters
         ----------
-        only_center : bool
-            If set to True only the input data for the central neighbour
-            i.e. NX = NY = 0 (the location of the gauge) will be recomputed
-            this takes much less time and is the default option since until
-            now the neighbour values are not used in the training of the RF
-            QPE
-        foldername_radar: str
-            Name of the folder to use for the radar data. Default name is 'radar'
+        nx : list
+            List of neighbours to compute in the X direction (default = 0, only center)
+        ny : list
+            List of neighbours to compute in the Y direction (default = 0, only center)
         temporal_aggregation: list of int
             The temporal aggregation arrays to create, these arrays have identical values
             for a given station and a given aggregation period. By default aggregation arrays
@@ -167,12 +163,6 @@ class RFTraining(object):
         if not os.path.exists(Path(self.db_location, foldername_radar)):
             self.logger.error("Invalid foldername for radar data, please check")
 
-        if only_center:
-            nx = [0]
-            ny = [0]
-        else:
-            nx = [0, 1, -1]
-            ny = [0, 1, -1]
         gauge = dd.read_csv(
             str(Path(self.db_location, "gauge", "*.csv.gz")),
             compression="gzip",

@@ -1,10 +1,8 @@
 # %%
 import os
-import shutil
 from pathlib import Path
 
 from rainforest.common.lookup import get_lookup, calc_lookup
-from rainforest.common.constants import METSTATIONS
 
 LOOKUP_FOLDER = Path(os.environ["RAINFOREST_DATAPATH"], "references", "lookup_data")
 
@@ -24,10 +22,10 @@ def test_calc_lookup():
         calc_lookup("station_to_qpegrid")
         if os.path.exists(lut_name):
             fail = False
-    except:
+    except Exception:
         os.rename(lut_name.replace(".p", ".bkp"), lut_name)
 
-    assert fail == False
+    assert not fail
 
 
 # %%

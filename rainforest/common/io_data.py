@@ -114,7 +114,7 @@ def read_status(status_file, add_wet_radome=False):
     return status
 
 
-def read_polar(polar_files, physic_value=True):
+def read_polar(polar_files):
     """
     Reads a polar radar metranet file as a pyart radar instance, if multiple
     files corresponding to multiple elevations (sweeps) are provided they are

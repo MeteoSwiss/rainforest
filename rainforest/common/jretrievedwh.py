@@ -29,7 +29,7 @@ import urllib.parse
 import base64
 import json
 
-jretrieve_url = 'https://servicedevt.meteoswiss.ch/jretrieve/api/v1'
+jretrieve_url = ''
 with urllib.request.urlopen(urllib.request.Request(
         method='POST',
         url='https://servicedevt.meteoswiss.ch/auth/realms/meteoswiss.ch/protocol/openid-connect/token',

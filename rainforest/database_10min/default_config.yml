@@ -20,7 +20,7 @@ PYTHON_HEADER: |
     export RAINFOREST_DATAPATH=/store/msrad/radar/rainforest/rainforest_data/
 
 GAUGE_RETRIEVAL:
-    VARIABLES : ['tre200s0','prestas0','ure200s0','''rre150z0''','dkl010z0','fkl010z0','rre150z0_adj']
+    VARIABLES : ['tre200s0','prestas0','ure200s0','rre150z0','dkl010z0','fkl010z0','rre150z0_adj']
     STATIONS : 'all'
     MIN_R_HOURLY : 0.01
     MAX_NB_SLURM_JOBS: 6

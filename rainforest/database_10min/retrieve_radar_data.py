@@ -81,8 +81,8 @@ class Updater(object):
         self.radars = self.radar_cfg["RADARS"]
         self.radar_variables = self.radar_cfg["RADAR_VARIABLES"]
         self.radar_variables.append("TCOUNT")
-        self.cosmo_variables = self.radar_cfg["COSMO_VARIABLES"]
-        self.other_variables = self.radar_cfg["OTHER_VARIABLES"]
+        self.cosmo_variables = self.radar_cfg.get("COSMO_VARIABLES", [])
+        self.other_variables = self.radar_cfg.get("OTHER_VARIABLES", [])
         self.temp_ref = self.radar_cfg["TEMP_REF"]
         self.agg_methods = self.radar_cfg["AGGREGATION_METHODS"]
         self.neighb_x = self.radar_cfg["NEIGHBOURS_X"]
@@ -249,7 +249,6 @@ class Updater(object):
             self.downloaded_files.extend(nested_dict_values(files_hzt))
 
         except Exception:
-            raise
             logging.error(
                 """Retrieval of hzt files at timesteps {:s}-{:s}
                       failed""".format(
@@ -522,12 +521,12 @@ class Updater(object):
                 if i == 0:
                     hzt_files = self.retrieve_iso0_files(tstart, tend)
                     # Interpolate between timesteps
-                    hztfields = HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)
+                    hztfields = HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)[0]
                 elif tstart > np.max(list(hztfields.keys())):
                     hzt_files = self.retrieve_iso0_files(tstart, tend)
                     # Interpolate between timesteps
                     hztfields.update(
-                        HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)
+                        HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)[0]
                     )
 
             # Create array for one timestep
@@ -571,6 +570,9 @@ class Updater(object):
                             status_file,
                             vpr_file,
                             temp_ref=self.temp_ref,
+                            metranet_reader=self.radar_cfg.get(
+                                "METRANET_READER", "python"
+                            ),
                         )
 
                         # Add ISO0_HEIGHT and height_over_iso0 to radar object

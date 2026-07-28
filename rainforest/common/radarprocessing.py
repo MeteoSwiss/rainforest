@@ -46,7 +46,7 @@ class Radar(object):
         statusfile=None,
         vprfile=None,
         temp_ref="TAIR",
-        metranet_reader="C",
+        metranet_reader="python",
     ):
         """
         Creates an Radar class instance

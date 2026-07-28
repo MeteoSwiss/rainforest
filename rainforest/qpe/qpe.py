@@ -549,6 +549,9 @@ class QPEProcessor(object):
                     )
 
             self.logger.info("Processing all sweeps of all radars")
+            rf_features_cart_unweighted = (
+                {}
+            )  # Used to store unweighted features if config requires, it is a dict of dict of dict with keys [radar][sweep][variable]
             for sweep in self.config["SWEEPS"]:  # Loop on sweeps
                 if not self.rt:
                     self.logger.info("---")
@@ -642,25 +645,42 @@ class QPEProcessor(object):
                                 W *= visib_radsweep / 100
 
                             for var in rf_features_cart[weight].keys():
-                                if var == "HEIGHT":  # precomputed in lookup tables
+                                if var == "HEIGHT":
                                     var_radsweep = self.rad_heights[rad][sweep]
+
                                 elif var == "VISIB":
                                     var_radsweep = visib_radsweep
+
                                 elif "RADAR_prop_" in var:
-                                    if (
-                                        var[-1] != rad
-                                    ):  # Can update RADAR_prop only for the current radar
+                                    if var[-1] != rad:
                                         continue
                                     var_radsweep = isvalidzh_radsweep
+
                                 else:
                                     if var in datasweep.keys():
-                                        # Compute variable integrated over QPE grid for rad/sweep
                                         var_radsweep = pol_to_cart(
                                             datasweep[var][idx_polar[0], idx_polar[1]],
                                             idx_ch,
                                         )
+                                    else:
+                                        continue
 
-                                # Do a weighted update of the rf_features_cart array
+                                # Save unweighted Cartesian field, once per radar/sweep/variable
+                                if self.config.get("SAVE_UNWEIGHTED_FEATURES", False):
+                                    rf_features_cart_unweighted.setdefault(rad, {})
+                                    rf_features_cart_unweighted[rad].setdefault(
+                                        sweep, {}
+                                    )
+
+                                    if (
+                                        var
+                                        not in rf_features_cart_unweighted[rad][sweep]
+                                    ):
+                                        rf_features_cart_unweighted[rad][sweep][
+                                            var
+                                        ] = var_radsweep.copy()
+
+                                # Existing weighted update
                                 rf_features_cart[weight][var] = np.nansum(
                                     np.dstack(
                                         (
@@ -682,6 +702,20 @@ class QPEProcessor(object):
                         self.logger.error(f"Could not compute sweep {sweep}")
                         self.logger.error(f"Error is {err}")
                         pass
+
+            if len(rf_features_cart_unweighted):
+                filepath = os.path.join(output_folder, "UNWEIGHTED_FEATURES")
+                os.makedirs(filepath, exist_ok=True)
+                print(f"Writing file {os.path.join(filepath, tstr)}")
+                np.savez_compressed(
+                    os.path.join(filepath, tstr),
+                    **{
+                        f"{rad}_sweep{sweep}_{var}": arr
+                        for rad, sweeps in rf_features_cart_unweighted.items()
+                        for sweep, variables in sweeps.items()
+                        for var, arr in variables.items()
+                    },
+                )
 
             """Part four - RF prediction"""
             self.logger.info("Applying RF model to retrieve predictions")
@@ -798,11 +832,9 @@ class QPEProcessor(object):
                     self.save_output(qpe_ac, ct, filepath + tstr)
 
                 """Part six - Save main output"""
-                filepath = output_folder + "/" + k
-                if not os.path.exists(filepath):
-                    os.mkdir(filepath)
-                filepath += "/" + tstr
-                self.save_output(qpe, ct, filepath)
+                filepath = os.path.join(output_folder, k)
+                os.makedirs(filepath, exist_ok=True)
+                self.save_output(qpe, ct, os.path.join(filepath, tstr))
 
                 if self.config["SAVE_NON_POSTPROCESSED_DATA"]:
                     # Coding of folders (0 not applied, 1 applied)
@@ -810,26 +842,17 @@ class QPEProcessor(object):
                     # O: outlier removal
                     # G: Gaussian smoothing
 
-                    filepath = output_folder + "/" + k + "_T0O0G0/"
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)
-                    self.save_output(qpe_no_temp, ct, filepath + tstr)
+                    outputs = [
+                        ("_T0O0G0", qpe_no_temp),
+                        ("_T1O0G0", qpe_no_pp),
+                        ("_T1O1G0", outlier_removal(qpe_no_pp)),
+                        (
+                            "_T1O0G1",
+                            gaussian_filter(qpe_no_pp, self.config["GAUSSIAN_SIGMA"]),
+                        ),
+                    ]
 
-                    filepath = output_folder + "/" + k + "_T1O0G0/"
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)
-                    self.save_output(qpe_no_pp, ct, filepath + tstr)
-
-                    # With outlier removal (O1), but without Gaussian smoothing (G0)
-                    filepath = output_folder + "/" + k + "_T1O1G0/"
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)
-                    qpe_temp = outlier_removal(qpe_no_pp)
-                    self.save_output(qpe_temp, ct, filepath + tstr)
-
-                    # Without outlier removal (O0), but without Gaussian smoothing (G1)
-                    filepath = output_folder + "/" + k + "_T1O0G1/"
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)
-                    qpe_temp = gaussian_filter(qpe_no_pp, self.config["GAUSSIAN_SIGMA"])
-                    self.save_output(qpe_temp, ct, filepath + tstr)
+                    for suffix, data in outputs:
+                        filepath = os.path.join(output_folder, f"{k}{suffix}")
+                        os.makedirs(filepath, exist_ok=True)
+                        self.save_output(data, ct, os.path.join(filepath, tstr))

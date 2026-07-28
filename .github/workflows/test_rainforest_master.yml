@@ -48,6 +48,7 @@ jobs:
       - name: Check imports
         env:
            AWS_KEY: ${{ secrets.AWS_KEY }}
+           AWS_SECRET: ${{ secrets.AWS_SECRET }}
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
         working-directory: /tmp/
         run: |
@@ -59,6 +60,7 @@ jobs:
       - name: Run tests
         env:
            AWS_KEY: ${{ secrets.AWS_KEY }}
+           AWS_SECRET: ${{ secrets.AWS_SECRET }}
            RAINFOREST_DATAPATH:  ${{github.workspace}}/rainforest_data
         working-directory: ${{github.workspace}}
         run: pytest tests_ci

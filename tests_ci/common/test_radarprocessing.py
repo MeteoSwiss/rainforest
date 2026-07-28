@@ -1,5 +1,4 @@
 from rainforest.common.radarprocessing import Radar
-from rainforest.common.utils import split_by_time
 from rainforest.common.object_storage import ObjectStorage
 from pathlib import Path
 import pyart

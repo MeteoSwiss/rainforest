@@ -14,24 +14,29 @@ os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
 ###############
 # S3 ACCESS
 ###############
-AWS_ACCESS_KEY_ID = "78FXN2YBOXTRQS8938Z7"
-ENDPOINT_URL = "https://eu-central-1.linodeobjects.com"
+ENDPOINT_URL = "https://s3.pub1.infomaniak.cloud"
 
 
 class ObjectStorage(object):
-    def __init__(self, aws_key=None):
+    def __init__(self, aws_key=None, aws_secret=None):
         """
         Creates an ObjectStorage instance
         """
         self.aws_defined = True
         if aws_key is None:
-            if "AWS_KEY" in os.environ:
-                aws_key = os.environ["AWS_KEY"]
-            else:
+            aws_key = os.getenv("AWS_KEY")
+            if aws_key is None:
                 print(
-                    'No AWS_KEY environment variable was found, you will not be able to download/upload additional data from the cloud!"'
+                    "No AWS_KEY environment variable was found, you will not be able to download/upload additional data from the cloud!"
                 )
                 self.aws_defined = False
+            if aws_secret is None:
+                aws_secret = os.getenv("AWS_SECRET")
+                if aws_key is None:
+                    print(
+                        "No AWS_SECRET environment variable was found, you will not be able to download/upload additional data from the cloud!"
+                    )
+                    self.aws_defined = False
 
         hostname = socket.gethostname()
         if "zuerh" in hostname or "lomrh" in hostname:
@@ -43,9 +48,9 @@ class ObjectStorage(object):
 
         if self.aws_defined:
             self.linode_obj_config = {
-                "aws_access_key_id": AWS_ACCESS_KEY_ID,
+                "aws_access_key_id": aws_key,
                 "endpoint_url": ENDPOINT_URL,
-                "aws_secret_access_key": aws_key,
+                "aws_secret_access_key": aws_secret,
                 "config": Config(s3={"use_expect_header": False}),
             }
             self.client = boto3.client("s3", **self.linode_obj_config, verify=verify)
@@ -73,7 +78,7 @@ class ObjectStorage(object):
             self.download_file(key, bpath)
         return filename
 
-    def list_files(self, bucket="rainforest"):
+    def list_files(self, bucket="rainforest-ci"):
         """
         Lists all files in a given bucket
 
@@ -89,7 +94,7 @@ class ObjectStorage(object):
             all_keys.append(object["Key"])
         return all_keys
 
-    def clean_bucket(self, bucket="rainforest"):
+    def clean_bucket(self, bucket="rainforest-ci"):
         """
         Cleans a bucket on the cloud S3, will DELETE all data!
 
@@ -107,7 +112,7 @@ class ObjectStorage(object):
             for object in objects["Contents"]:
                 self.client.delete_object(Bucket=bucket, Key=object["Key"])
 
-    def delete_file(self, key, bucket="rainforest"):
+    def delete_file(self, key, bucket="rainforest-ci"):
         """
         Deletes a file from a bucket
 
@@ -120,7 +125,7 @@ class ObjectStorage(object):
         """
         self.client.delete_object(Bucket=bucket, Key=key)
 
-    def download_file(self, key, bpath, bucket="rainforest"):
+    def download_file(self, key, bpath, bucket="rainforest-ci"):
         """
         Downloads a given file from the cloud S3
 
@@ -141,7 +146,7 @@ class ObjectStorage(object):
             Bucket=bucket, Key=key, Filename=str(Path(bpath, key))
         )
 
-    def upload_file(self, filename, bucket="rainforest"):
+    def upload_file(self, filename, bucket="rainforest-ci"):
         """
         Uploads a given file to the cloud S3
 
@@ -162,7 +167,7 @@ class ObjectStorage(object):
         )
 
     def rsync_cloud(
-        self, rainforest_data_folder=None, bucket="rainforest", overwrite=False
+        self, rainforest_data_folder=None, bucket="rainforest-ci", overwrite=False
     ):
         """
         Uploads all files within a given folder

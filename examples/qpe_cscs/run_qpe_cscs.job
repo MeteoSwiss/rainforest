@@ -1,9 +1,0 @@
-#!/bin/bash
-#SBATCH -N 1                # nodes requested
-#SBATCH -c 1                # cores requested
-#SBATCH -t 23:0:00          # time requested in hour:minute:second
-export PATH=/scratch/mch/wolfensb/rainforest_venv/bin/:$PATH
-export RAINFOREST_DATAPATH=/store_new/mch/msrad/radar/rainforest_data/
-START_TIME=202511190000
-END_TIME=202511250000
-qpe_compute -s ${START_TIME} -e ${END_TIME} -c config.yml -m  '{"RF_dualpol":"RFO_BETA_-0.5_BC_spline.p"}' -o /scratch/mch/wolfensb/rfo_nov_2025/
