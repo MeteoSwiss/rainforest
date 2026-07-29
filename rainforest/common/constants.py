@@ -29,7 +29,7 @@ cosmo_coords_folder = str(Path(data_folder, "references", "coords_ICON"))
 radar_samples_folder = str(Path(data_folder, "references", "radar_samples"))
 rfmodels_folder = str(Path(data_folder, "rf_models"))
 
-ObjStorage = ObjectStorage(data_folder)
+ObjStorage = ObjectStorage()
 
 
 ###############
