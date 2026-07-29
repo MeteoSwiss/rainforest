@@ -30,13 +30,13 @@ class ObjectStorage:
                     "No AWS_KEY environment variable was found, you will not be able to download/upload additional data from the cloud!"
                 )
                 self.aws_defined = False
+        if aws_secret is None:
+            aws_secret = os.getenv("AWS_SECRET")
             if aws_secret is None:
-                aws_secret = os.getenv("AWS_SECRET")
-                if aws_key is None:
-                    print(
-                        "No AWS_SECRET environment variable was found, you will not be able to download/upload additional data from the cloud!"
-                    )
-                    self.aws_defined = False
+                print(
+                    "No AWS_SECRET environment variable was found, you will not be able to download/upload additional data from the cloud!"
+                )
+                self.aws_defined = False
 
         hostname = socket.gethostname()
         if "zuerh" in hostname or "lomrh" in hostname:
