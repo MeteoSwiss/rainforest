@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Command line script to evaluate a set of QPE realizations using gauge data
 as reference
@@ -7,10 +6,10 @@ as reference
 see :ref:`qpe_evaluation`
 """
 
-import os
 import datetime
-
+import os
 from optparse import OptionParser
+
 from rainforest.qpe.evaluation import evaluation
 
 
@@ -100,7 +99,7 @@ def main():
         default=None,
     )
 
-    (options, args) = parser.parse_args()
+    (options, _args) = parser.parse_args()
 
     options.b10 = [int(u) for u in options.b10.split(",")]
     options.b60 = [int(u) for u in options.b60.split(",")]

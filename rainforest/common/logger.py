@@ -1,5 +1,5 @@
-import logging
 import gzip
+import logging
 import os
 import sys
 from datetime import datetime

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Utility functions for the ML submodule
 """
 
 # Global imports
-import pandas as pd
-import numpy as np
+import datetime
 import logging
 import uuid
-import datetime
+
+import numpy as np
+import pandas as pd
 
 # Local imports
-from ..common.utils import chunks, check_random_state
+from ..common.utils import check_random_state, chunks
 
 
 def vert_aggregation(
@@ -100,7 +100,7 @@ def split_event(timestamps, n=5, threshold_hr=12, random_state=None):
     split_idx : int array
         array containing the subset grouping, with values from 0 to n - 1
     """
-    logging.info("Splitting dataset in {:d} parts using different events".format(n))
+    logging.info(f"Splitting dataset in {n:d} parts using different events")
 
     tstamps_gau = np.array(timestamps - timestamps % 3600)
     order = np.argsort(tstamps_gau)
@@ -112,7 +112,7 @@ def split_event(timestamps, n=5, threshold_hr=12, random_state=None):
     dif = np.insert(dif, 0, 0)
 
     # label the events
-    jumps = np.zeros((len(dif)))
+    jumps = np.zeros(len(dif))
     jumps[dif > threshold_hr] = 1
     labels = np.cumsum(jumps)
 
@@ -124,7 +124,7 @@ def split_event(timestamps, n=5, threshold_hr=12, random_state=None):
     # split events in n groups
     events_split = chunks(allevents, n)
 
-    split_idx = np.zeros((len(timestamps)))
+    split_idx = np.zeros(len(timestamps))
 
     for i in range(n):
         split_idx[np.isin(labels, events_split[i])] = i
@@ -133,7 +133,7 @@ def split_event(timestamps, n=5, threshold_hr=12, random_state=None):
     return split_idx
 
 
-def split_years(timestamps, years=[2016, 2017, 2018, 2019, 2020, 2021]):
+def split_years(timestamps, years=None):
     """
     Splits the dataset into n subsets by separating the observations into
     separate years
@@ -150,13 +150,15 @@ def split_years(timestamps, years=[2016, 2017, 2018, 2019, 2020, 2021]):
     split_idx : int array
         array containing the subset grouping, with values from 0 to years-1
     """
-    logging.info("Splitting dataset in {:d} years".format(len(years)))
+    if years is None:
+        years = [2016, 2017, 2018, 2019, 2020, 2021]
+    logging.info(f"Splitting dataset in {len(years):d} years")
 
     tstamps_years = np.array(
         [datetime.datetime.utcfromtimestamp(ti).year for ti in timestamps]
     )
 
-    split_idx = np.zeros((len(timestamps))) * np.nan
+    split_idx = np.zeros(len(timestamps)) * np.nan
 
     for i, year in enumerate(years):
         split_idx[np.where(tstamps_years == year)] = year

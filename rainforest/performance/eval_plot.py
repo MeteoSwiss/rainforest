@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-    Functions to plot the performance scores on a Swiss map
-    Rebecca Gugerli, EPFL-MeteoSwiss, March 2023
+Functions to plot the performance scores on a Swiss map
+Rebecca Gugerli, EPFL-MeteoSwiss, March 2023
 """
 
-import os
-import sys
-import pandas as pd
-import numpy as np
 import datetime
 import logging
-from PIL import Image
+import os
+import sys
 
 # Settings for plots
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from matplotlib import colors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.colors import from_levels_and_colors
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from PIL import Image
 
 from ..common import constants
-from ..common.utils import envyaml
 from ..common.io_data import read_cart
+from ..common.utils import envyaml
 from .eval_get_estimates import get_QPE_filelist
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -193,7 +192,7 @@ def compileSubplotSetup(modellist, modelfullnames):
 
     for im, model in enumerate(modellist):
         setup[list(setup.keys())[im]]["model"] = model
-        if model in modelfullnames.keys():
+        if model in modelfullnames:
             setup[list(setup.keys())[im]]["tit"] = modelfullnames[model]
         else:
             setup[list(setup.keys())[im]]["tit"] = model
@@ -266,7 +265,7 @@ def plotModelMapsSubplots(
         else:
             ax1 = plt.subplot2grid(figShape, loc, sharey=ax0, sharex=ax0)
 
-        if "model" not in figsetup[loc].keys():
+        if "model" not in figsetup[loc]:
             plt.axis("off")
             continue
         else:
@@ -295,13 +294,13 @@ def plotModelMapsSubplots(
     plt.tight_layout()
 
     if output_file:
-        logging.info("Saving file : {}".format(filename))
+        logging.info(f"Saving file : {filename}")
         plt.savefig(filename, transparent=False, dpi=300)
 
     return plt.gcf()
 
 
-class plotQPEMaps(object):
+class plotQPEMaps:
     def __init__(self, config_file, config_figures=None):
         """Initiate the class evaluation
 
@@ -337,7 +336,7 @@ class plotQPEMaps(object):
                 config (dic): Dictionnary with the setup for the evaluation
         """
 
-        if ("MAINFOLDER" not in config["PATHS"].keys()) or (
+        if ("MAINFOLDER" not in config["PATHS"]) or (
             not os.path.exists(config["PATHS"]["MAINFOLDER"])
         ):
             logging.error(
@@ -364,7 +363,7 @@ class plotQPEMaps(object):
             )
         self.qpemapfolder = config["PATHS"]["MAINFOLDER"] + "/qpe_maps/"
 
-        if "TIME_START" not in config.keys():
+        if "TIME_START" not in config:
             logging.error("No starting time was defined, please check.")
         else:
             try:
@@ -376,7 +375,7 @@ class plotQPEMaps(object):
                     "Starting time is not valid, please check that the format corresponds to YYYYMMDDHHMM."
                 )
 
-        if "TIME_END" not in config.keys():
+        if "TIME_END" not in config:
             logging.error("No ending time was defined, please check.")
         else:
             try:
@@ -388,13 +387,13 @@ class plotQPEMaps(object):
                     "Ending time is not valid, please check that the format corresponds to YYYYMMDDHHMM."
                 )
 
-        if "RF_MODELS" in config.keys():
+        if "RF_MODELS" in config:
             self.modellist = config["RF_MODELS"]
         else:
             logging.error("Please define a model to evaluate :)")
             sys.exit()
 
-        if "REFERENCES" in config.keys():
+        if "REFERENCES" in config:
             self.references = list(config["REFERENCES"])
         else:
             self.references = None
@@ -577,7 +576,7 @@ class plotQPEMaps(object):
 
         # Plotting all realizations for each timestamp
         # ----------------------------------------------
-        logging.info("All images are saved here: {}".format(self.qpemapfolder))
+        logging.info(f"All images are saved here: {self.qpemapfolder}")
         for i, tstep in enumerate(time_res["tstamps"][1::]):
             plt.figure(figsize=figSize)
 
@@ -633,7 +632,7 @@ class plotQPEMaps(object):
                     ax1.set_ylim([zoom_extent[2], zoom_extent[3]])
 
                 if plot_points:
-                    for station in plot_points_dic.keys():
+                    for station in plot_points_dic:
                         ax1.plot(
                             plot_points_dic[station][0],
                             plot_points_dic[station][1],
@@ -668,7 +667,7 @@ class plotQPEMaps(object):
                     "".join(modellabel), datetime.datetime.strftime(tstep, "%Y%m%d%H%M")
                 )
 
-            logging.info("Saving image to {}".format(fname))
+            logging.info(f"Saving image to {fname}")
             plt.savefig(self.qpemapfolder + fname, bbox_inches="tight")
             plt.close("all")
 
@@ -686,9 +685,9 @@ class plotQPEMaps(object):
                 time_res["tstamps"][-1].strftime("%Y%m%d%H"),
             )
             if zoom:
-                fname = "QPEmap_zoom_{}.gif".format(timestring)
+                fname = f"QPEmap_zoom_{timestring}.gif"
             else:
-                fname = "QPEmap_{}.gif".format(timestring)
+                fname = f"QPEmap_{timestring}.gif"
 
             frames[0].save(
                 self.qpemapfolder + fname,

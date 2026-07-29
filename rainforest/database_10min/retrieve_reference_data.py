@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main routine for retrieving reference MeteoSwiss data (e.g. CPC, RZC, POH, etc)
 This is meant to be run as a command line command from a slurm script
@@ -14,25 +13,21 @@ Daniel Wolfensberger, LTE-MeteoSwiss, 2020
 Rebecca Gugerli, LTE-MeteoSwiss, 2022
 """
 
-import numpy as np
-import pandas as pd
 import datetime
 import logging
-import dask.dataframe as dd
 import os
-
 from collections import OrderedDict
 from optparse import OptionParser
 
+import dask.dataframe as dd
+import numpy as np
+import pandas as pd
+
 from rainforest.common import constants
-from rainforest.common.lookup import get_lookup
-from rainforest.common.utils import read_task_file, envyaml, nested_dict_values
-from rainforest.common.retrieve_data import (
-    retrieve_prod,
-    retrieve_CPCCV,
-    retrieve_AQC_XLS,
-)
 from rainforest.common.io_data import read_cart
+from rainforest.common.lookup import get_lookup
+from rainforest.common.retrieve_data import retrieve_CPCCV, retrieve_prod
+from rainforest.common.utils import envyaml, nested_dict_values, read_task_file
 
 logging.basicConfig(level=logging.INFO)
 
@@ -46,7 +41,7 @@ except ImportError:
 IGNORE_ERRORS = True
 
 
-class Updater(object):
+class Updater:
     def __init__(self, task_file, config_file, output_folder, debug=False):
         """
         Creates an Updater  class instance that allows to add new reference
@@ -137,10 +132,8 @@ class Updater(object):
                 self.downloaded_files.extend(nested_dict_values(files_allproducts))
             except Exception:
                 logging.error(
-                    """Retrieval for product {:s} at timesteps {:s}-{:s}
-                          failed""".format(
-                        prod, str(start_time), str(end_time)
-                    )
+                    f"""Retrieval for product {prod:s} at timesteps {start_time!s:s}-{end_time!s:s}
+                          failed"""
                 )
                 files_allproducts[prod] = []
                 if not IGNORE_ERRORS:
@@ -171,31 +164,28 @@ class Updater(object):
         data_cst = []  # for time, sta, nx,ny
 
         if "CPC.CV" in self.products:
-            data_cpccv = []  # separate list for cpccv
-            data_cst_cpccv = []  # for time, sta, nx,ny
+            # If CPC.CV is activated, 3 new products are added
             include_cpccv = True
-            self.products.remove("CPC.CV")
-            colnames_cpccv = ["TIMESTAMP", "STATION", "NX", "NY"]
-            colnames_cpccv.append("CPC.CV")
-            # If getting CPC.CV, also get CPC from excel files
-            try:
-                self.products.remove("CPC_XLS")
-            except Exception:
-                pass
-            data_cpcxls = []
-            colnames_cpccv.append("CPC_XLS")
-        else:
-            include_cpccv = False
+            data_cpccv = []  # separate list for cpccv
+            data_cpcxls = []  # for cpc gotten from CPC.CV files
+            data_aqcxls = []  # for AQC (rzc) gotten from CPC.CV xls files
+            data_cst_cpccv = []  # for time, sta, nx,ny
 
-        if "AQC_XLS" in self.products:
-            data_aqcxls = []
-            data_cst_aqcxls = []
-            include_aqcxls = True
-            self.products.remove("AQC_XLS")
-            colnames_aqcxls = ["TIMESTAMP", "STATION", "NX", "NY"]
-            colnames_aqcxls.append("AQC_XLS")
-        else:
-            include_aqcxls = False
+            self.products.remove("CPC.CV")
+            if "AQC_XLS" in self.products:
+                self.products.remove("AQC_XLS")
+            if "CPC_XLS" in self.products:
+                self.products.remove("CPC_XLS")
+
+            colnames_cpccv = [
+                "TIMESTAMP",
+                "STATION",
+                "NX",
+                "NY",
+                "CPC.CV",
+                "CPC_XLS",
+                "AQC_XLS",
+            ]
 
         # Initiate
         current_hour = None
@@ -229,25 +219,22 @@ class Updater(object):
                 current_hour = hour_of_year
                 if include_cpccv:
                     logging.info(
-                        "Retrieving product CPC.CV and CPC_XLS for hour {}".format(
-                            current_hour
-                        )
+                        f"Retrieving product CPC.CV and CPC_XLS for hour {current_hour}"
                     )
 
                     # CPC.CV only contains a measurement every full hour
                     tstep_xls = datetime.datetime.strptime(current_hour, "%Y%m%d%H")
 
-                    data_at_stations, data_at_stations_cpc = retrieve_CPCCV(
-                        tstep_xls, stations_to_get
-                    )
+                    cpccv, cpc_xls, aqc_xls = retrieve_CPCCV(tstep_xls, stations_to_get)
 
-                    # Replace NAN
-                    data_at_stations[np.isnan(data_at_stations)] = fill_value
-                    data_at_stations_cpc[np.isnan(data_at_stations_cpc)] = fill_value
+                    cpccv[np.isnan(cpccv)] = fill_value
+                    cpc_xls[np.isnan(cpc_xls)] = fill_value
+                    aqc_xls[np.isnan(aqc_xls)] = fill_value
 
                     # Assign CPC.CV values to rows corresponding to nx = ny = 0
-                    data_cpccv.extend(data_at_stations)
-                    data_cpcxls.extend(data_at_stations_cpc)
+                    data_cpccv.extend(cpccv)
+                    data_cpcxls.extend(cpc_xls)
+                    data_aqcxls.extend(aqc_xls)
 
                     # CPC.CV only contains a measurement every full hour
                     tstep_xls = int(
@@ -255,32 +242,6 @@ class Updater(object):
                     )
                     for sta in stations_to_get:
                         data_cst_cpccv.append([tstep_xls, sta, 0, 0])  # nx = ny = 0
-
-                if include_aqcxls:
-                    logging.info(
-                        "Retrieving product AQC from Excel file for hour {}".format(
-                            current_hour
-                        )
-                    )
-
-                    # AQC_XLS only contains a measurement every full hour
-                    tstep_xls = datetime.datetime.strptime(current_hour, "%Y%m%d%H")
-
-                    # Get value
-                    data_at_stations = retrieve_AQC_XLS(tstep_xls, stations_to_get)
-
-                    # Replace NAN
-                    data_at_stations[np.isnan(data_at_stations)] = fill_value
-
-                    # Assign CPC.CV values to rows corresponding to nx = ny = 0
-                    data_aqcxls.extend(data_at_stations)
-
-                    # AQC_XLS only contains a measurement every full hour
-                    tstep_xls = int(
-                        tstep_xls.replace(tzinfo=datetime.timezone.utc).timestamp()
-                    )
-                    for sta in stations_to_get:
-                        data_cst_aqcxls.append([tstep_xls, sta, 0, 0])  # nx = ny = 0
 
             # Initialize output
             N, M = len(stations_to_get) * nneighb, self.dims["np"]
@@ -330,7 +291,7 @@ class Updater(object):
                     for sta in stations_to_get:  # Loop on stations
                         for nx in self.neighb_x:
                             for ny in self.neighb_y:
-                                strnb = "{:d}{:d}".format(nx, ny)
+                                strnb = f"{nx:d}{ny:d}"
                                 # Get idx of Cart pixel in 2D map
                                 idx = lut_cart[sta][strnb]
                                 data_prod[idx_row] = mv[idx_slice_mv, idx[0], idx[1]]
@@ -360,10 +321,12 @@ class Updater(object):
                         for sta in stations_to_get:  # Loop on stations
                             for nx in self.neighb_x:
                                 for ny in self.neighb_y:
-                                    strnb = "{:d}{:d}".format(nx, ny)
+                                    strnb = f"{nx:d}{ny:d}"
                                     # Get idx of Cart pixel in 2D map
                                     idx = lut_cart[sta][strnb]
-                                    data_prod[idx_row, k] = proddata[idx[0], idx[1]]
+                                    data_prod[idx_row, k] = np.squeeze(proddata)[
+                                        idx[0], idx[1]
+                                    ]
                                     # Add next row
                                     idx_row += 1
 
@@ -372,7 +335,7 @@ class Updater(object):
 
                 data_allprod[:, j] = data_prod
 
-            for prod in allfiles.keys():
+            for prod in allfiles:
                 for f in allfiles[prod]:
                     try:
                         os.remove(f)
@@ -401,7 +364,7 @@ class Updater(object):
                     save_output = False
 
             if save_output and len(data_cst):
-                logging.info("Saving new table for day {:s}".format(str(current_day)))
+                logging.info(f"Saving new table for day {current_day!s:s}")
                 name = self.output_folder + current_day + ".parquet"
 
                 # Check if a file already exists
@@ -417,7 +380,7 @@ class Updater(object):
 
                 for c, col in enumerate(colnames):
                     data_col = all_data[:, c]
-                    isin_listcols = [col in c for c in constants.COL_TYPES.keys()]
+                    isin_listcols = [col in c for c in constants.COL_TYPES]
                     if any(isin_listcols):
                         idx = np.where(isin_listcols)[0][0]
                         coltype = list(constants.COL_TYPES.values())[idx]
@@ -437,14 +400,16 @@ class Updater(object):
                     data_cst_cpccv = np.array(data_cst_cpccv)
                     data_cpccv = np.array([data_cpccv]).T
                     data_cpcxls = np.array([data_cpcxls]).T
+                    data_aqcxls = np.array([data_aqcxls]).T
+
                     all_data_cpccv = np.hstack(
-                        (data_cst_cpccv, data_cpccv, data_cpcxls)
+                        (data_cst_cpccv, data_cpccv, data_cpcxls, data_aqcxls)
                     )
 
                     dic_cpccv = OrderedDict()
                     for c, col in enumerate(colnames_cpccv):
                         data_col = all_data_cpccv[:, c]
-                        isin_listcols = [col in c for c in constants.COL_TYPES.keys()]
+                        isin_listcols = [col in c for c in constants.COL_TYPES]
                         if any(isin_listcols):
                             idx = np.where(isin_listcols)[0][0]
                             coltype = list(constants.COL_TYPES.values())[idx]
@@ -459,35 +424,6 @@ class Updater(object):
                         dic_cpccv[col] = data_col
 
                     dfcpc = pd.DataFrame(dic_cpccv)
-                    df = pd.merge(
-                        df, dfcpc, on=["STATION", "TIMESTAMP", "NX", "NY"], how="left"
-                    )
-                    df.replace(np.nan, fill_value, inplace=True)
-
-                # Add AQC Values
-                if include_aqcxls:
-                    data_cst_aqcxls = np.array(data_cst_aqcxls)
-                    data_aqcxls = np.array([data_aqcxls]).T
-                    all_data_aqcxls = np.hstack((data_cst_aqcxls, data_aqcxls))
-
-                    dic_aqcxls = OrderedDict()
-                    for c, col in enumerate(colnames_aqcxls):
-                        data_col = all_data_aqcxls[:, c]
-                        isin_listcols = [col in c for c in constants.COL_TYPES.keys()]
-                        if any(isin_listcols):
-                            idx = np.where(isin_listcols)[0][0]
-                            coltype = list(constants.COL_TYPES.values())[idx]
-                            try:
-                                data_col = data_col.astype(coltype)
-                            except Exception:  # for int
-                                data_col = data_col.astype(float).astype(coltype)
-                                if not IGNORE_ERRORS:
-                                    raise
-                        else:
-                            data_col = data_col.astype(np.float32)
-                        dic_aqcxls[col] = data_col
-
-                    dfcpc = pd.DataFrame(dic_aqcxls)
                     df = pd.merge(
                         df, dfcpc, on=["STATION", "TIMESTAMP", "NX", "NY"], how="left"
                     )
@@ -520,9 +456,7 @@ class Updater(object):
                     data_cst_cpccv = []  # for time, sta, nx,ny
                     data_cpccv = []  # separate list for cpccv
                     data_cpcxls = []  # separate list for cpc from xls files
-                if include_aqcxls:
-                    data_cst_aqcxls = []
-                    data_aqcxls = []
+                    data_aqcxls = []  # separate list for aqc from xls files
 
     def final_cleanup(self):
         """
@@ -535,7 +469,7 @@ class Updater(object):
                     os.remove(f)
                 except PermissionError as e:
                     logging.error(e)
-                    logging.error("Could not delete file {:s}".format(f))
+                    logging.error(f"Could not delete file {f:s}")
 
 
 if __name__ == "__main__":

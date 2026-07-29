@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Functions to read and compute lookup tables
@@ -58,27 +57,32 @@ for a given sweep number in the form of a 2D field of size nazimuth x nrange
 
 """
 
-import pickle
 import glob
-import pandas as pd
-import logging
-import numpy as np
+import pickle
 from pathlib import Path
+
 import netCDF4
-from pyart.map.polar_to_cartesian import get_earth_radius
+import numpy as np
+import pandas as pd
 from pyart.aux_io import read_metranet
+from pyart.core.transforms import wgs84_to_swissCH1903
 
 # Local imports
 from . import constants
+from .constants import (
+    cosmo_coords_folder,
+    lut_boscacci_folder,
+    lut_folder,
+    metadata_folder,
+    radar_samples_folder,
+)
+from .logger import get_logger
+from .object_storage import ObjectStorage
 from .utils import nanadd_at
 from .wgs84_ch1903 import GPSConverter
-from .object_storage import ObjectStorage
-
-from .constants import metadata_folder, lut_folder, lut_boscacci_folder
-from .constants import cosmo_coords_folder, radar_samples_folder
-
 
 ObjStorage = ObjectStorage()
+mylogger = get_logger("lookup")
 
 
 def get_lookup(lookup_type, radar=None):
@@ -175,23 +179,19 @@ def calc_lookup(lookup_type, radar=None):
         offset_y = int((neighb_y - 1) / 2)
 
         for r in radar:
-            lut_name = Path(lut_folder, "lut_station_to_rad{:s}.p".format(r))
-            logging.info("Creating lookup table {:s}".format(str(lut_name)))
+            lut_name = Path(lut_folder, f"lut_station_to_rad{r:s}.p")
+            mylogger.info(f"Creating lookup table {lut_name!s:s}")
             try:
                 lut_cart = get_lookup("qpegrid_to_rad", radar)
             except Exception:
-                raise IOError(
-                    "Could not load qpegrid_to_rad lookup for radar {:s}, compute it first!".format(
-                        r
-                    )
+                raise OSError(
+                    f"Could not load qpegrid_to_rad lookup for radar {r:s}, compute it first!"
                 )
             try:
                 lut_coords = get_lookup("cartcoords_rad", radar)
             except Exception:
-                raise IOError(
-                    "Could not load cartcoords_rad lookup for radar {:s}, compute it first!".format(
-                        r
-                    )
+                raise OSError(
+                    f"Could not load cartcoords_rad lookup for radar {r:s}, compute it first!"
                 )
 
             stations = list(constants.METSTATIONS["Abbrev"])
@@ -238,7 +238,7 @@ def calc_lookup(lookup_type, radar=None):
                     if not len(idx):
                         continue
 
-                    if station not in all_idx_sta.keys():
+                    if station not in all_idx_sta:
                         all_idx_sta[station] = {}
                         all_heights_sta[station] = {}
                         all_distances_sta[station] = np.sqrt(
@@ -246,7 +246,7 @@ def calc_lookup(lookup_type, radar=None):
                             + (lut_coords[sweep][1] - y_sta) ** 2
                         )
 
-                    if sweep not in all_idx_sta[station].keys():
+                    if sweep not in all_idx_sta[station]:
                         all_idx_sta[station][sweep] = {}
 
                     all_heights_sta[station][sweep] = np.nanmean(
@@ -280,7 +280,7 @@ def calc_lookup(lookup_type, radar=None):
 
         cosmo_version = lookup_type.split("cosmo")[1].split("_")[0]
         fname_cosmo_coords = Path(
-            cosmo_coords_folder, "coords_COSMO{:s}.nc".format(cosmo_version)
+            cosmo_coords_folder, f"coords_COSMO{cosmo_version:s}.nc"
         )
         fname_cosmo_coords = ObjStorage.check_file(fname_cosmo_coords)
 
@@ -301,15 +301,13 @@ def calc_lookup(lookup_type, radar=None):
 
         for r in radar:
             lut = {}
-            lut_name = Path(lut_folder, "lut_" + lookup_type + "{:s}.p".format(r))
-            logging.info("Creating lookup table {:s}".format(str(lut_name)))
+            lut_name = Path(lut_folder, "lut_" + lookup_type + f"{r:s}.p")
+            mylogger.info(f"Creating lookup table {lut_name!s:s}")
             try:
                 lut_coords = get_lookup("cartcoords_rad", radar)
             except Exception:
-                raise IOError(
-                    "Could not load cartcoords_rad lookup for radar {:s}, compute it first!".format(
-                        r
-                    )
+                raise OSError(
+                    f"Could not load cartcoords_rad lookup for radar {r:s}, compute it first!"
                 )
 
             for sweep in sweeps:
@@ -349,7 +347,7 @@ def calc_lookup(lookup_type, radar=None):
         fname_cosmo_coords = Path(
             cosmo_coords_folder,
             "coords_cosmo",
-            "coords_COSMO{:d}_T.nc".format(cosmo_version),
+            f"coords_COSMO{cosmo_version:d}_T.nc",
         )
         fname_cosmo_coords = ObjStorage.check_file(fname_cosmo_coords)
         coords_COSMO = netCDF4.Dataset(fname_cosmo_coords)
@@ -368,15 +366,13 @@ def calc_lookup(lookup_type, radar=None):
 
         for r in radar:
             lut = {}
-            lut_name = Path(lut_folder, "lut_" + lookup_type + "{:s}.p".format(r))
-            logging.info("Creating lookup table {:s}".format(str(lut_name)))
+            lut_name = Path(lut_folder, "lut_" + lookup_type + f"{r:s}.p")
+            mylogger.info(f"Creating lookup table {lut_name!s:s}")
             try:
                 lut_coords = get_lookup("cartcoords_rad", radar)
             except Exception:
-                raise IOError(
-                    "Could not load cartcoords_rad lookup for radar {:s}, compute it first!".format(
-                        r
-                    )
+                raise OSError(
+                    f"Could not load cartcoords_rad lookup for radar {r:s}, compute it first!"
                 )
 
             for sweep in sweeps:
@@ -418,23 +414,19 @@ def calc_lookup(lookup_type, radar=None):
 
     elif lookup_type == "qpegrid_to_height_rad":
         for r in radar:
-            lut_name = Path(lut_folder, "lut_" + lookup_type + "{:s}.p".format(r))
+            lut_name = Path(lut_folder, "lut_" + lookup_type + f"{r:s}.p")
 
             try:
                 lut_cart = get_lookup("qpegrid_to_rad", r)
             except Exception:
-                raise IOError(
-                    "Could not load qpegrid_to_rad lookup for radar {:s}, compute it first!".format(
-                        r
-                    )
+                raise OSError(
+                    f"Could not load qpegrid_to_rad lookup for radar {r:s}, compute it first!"
                 )
             try:
                 lut_coords = get_lookup("cartcoords_rad", r)
             except Exception:
-                raise IOError(
-                    "Could not load cartcoords_rad lookup for radar {:s}, compute it first!".format(
-                        r
-                    )
+                raise OSError(
+                    f"Could not load cartcoords_rad lookup for radar {r:s}, compute it first!"
                 )
 
             Y_QPE_CENTERS = constants.Y_QPE_CENTERS
@@ -512,8 +504,7 @@ def calc_lookup(lookup_type, radar=None):
                     y_llc = y_llc_sta + i
                     # Find index of station in cart grid
                     idx = np.where(np.logical_and(x == x_llc, y == y_llc))
-
-                    idx = [int(idx[0]), int(idx[1])]
+                    idx = [int(idx[0][0]), int(idx[1][0])]
                     key = str(i) + str(j)
                     if len(idx):
                         lut[station][key] = idx
@@ -523,7 +514,7 @@ def calc_lookup(lookup_type, radar=None):
         lut_objects.append(lut)
 
     elif "cartcoords_rad" in lookup_type:
-        if lookup_type == "cardcoords_radL":
+        if lookup_type == "cartcoords_radL":
             res = "L"
         elif lookup_type == "cartcoords_radH":
             res = "H"
@@ -531,59 +522,25 @@ def calc_lookup(lookup_type, radar=None):
 
         for r in radar:
             lut = {}
-            lut_name = Path(lut_folder, "lut_" + lookup_type + "{:s}.p".format(r))
-            logging.info("Creating lookup table {:s}".format(str(lut_name)))
+            lut_name = Path(lut_folder, "lut_" + lookup_type + f"{r:s}.p")
+            mylogger.info(f"Creating lookup table {lut_name!s:s}")
             files = sorted(
-                glob.glob(str(Path(radar_samples_folder, "M{:s}{:s}*".format(res, r))))
+                glob.glob(str(Path(radar_samples_folder, f"M{res:s}{r:s}*")))
             )
-            rad_pos = constants.RADARS[constants.RADARS.Abbrev == r]
-            x_rad = float(rad_pos.X)
-            y_rad = float(rad_pos.Y)
-            z_rad = float(rad_pos.Z)
-            lat_rad = converter.LV03toWGS84(x_rad, y_rad, z_rad)[0]
-
-            RE = get_earth_radius(lat_rad)
-
-            coords_x = {}
-            coords_y = {}
-            coords_z = {}
-
             for sweep, f in enumerate(files):
-                f = ObjStorage.check_file(f)
+                mylogger.info(f"Processing sweep {sweep}")
                 # Get x and y of all radar pixels
-                data = read_metranet(f)
-                range_vec = data.range["data"]
-                elevation_angle = np.deg2rad(constants.ELEVATIONS[sweep])
-                az_angle = np.deg2rad(data.azimuth["data"][0:360])
-                # Use 4/3 earth radius model
-                temp = np.sqrt(
-                    range_vec**2
-                    + (constants.KE * RE) ** 2
-                    + 2 * range_vec * constants.KE * RE * np.sin(elevation_angle)
+                radar = read_metranet(f)
+                gate_lat = radar.gate_latitude["data"]
+                gate_lon = radar.gate_longitude["data"]
+                gate_alt = radar.gate_altitude["data"]
+                coord_y, coord_x, coord_z = wgs84_to_swissCH1903(
+                    gate_lon, gate_lat, gate_alt
                 )
-
-                h = temp - constants.KE * RE + float(data.altitude["data"])
-                s = (
-                    constants.KE
-                    * RE
-                    * np.arcsin(
-                        (range_vec * np.cos(elevation_angle)) / (constants.KE * RE + h)
-                    )
-                )
-
-                # Get coordiantes of all radar gates
-                coord_x = (x_rad + np.cos(az_angle) * s[:, None]).T
-                coord_y = (y_rad + np.sin(az_angle) * s[:, None]).T
-                coord_z = h
-                coord_z = np.tile(coord_z, reps=(coord_x.shape[0], 1))
-
-                coords_z[sweep] = coord_z
-                coords_x[sweep] = coord_x
-                coords_y[sweep] = coord_y
 
                 lut[sweep] = []
-                lut[sweep].append(coord_y)
                 lut[sweep].append(coord_x)
+                lut[sweep].append(coord_y)
                 lut[sweep].append(coord_z)
                 lut[sweep] = np.array(lut[sweep])
 
@@ -594,8 +551,8 @@ def calc_lookup(lookup_type, radar=None):
         """Currently it just uses the csv files of Marco Boscacci and
         converts them to pickle to be consistent with the other luts"""
         for r in radar:
-            lut_name = Path(lut_folder, "lut_" + lookup_type + "{:s}.p".format(r))
-            lut_boscacci = Path(lut_boscacci_folder, "lut_PL{:s}.csv".format(r))
+            lut_name = Path(lut_folder, "lut_" + lookup_type + f"{r:s}.p")
+            lut_boscacci = Path(lut_boscacci_folder, f"lut_PL{r:s}.csv")
             lut_boscacci = ObjStorage.check_file(lut_boscacci)
             lut = np.array(pd.read_csv(str(lut_boscacci)))
 
@@ -609,11 +566,10 @@ def calc_lookup(lookup_type, radar=None):
         pickle.dump(lut_objects[i], open(lut_names[i], "wb"))
         try:
             ObjStorage.upload_file(lut_names[i])
+            mylogger.info(f"Successfully uploaded lut {lut_names[i]:s} to cloud")
         except AttributeError:
-            print(
-                "Could not upload lut {:s} to cloud, please verify AWS_KEY env variable...".format(
-                    lut_names[i]
-                )
+            mylogger.error(
+                f"Could not upload lut {lut_names[i]:s} to cloud, please verify AWS_KEY env variable..."
             )
 
 

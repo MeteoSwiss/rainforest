@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Functions to read MeteoSwiss products
 
@@ -15,28 +14,25 @@ March 2022
 
 """
 
-
-import os
-from imageio.v2 import imread
+import datetime
 import glob
-import pandas as pd
+import os
+
 import numpy as np
-from scipy.interpolate import interp1d
-from pyart.aux_io import read_metranet
-from pyart.aux_io import read_cartesian_metranet
-from pyart.util import join_radar
+import pandas as pd
+import xmltodict
+from imageio.v2 import imread
 from matplotlib import colors
 from PIL import Image
-
-import datetime
-import xmltodict
+from pyart.aux_io import read_cartesian_metranet, read_metranet
+from pyart.aux_io.odim_h5 import read_odim_grid_h5
+from pyart.util import join_radar
+from scipy.interpolate import interp1d
 
 from . import constants
-from .utils import sweepnumber_fromfile
 from . import retrieve_data as retrieve
 from .lookup import get_lookup
-
-from pyart.aux_io.odim_h5 import read_odim_grid_h5
+from .utils import sweepnumber_fromfile
 
 
 def read_xls(xls_file):
@@ -86,7 +82,7 @@ def read_status(status_file, add_wet_radome=False):
     #  if wetradome is missing computes it
     radstat = status["status"]["sweep"][-1]["RADAR"]["STAT"]
 
-    if "WET_RADOME" not in radstat.keys() and add_wet_radome:
+    if "WET_RADOME" not in radstat and add_wet_radome:
         # get radar and time from filename
         bname = os.path.basename(status_file)
         radar = bname[2]
@@ -100,7 +96,7 @@ def read_status(status_file, add_wet_radome=False):
         lut = get_lookup("station_to_qpegrid")
         for i in range(-1, 2):  # 3 x 3
             for j in range(-1, 2):
-                coord = lut[radar]["{:d}{:d}".format(i, j)]
+                coord = lut[radar][f"{i:d}{j:d}"]
                 radprecip.append(rzc[coord[0], coord[1]])
 
         radprecip = np.nanmean(radprecip)
@@ -114,7 +110,7 @@ def read_status(status_file, add_wet_radome=False):
     return status
 
 
-def read_polar(polar_files, physic_value=True):
+def read_polar(polar_files):
     """
     Reads a polar radar metranet file as a pyart radar instance, if multiple
     files corresponding to multiple elevations (sweeps) are provided they are
@@ -188,7 +184,7 @@ def read_cart(cart_file):
         data = read_gif(cart_file)
     elif extension == ".h5":
         odim_dummy = read_odim_grid_h5(cart_file, undetect=np.nan, nodata=np.nan)
-        data = odim_dummy.fields[list(odim_dummy.fields.keys())[0]]["data"]
+        data = odim_dummy.fields[next(iter(odim_dummy.fields.keys()))]["data"]
         if len(np.shape(data)) == 3:
             data = np.squeeze(data)
     elif "RFQ" in cart_file:
@@ -205,7 +201,7 @@ def read_cart(cart_file):
             data = np.fromfile(cart_file, dtype=np.float32).reshape(nbins_x, nbins_y)
     else:
         data = read_cartesian_metranet(cart_file, physic_value=True)
-        data = list(data.fields.values())[0]["data"].data.copy()
+        data = next(iter(data.fields.values()))["data"].data.copy()
         data[data < constants.MIN_RZC_VALID] = 0
     return data
 
@@ -222,7 +218,7 @@ def read_NWP_HZT_cart(cart_file):
     """
 
     data = read_cartesian_metranet(cart_file)
-    data = list(data.fields.values())[0]["data"].data.copy()
+    data = next(iter(data.fields.values()))["data"].data.copy()
     data = np.flipud(np.squeeze(data))
 
     return data
@@ -314,7 +310,7 @@ def read_station_data(gauge_file):
     data = pd.read_csv(
         gauge_file,
         skiprows=idx_header,
-        delimiter="\s+",
+        delimiter=r"\s+",
         parse_dates={"datetime": [1, 2, 3, 4, 5]},
         date_parser=lambda x: pd.datetime.strptime(x, "%Y %m %d %H %M"),
     )

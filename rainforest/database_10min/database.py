@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main class to update the RADAR/STATION database and run queries to retrieve
 specific data
@@ -9,29 +8,33 @@ Note that I use spark because there is currently no way to use SQL queries
 with dask
 """
 
-from pyspark import SparkConf
-from pyspark import SparkContext
-from pyspark.sql import SparkSession
-
-# Global imports
-import glob
-import yaml
-import logging
-
-import os
-import textwrap
-import numpy as np
-import subprocess
-from datetime import datetime, timezone
 import copy
 import fnmatch
 
+# Global imports
+import glob
+import logging
+import os
+import subprocess
+import textwrap
+from collections import defaultdict
+from datetime import datetime, timezone
+
+import numpy as np
+import yaml
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
+
 # Local imports
 from ..common import constants
-from ..common.utils import chunks, timestamp_from_datestr
-from ..common.utils import dict_flatten, read_df, envyaml
+from ..common.utils import (
+    chunks,
+    dict_flatten,
+    envyaml,
+    read_df,
+    timestamp_from_datestr,
+)
 
-logging.getLogger().setLevel(logging.INFO)
 # This could benefit from some tweaks especially if the database becomes larger
 conf = SparkConf()
 conf.set("spark.sql.autoBroadcastJoinThreshold", 1024 * 1024 * 100)
@@ -45,6 +48,7 @@ conf.setAll(
     ]
 )
 conf.set("spark.sql.caseSensitive", "true")
+logging.getLogger().setLevel(logging.INFO)
 
 STATION_INFO = np.array(constants.METSTATIONS)
 
@@ -78,7 +82,7 @@ class DataFrameWithInfo:
             ------------------------
             Dimension: {rows} x {len(cols)}
             Time interval: {t0} - {t1}
-            Columns: {', '.join(cols)}
+            Columns: {", ".join(cols)}
             """
         return self._info
 
@@ -87,7 +91,7 @@ class DataFrameWithInfo:
         self._info = value
 
 
-class Database(object):
+class Database:
     def __init__(self, config_file=None):
         """
         Creates a Database instance that can be used to load data, update
@@ -250,8 +254,8 @@ class Database(object):
             appended to the file.
 
         inputs:
-            t0: start time in YYYYMMDD(HHMM) format (HHMM) is optional
-            t1: end time in YYYYMMDD(HHMM) format (HHMM) is optional
+            t0: start time in datetime format
+            t1: end time in datetime format
             output_folder: where the files should be stored. If the directory
                 is not empty, the new data will be merged with existing files
                 if relevant
@@ -300,15 +304,13 @@ class Database(object):
             old_data_ok = True  # valid data present
         except Exception:
             old_data_ok = False
-            pass
 
         # Check existence of config file
         mdata_path = output_folder + "/.mdata.yml"
         try:
-            old_config = envyaml(mdata_path)["GAUGE_RETRIEVAL"]
+            old_config = envyaml(mdata_path)
         except Exception:
             old_config = None
-            pass
 
         overwrite = 1  # default
 
@@ -318,19 +320,22 @@ class Database(object):
             ):
                 # Old data same format as new, don't overwrite
                 overwrite = 0
-            if old_config != self.config:
+            else:
+                import pdb
+
+                pdb.set_trace()
                 # Special case
                 tsteps_proc = np.array(
-                    current_tab.select("timestamp").collect(), dtype=int
+                    current_tab.select("TIMESTAMP").collect(), dtype=int
                 )
                 tstamp_start_old = np.min(tsteps_proc)
                 tstamp_end_old = np.max(tsteps_proc)
 
-                tstamp_start = int(timestamp_from_datestr(t0))
-                tstamp_end = int(timestamp_from_datestr(t1))
+                tstamp_start = int(timestamp_from_datestr(t0.strftime("%Y%m%d%H%M%S")))
+                tstamp_end = int(timestamp_from_datestr(t1.strftime("%Y%m%d%H%M%S")))
 
                 if tstamp_start > tstamp_start_old or tstamp_end < tstamp_end_old:
-                    warning = """
+                    warning = f"""
                     IMPORTANT: A previous set of tables was found in the indicated output folder
                     corresponding to a different configuration file. If you continue, the old data
                     will be replaced by the newly generated data, if they have the same timestamps.
@@ -341,19 +346,16 @@ class Database(object):
                     (2) change the current config file to match the config file of the old data
                     (which is stored in the file .mdata.yaml in the specified output folder)
                     (3) Rerun retrieval of station data to overlap the time period
-                    covered by the old data ({:s} - {:s}) and rerun the radar retrieval
+                    covered by the old data ({datetime.fromtimestamp(tstamp_start_old, timezone.utc)!s:s} - {datetime.fromtimestamp(tstamp_end_old, timezone.utc)!s:s}) and rerun the radar retrieval
 
                     Press enter to continue, q to quit ...
-                    """.format(
-                        str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
-                        str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)),
-                    )
+                    """
                     userinput = input(textwrap.dedent(warning))
                     if userinput == "q":
                         raise KeyboardInterrupt()
 
         # Write metadata file
-        mdata = copy.deepcopy(config_g)
+        mdata = copy.deepcopy(self.config)
         yaml.dump(mdata, open(mdata_path, "w"))
 
         # If timestamp is datetime format, convert to string
@@ -369,13 +371,13 @@ class Database(object):
         # Get current folder
         cwd = os.path.dirname(os.path.realpath(__file__))
         for i, stations in enumerate(stations_sub):
-            fname = tmp_folder + "/getdata_station_{:d}.job".format(i)
+            fname = tmp_folder + f"/getdata_station_{i:d}.job"
             file = open(fname, "w")
-            logging.info("Writing task file {:s}".format(fname))
+            logging.info(f"Writing task file {fname:s}")
             file.write(self.config["SLURM_HEADER"].format("gauge", "gauge", "GAUGE"))
             file.write(self.config["PYTHON_HEADER"])
             file.write(
-                'python -u {:s}/retrieve_dwh_data_5min.py "{:s}" "{:s}" {:f} "{:s}" "{:s}" {:s} {:d} {:d}'.format(
+                'python -u {:s}/retrieve_dwh_data.py "{:s}" "{:s}" {:f} "{:s}" "{:s}" {:s} {:d} {:d}'.format(
                     cwd,
                     t0,
                     t1,
@@ -388,8 +390,8 @@ class Database(object):
                 )
             )
             file.close()
-            logging.info("Submitting job {:d}".format(i))
-            subprocess.call("sbatch {:s}".format(fname), shell=True)
+            logging.info(f"Submitting job {i:d}")
+            subprocess.call(f"sbatch {fname:s}", shell=True)
         logging.info(
             """All jobs have been submitted, please wait a few hours
                      for completion..."""
@@ -423,13 +425,11 @@ class Database(object):
         except Exception:
             raise ValueError("Need to provide a config file to update data")
 
-        if gauge_table_name not in self.tables.keys():
+        if gauge_table_name not in self.tables:
             raise ValueError(
-                """No table with name {:s} was found in the
+                f"""No table with name {gauge_table_name:s} was found in the
                              loaded tables, make sure to add that table
-                             with load_tables first""".format(
-                    gauge_table_name
-                )
+                             with load_tables first"""
             )
 
         if "REFERENCE_RETRIEVAL" in self.config:
@@ -447,14 +447,11 @@ class Database(object):
             old_data_ok = True  # valid data present
         except Exception:
             old_data_ok = False
-            pass
 
         logging.info("Loading data... (may take a while)")
 
         if t0 is not None and t1 is not None and t1 > t0:
-            logging.info(
-                "Limiting myself to time period {:s} - {:s}".format(str(t0), str(t1))
-            )
+            logging.info(f"Limiting myself to time period {t0!s:s} - {t1!s:s}")
             if not isinstance(t0, datetime):
                 tstamp_start = int(timestamp_from_datestr(t0))
                 tstamp_end = int(timestamp_from_datestr(t1))
@@ -489,7 +486,6 @@ class Database(object):
             old_config = envyaml(mdata_path)
         except Exception:
             old_config = None
-            pass
 
         overwrite = 1  # default
         if old_config and old_data_ok:
@@ -511,7 +507,7 @@ class Database(object):
                 tstamp_end = int(np.max(tab["TIMESTAMP"]))
 
                 if tstamp_start > tstamp_start_old or tstamp_end < tstamp_end_old:
-                    warning = """
+                    warning = f"""
                     IMPORTANT: A previous set of tables was found in the indicated output folder
                     corresponding to a different configuration file. If you continue, the old data
                     will be replaced by the newly generated data, if they have the same timestamps.
@@ -522,13 +518,10 @@ class Database(object):
                     (2) change the current config file to match the config file of the old data
                     (which is stored in the file .mdata.yaml in the specified output folder)
                     (3) Rerun retrieval of station data to overlap the time period
-                    covered by the old data ({:s} - {:s}) and rerun the radar retrieval
+                    covered by the old data ({datetime.fromtimestamp(tstamp_start_old, timezone.utc)!s:s} - {datetime.fromtimestamp(tstamp_end_old, timezone.utc)!s:s}) and rerun the radar retrieval
 
                     Press enter to continue, q to quit ...
-                    """.format(
-                        str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
-                        str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)),
-                    )
+                    """
                     userinput = input(textwrap.dedent(warning))
                     if userinput == "q":
                         raise KeyboardInterrupt()
@@ -546,12 +539,14 @@ class Database(object):
             logging.error("Stopping now...")
             return
 
-        all_stations = tab["STATION"]
+        all_stations = tab["STATION"].to_numpy()
 
         # Split tasks and write taskfiles
         logging.info("Writing task files, this can take a long time")
         num_jobs = config_r["MAX_NB_SLURM_JOBS"]
         tmp_folder = self.config["TMP_FOLDER"]
+        if not os.path.exists(tmp_folder):
+            os.makedirs(tmp_folder)
 
         # Jobs are split by days, a single day is never split over several jobs
         # because the created output files are day based
@@ -577,12 +572,10 @@ class Database(object):
                 tt = dt.timetuple()
                 current_day = str(tt.tm_year) + str(tt.tm_yday)
                 if current_day in days_to_process:
-                    logging.warning(
-                        "Day {:s} was already computed, ignoring it...".format(f)
-                    )
+                    logging.warning(f"Day {f:s} was already computed, ignoring it...")
                     days_to_process.remove(current_day)
 
-        days_per_job = max([1, len(days_to_process) // num_jobs])
+        days_per_job = max([1, len(days_to_process) // num_jobs + 1])
 
         day_counter = 0
         current_job = 0
@@ -590,9 +583,18 @@ class Database(object):
 
         # Create task files
         task_files = []
-        name_file = tmp_folder + "task_file_reference_{:d}".format(current_job)
+        name_file = tmp_folder + f"task_file_reference_{current_job:d}"
         task_files.append(name_file)
         ftask = open(name_file, "w")
+
+        # Get all stations for every unique time
+        station_dict = defaultdict(list)
+        for i, group_idx in enumerate(idx):
+            station_dict[group_idx].append(all_stations[i])
+        station_lines = [
+            "{:d},{}\n".format(int(unique_times[i]), ",".join(station_dict[i]))
+            for i in range(len(unique_times))
+        ]
 
         for i in range(len(unique_times)):
             if days[i] not in days_to_process:
@@ -606,69 +608,37 @@ class Database(object):
                 current_job += 1
                 ftask.close()
 
-                name_file = tmp_folder + "task_file_reference_{:d}".format(current_job)
-                logging.info("Writing task file {:s}".format(name_file))
+                name_file = tmp_folder + f"task_file_reference_{current_job:d}"
+                logging.info(f"Writing task file {name_file:s}")
                 task_files.append(name_file)
                 # Open new task file
                 ftask = open(name_file, "w")
                 # Reset counters
                 day_counter = 0
-            ftask.write(
-                "{:d},{:s} \n".format(
-                    int(unique_times[i]), ",".join(all_stations[idx == i])
-                )
-            )
+            ftask.write(station_lines[i])
 
         ftask.close()
 
         # Get current folder
         cwd = os.path.dirname(os.path.realpath(__file__))
         # Create slurm files
-        job_files = []
-        nfperjob = config_r["SLURM_JOBS_PER_FILE"]
-        jobmax = config_r["MAX_SIMULTANEOUS_JOBS"]
+        max_simul_jobs = config_r["MAX_SIMULTANEOUS_JOBS"]
         tf = tmp_folder + "task_file_reference_${SLURM_ARRAY_TASK_ID}"
 
-        # If only one task file is created:
-        if len(task_files) == 1:
-            fname = tmp_folder + "/getdata_reference_0.job"
-            file = open(fname, "w")
-            file.write(self.config["SLURM_HEADER"].format("ref", "ref", "REF"))
-            file.write("#SBATCH --array=0\n\n")
-            file.write(self.config["PYTHON_HEADER"])
-            # The following two lines are necessary to use the right environment
-            file.write(
-                "python -u {:s}/retrieve_reference_data_5min.py -c {:s} -t {:s} -o {:s} \n".format(
-                    cwd, self.config_file, tf, output_folder
-                )
-            )
-            file.close()
-            job_files = [fname]
-        # If more than one task file is created loop through them and created grouped batch files
-        else:
-            i = 0
-            while i < (len(task_files) - 1):
-                if (i + nfperjob) > (len(task_files) - 1):
-                    iend = len(task_files) - 1
-                else:
-                    iend = i + nfperjob
-                fname = tmp_folder + "/getdata_reference_{:d}_{:d}.job".format(i, iend)
-                file = open(fname, "w")
-                file.write(self.config["SLURM_HEADER"].format("ref", "ref", "REF"))
-                file.write("#SBATCH --array={:d}-{:d}%{:d}\n\n".format(i, iend, jobmax))
-                file.write(self.config["PYTHON_HEADER"])
-                file.write(
-                    "python -u {:s}/retrieve_reference_data_5min.py -c {:s} -t {:s} -o {:s} \n".format(
-                        cwd, self.config_file, tf, output_folder
-                    )
-                )
-                file.close()
-                # Set counter to next file that is not included (+1)
-                i = i + 1 + nfperjob
-                job_files.append(fname)
-        for fn in job_files:
-            logging.info("Submitting job {}".format(fn))
-            subprocess.call("sbatch {:s}".format(fn), shell=True)
+        # Create job file
+        fname = tmp_folder + f"/getdata_reference_{0:d}_{len(task_files) - 1:d}.job"
+        logging.info(f"Writing job file {fname}")
+        file = open(fname, "w")
+        file.write(self.config["SLURM_HEADER"].format("ref", "ref", "REF"))
+        file.write(f"#SBATCH --array={0:d}-{len(task_files):d}%{max_simul_jobs:d}\n\n")
+        file.write(self.config["PYTHON_HEADER"])
+        file.write(
+            f"python -u {cwd:s}/retrieve_reference_data.py -c {self.config_file:s} -t {tf:s} -o {output_folder:s} \n"
+        )
+        file.close()
+
+        logging.info(f"Submitting job {fname}")
+        subprocess.call(f"sbatch {fname:s}", shell=True)
 
     def update_radar_data(self, gauge_table_name, output_folder, t0=None, t1=None):
         """
@@ -699,13 +669,11 @@ class Database(object):
         except Exception:
             raise ValueError("Need to provide a config file to update data")
 
-        if gauge_table_name not in self.tables.keys():
+        if gauge_table_name not in self.tables:
             raise ValueError(
-                """No table with name {:s} was found in the
+                f"""No table with name {gauge_table_name:s} was found in the
                              loaded tables, make sure to add that table
-                             with load_tables first""".format(
-                    gauge_table_name
-                )
+                             with load_tables first"""
             )
 
         if "RADAR_RETRIEVAL" in self.config:
@@ -724,9 +692,7 @@ class Database(object):
         tab["TIMESTAMP"] = tab["TIMESTAMP"].astype(float).astype(int)
 
         if t0 is not None and t1 is not None and t1 > t0:
-            logging.info(
-                "Limiting myself to time period {:s} - {:s}".format(str(t0), str(t1))
-            )
+            logging.info(f"Limiting myself to time period {t0!s:s} - {t1!s:s}")
             if not isinstance(t0, datetime):
                 tstamp_start = int(timestamp_from_datestr(t0))
                 tstamp_end = int(timestamp_from_datestr(t1))
@@ -751,7 +717,6 @@ class Database(object):
             old_data_ok = True  # valid data present
         except Exception:
             old_data_ok = False
-            pass
 
         # Check existence of config file
         mdata_path = output_folder + "/.mdata.yml"
@@ -759,7 +724,6 @@ class Database(object):
             old_config = envyaml(mdata_path)
         except Exception:
             old_config = None
-            pass
 
         overwrite = 1  # default
         if old_config and old_data_ok:
@@ -780,7 +744,7 @@ class Database(object):
                 tstamp_end = int(np.max(tab["TIMESTAMP"]))
 
                 if tstamp_start > tstamp_start_old or tstamp_end < tstamp_end_old:
-                    warning = """
+                    warning = f"""
                     IMPORTANT: A previous set of tables was found in the indicated output folder
                     corresponding to a different configuration file. If you continue, the old data
                     will be replaced by the newly generated data, if they have the same timestamps.
@@ -791,13 +755,10 @@ class Database(object):
                     (2) change the current config file to match the config file of the old data
                     (which is stored in the file .mdata.yaml in the specified output folder)
                     (3) Rerun retrieval of station data to overlap the time period
-                    covered by the old data ({:s} - {:s}) and rerun the radar retrieval
+                    covered by the old data ({datetime.fromtimestamp(tstamp_start_old, timezone.utc)!s:s} - {datetime.fromtimestamp(tstamp_end_old, timezone.utc)!s:s}) and rerun the radar retrieval
 
                     Press enter to continue, q to quit ...
-                    """.format(
-                        str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
-                        str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)),
-                    )
+                    """
                     userinput = input(textwrap.dedent(warning))
                     if userinput == "q":
                         raise KeyboardInterrupt()
@@ -808,7 +769,7 @@ class Database(object):
 
         logging.info("Finding unique timesteps and corresponding stations")
         unique_times, idx = np.unique(tab["TIMESTAMP"].astype(int), return_inverse=True)
-        all_stations = tab["STATION"]
+        all_stations = tab["STATION"].to_numpy()
 
         if not len(unique_times):
             msg = """All timesteps are already present in the already computed tables in the indicated output folder!"""
@@ -819,6 +780,8 @@ class Database(object):
         # Split tasks and write taskfiles
         num_jobs = config_r["MAX_NB_SLURM_JOBS"]
         tmp_folder = self.config["TMP_FOLDER"]
+        if not os.path.exists(tmp_folder):
+            os.makedirs(tmp_folder)
 
         # Jobs are split by days, a single day is never split over several jobs
         # because the created output files are day based
@@ -845,12 +808,10 @@ class Database(object):
                 current_day = str(tt.tm_year) + str(tt.tm_yday)
 
                 if current_day in days_to_process:
-                    logging.warning(
-                        "Day {:s} was already computed, ignoring it...".format(f)
-                    )
+                    logging.warning(f"Day {f:s} was already computed, ignoring it...")
                     days_to_process.remove(current_day)
 
-        days_per_job = max([1, len(days_to_process) // num_jobs])
+        days_per_job = max([1, len(days_to_process) // num_jobs + 1])
 
         day_counter = 0
         current_job = 0
@@ -859,9 +820,18 @@ class Database(object):
         logging.info("Writing task files")
         # Create task files
         task_files = []
-        name_file = tmp_folder + "task_file_radar_{:d}".format(current_job)
+        name_file = tmp_folder + f"task_file_radar_{current_job:d}"
         task_files.append(name_file)
         ftask = open(name_file, "w")
+
+        # Get all stations for every unique time
+        station_dict = defaultdict(list)
+        for i, group_idx in enumerate(idx):
+            station_dict[group_idx].append(all_stations[i])
+        station_lines = [
+            "{:d},{}\n".format(int(unique_times[i]), ",".join(station_dict[i]))
+            for i in range(len(unique_times))
+        ]
 
         for i in range(len(unique_times)):
             if days[i] not in days_to_process:
@@ -876,18 +846,14 @@ class Database(object):
                 current_job += 1
                 ftask.close()
 
-                name_file = tmp_folder + "task_file_radar_{:d}".format(current_job)
-                logging.info("Writing task file {:s}".format(name_file))
+                name_file = tmp_folder + f"task_file_radar_{current_job:d}"
+                logging.info(f"Writing task file {name_file:s}")
 
                 task_files.append(name_file)
                 ftask = open(name_file, "w")
                 # Reset counters
                 day_counter = 0
-            ftask.write(
-                "{:d},{:s} \n".format(
-                    int(unique_times[i]), ",".join(all_stations[idx == i])
-                )
-            )
+            ftask.write(station_lines[i])
 
         ftask.close()
 
@@ -895,57 +861,23 @@ class Database(object):
         cwd = os.path.dirname(os.path.realpath(__file__))
 
         # Create slurm files
-        job_files = []
-        nfperjob = config_r["SLURM_JOBS_PER_FILE"]
-        jobmax = config_r["MAX_SIMULTANEOUS_JOBS"]
+        max_simul_jobs = config_r["MAX_SIMULTANEOUS_JOBS"]
         tf = tmp_folder + task_files[0].split("/")[-1][0:15] + "_${SLURM_ARRAY_TASK_ID}"
 
-        (
-            '#SBATCH --output="db_radar_%A_%a.out"\n'
-            + '#SBATCH --error="db_radar_%A_%a.err"\n'
-            + "#SBATCH --job-name=DB_RADAR\n"
+        # Create job file
+        fname = tmp_folder + f"/getdata_radar_{0:d}_{len(task_files) - 1:d}.job"
+        logging.info(f"Writing job file {fname}")
+        file = open(fname, "w")
+        file.write(self.config["SLURM_HEADER"].format("rad", "rad", "RAD"))
+        file.write(f"#SBATCH --array={0:d}-{len(task_files):d}%{max_simul_jobs:d}\n\n")
+        file.write(self.config["PYTHON_HEADER"])
+        file.write(
+            f"python -u {cwd:s}/retrieve_radar_data.py -c {self.config_file:s} -t {tf:s} -o {output_folder:s} \n"
         )
+        file.close()
 
-        # If only one task file is created:
-        if len(task_files) == 1:
-            fname = tmp_folder + "/getdata_radar_0.job"
-            file = open(fname, "w")
-            file.write(self.config["SLURM_HEADER"].format("rad", "rad", "RAD"))
-            file.write("#SBATCH --array=0\n\n")
-            file.write(self.config["PYTHON_HEADER"])
-            file.write(
-                "python -u {:s}/retrieve_radar_data_5min.py -c {:s} -t {:s} -o {:s} \n".format(
-                    cwd, self.config_file, tf, output_folder
-                )
-            )
-            file.close()
-            job_files = [fname]
-        # If more than one task file is created loop through them and created grouped batch files
-        else:
-            i = 0
-            while i < (len(task_files) - 1):
-                if (i + nfperjob) > (len(task_files) - 1):
-                    iend = len(task_files) - 1
-                else:
-                    iend = i + nfperjob
-                fname = tmp_folder + "/getdata_radar_{:d}_{:d}.job".format(i, iend)
-                file = open(fname, "w")
-                file.write(self.config["SLURM_HEADER"].format("rad", "rad", "RAD"))
-                file.write("#SBATCH --array={:d}-{:d}%{:d}\n\n".format(i, iend, jobmax))
-                file.write(self.config["PYTHON_HEADER"])
-                file.write(
-                    "python -u {:s}/retrieve_radar_data_5min.py -c {:s} -t {:s} -o {:s} \n".format(
-                        cwd, self.config_file, tf, output_folder
-                    )
-                )
-                file.close()
-                # Set counter to next file that is not included (+1)
-                i = i + 1 + nfperjob
-                job_files.append(fname)
-
-        for fn in job_files:
-            logging.info("Submitting job {}".format(fn))
-            subprocess.call("sbatch {:s}".format(fn), shell=True)
+        logging.info(f"Submitting job {fname}")
+        subprocess.call(f"sbatch {fname:s}", shell=True)
 
 
 def _compare_config(config1, config2, keys=None):
@@ -974,20 +906,18 @@ def _compare_config(config1, config2, keys=None):
     c2 = dict_flatten(config2)
 
     try:
-        for k in c1.keys():
+        for k in c1:
             if k not in keys:
                 continue
-            notimportant = any([knd in k for knd in keys_no_data])
-            if not notimportant:
-                if c1[k] != c2[k]:
-                    return False
-        for k in c2.keys():
+            notimportant = any(knd in k for knd in keys_no_data)
+            if not notimportant and c1[k] != c2[k]:
+                return False
+        for k in c2:
             if k not in keys:
                 continue
-            notimportant = any([knd in k for knd in keys_no_data])
-            if not notimportant:
-                if c1[k] != c2[k]:
-                    return False
+            notimportant = any(knd in k for knd in keys_no_data)
+            if not notimportant and c1[k] != c2[k]:
+                return False
         return True
     except Exception:
         return False
@@ -1009,7 +939,7 @@ def _n_running_jobs(user="$USER", job_name="getdata*"):
     Number of jobs as an integer
     """
 
-    out = subprocess.check_output("squeue -u {:s}".format(user), shell=True)
+    out = subprocess.check_output(f"squeue -u {user:s}", shell=True)
 
     out = out.decode("utf-8").split("\n")
 

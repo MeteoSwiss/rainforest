@@ -1,36 +1,36 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main module to
 """
 
 # Global imports
+import datetime
+import glob
+import gzip
+import operator
 import os
 import pickle
-import glob
-import dask.dataframe as dd
-import pandas as pd
-import numpy as np
-import gzip
-import datetime
+from functools import reduce
 from pathlib import Path
 from warnings import warn
-import operator
-from functools import reduce
+
+import dask.dataframe as dd
+import numpy as np
+import pandas as pd
 
 # Local imports
 from ..common import constants
+from ..common.graphics import plot_crossval_stats, plot_fit_metrics
+from ..common.logger import get_logger
+from ..common.utils import envyaml, perfscores
+from .rfdefinitions import RandomForestRegressorBC
 from .utils import (
-    vert_aggregation,
+    make_run_id,
     split_event,
     split_years,
     time_station_aggregation,
-    make_run_id,
+    vert_aggregation,
 )
-from .rfdefinitions import RandomForestRegressorBC
-from ..common.utils import perfscores, envyaml
-from ..common.graphics import plot_crossval_stats, plot_fit_metrics
-from ..common.logger import get_logger
 
 # Optional mlflow import
 try:
@@ -50,7 +50,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 FOLDER_MODELS = Path(os.environ["RAINFOREST_DATAPATH"], "rf_models")
 
 
-class RFTraining(object):
+class RFTraining:
     """
     This is the main class that allows to preparate data for random forest
     training, train random forests and perform cross-validation of trained models
@@ -115,9 +115,7 @@ class RFTraining(object):
         self.logger = get_logger("RandomForest Training", verbose=verbose)
         if not valid:
             self.logger.info(
-                "Could not find valid input data from the folder {:s}".format(
-                    input_location
-                )
+                f"Could not find valid input data from the folder {input_location:s}"
             )
         if force_regenerate_input or not valid:
             self.logger.info(
@@ -126,7 +124,7 @@ class RFTraining(object):
             self.prepare_input()
 
     def prepare_input(
-        self, only_center=True, foldername_radar="radar", temporal_aggregation=[10, 60]
+        self, nx=None, ny=None, foldername_radar="radar", temporal_aggregation=None
     ):
         """
         Reads the data from the database  in db_location and processes it to
@@ -149,14 +147,10 @@ class RFTraining(object):
 
         Parameters
         ----------
-        only_center : bool
-            If set to True only the input data for the central neighbour
-            i.e. NX = NY = 0 (the location of the gauge) will be recomputed
-            this takes much less time and is the default option since until
-            now the neighbour values are not used in the training of the RF
-            QPE
-        foldername_radar: str
-            Name of the folder to use for the radar data. Default name is 'radar'
+        nx : list
+            List of neighbours to compute in the X direction (default = 0, only center)
+        ny : list
+            List of neighbours to compute in the Y direction (default = 0, only center)
         temporal_aggregation: list of int
             The temporal aggregation arrays to create, these arrays have identical values
             for a given station and a given aggregation period. By default aggregation arrays
@@ -164,15 +158,15 @@ class RFTraining(object):
             of more the aggregation array for 10 min will not be computed.
         """
 
+        if temporal_aggregation is None:
+            temporal_aggregation = [10, 60]
+        if ny is None:
+            ny = [0]
+        if nx is None:
+            nx = [0]
         if not os.path.exists(Path(self.db_location, foldername_radar)):
             self.logger.error("Invalid foldername for radar data, please check")
 
-        if only_center:
-            nx = [0]
-            ny = [0]
-        else:
-            nx = [0, 1, -1]
-            ny = [0, 1, -1]
         gauge = dd.read_csv(
             str(Path(self.db_location, "gauge", "*.csv.gz")),
             compression="gzip",
@@ -186,9 +180,9 @@ class RFTraining(object):
         # Get reference temporal resolution in minutes
         native_time_res = (unique_tstamps[1] - unique_tstamps[0]) // 60
         # name of precip column
-        precip_col = [
+        precip_col = next(
             col for col in gauge.columns if "RRE" in col and "ADJ" not in col
-        ][0]
+        )
         for x in nx:
             for y in ny:
                 self.logger.info(f"Processing neighbour {x}{y}")
@@ -286,12 +280,12 @@ class RFTraining(object):
                 gauge["minutes"] = (gauge["TIMESTAMP"] % 3600) / 60
 
                 # Save all to file
-                self.logger.info("Saving files to {}".format(self.input_location))
+                self.logger.info(f"Saving files to {self.input_location}")
                 refer.to_parquet(
                     str(
                         Path(
                             self.input_location,
-                            "reference_x{:d}y{:d}.parquet".format(x, y),
+                            f"reference_x{x:d}y{y:d}.parquet",
                         )
                     ),
                     compression="gzip",
@@ -299,11 +293,7 @@ class RFTraining(object):
                 )
 
                 radar.to_parquet(
-                    str(
-                        Path(
-                            self.input_location, "radar_x{:d}y{:d}.parquet".format(x, y)
-                        )
-                    ),
+                    str(Path(self.input_location, f"radar_x{x:d}y{y:d}.parquet")),
                     compression="gzip",
                     index=False,
                 )
@@ -319,7 +309,7 @@ class RFTraining(object):
                         str(
                             Path(
                                 self.input_location,
-                                "grouping_idx_x{:d}y{:d}.p".format(x, y),
+                                f"grouping_idx_x{x:d}y{y:d}.p",
                             )
                         ),
                         "wb",
@@ -418,9 +408,9 @@ class RFTraining(object):
         grp_vertical = grp["grp_vertical"]
         grp_time = grp["grp_time"]
         native_time_res = grp["native_time_res"]
-        precip_col = [
+        precip_col = next(
             col for col in gaugetab.columns if "RRE" in col and "ADJ" not in col
-        ][0]
+        )
 
         ###############################################################################
         # Compute additional data if needed
@@ -435,10 +425,10 @@ class RFTraining(object):
 
         for feat in features:
             if "zh" in feat:
-                self.logger.info("Computing derived variable {:s}".format(feat))
+                self.logger.info(f"Computing derived variable {feat:s}")
                 radartab[feat] = 10 ** (0.1 * radartab[feat.replace("zh", "ZH")])
             elif "zv" in feat:
-                self.logger.info("Computing derived variable {:s}".format(feat))
+                self.logger.info(f"Computing derived variable {feat:s}")
                 radartab[feat] = 10 ** (0.1 * radartab[feat.replace("zv", "ZV")])
             if "DIST_TO_RAD" in feat:
                 info_radar = constants.RADARS
@@ -475,8 +465,8 @@ class RFTraining(object):
                     ",".join(filterconf["sta_to_remove"])
                 )
             )
-            self.logger.info("Start time {:s}".format(str(tstart)))
-            self.logger.info("End time {:s}".format(str(tend)))
+            self.logger.info(f"Start time {tstart!s:s}")
+            self.logger.info(f"End time {tend!s:s}")
             self.logger.info(
                 "ZH must be > {:f} if R <= {:f}".format(
                     filterconf["constraint_min_zh"][1],
@@ -524,9 +514,7 @@ class RFTraining(object):
             ###############################################################################
 
             self.logger.info(
-                "Performing vertical aggregation of input features for model {:s}".format(
-                    model
-                )
+                f"Performing vertical aggregation of input features for model {model:s}"
             )
             features_VERT_AGG = vert_aggregation(
                 radartab[features_dic[model]],
@@ -602,7 +590,7 @@ class RFTraining(object):
 
             # Saving model
             gz_model_name = str(Path(output_folder, f"{model}_{run_id}.p.gz"))
-            self.logger.info("Saving model to {:s}".format(gz_model_name))
+            self.logger.info(f"Saving model to {gz_model_name:s}")
             with gzip.open(gz_model_name, "wb") as f:
                 pickle.dump(reg, f)
 
@@ -672,7 +660,7 @@ class RFTraining(object):
                     }
 
             for cv_it in range(cv):
-                self.logger.info(f"Run {cv_it+1}/{cv} of cross-validation")
+                self.logger.info(f"Run {cv_it + 1}/{cv} of cross-validation")
 
                 test = idx_testtrain == cv_it
                 train = idx_testtrain != cv_it
@@ -882,7 +870,7 @@ class RFTraining(object):
         #######################################################################
         # Read data
         #######################################################################
-        self.logger.info("Reading input data from {}".format(self.input_location))
+        self.logger.info(f"Reading input data from {self.input_location}")
         radartab = pd.read_parquet(str(Path(self.input_location, "radar_x0y0.parquet")))
         gaugetab = pd.read_parquet(str(Path(self.input_location, "gauge.parquet")))
         grp = pickle.load(
@@ -892,9 +880,9 @@ class RFTraining(object):
         grp_time = grp["grp_time"]
         grp_hourly = grp_time[60]
         native_time_res = grp["native_time_res"]
-        precip_col = [
+        precip_col = next(
             col for col in gaugetab.columns if "RRE" in col and "ADJ" not in col
-        ][0]
+        )
 
         #######################################################################
         # Filter time
@@ -950,10 +938,10 @@ class RFTraining(object):
         )
         for f in features:
             if "zh" in f:
-                self.logger.info("Computing derived variable {:s}".format(f))
+                self.logger.info(f"Computing derived variable {f:s}")
                 radartab[f] = 10 ** (0.1 * radartab[f.replace("zh", "ZH")])
             elif "zv" in f:
-                self.logger.info("Computing derived variable {:s}".format(f))
+                self.logger.info(f"Computing derived variable {f:s}")
                 radartab[f] = 10 ** (0.1 * radartab[f.replace("zv", "ZV")])
             if "DIST_TO_RAD" in f:
                 info_radar = constants.RADARS
@@ -975,9 +963,7 @@ class RFTraining(object):
         regressors = {}
         for im, model in enumerate(modelnames):
             self.logger.info(
-                "Performing vertical aggregation of input features for model {:s}".format(
-                    model
-                )
+                f"Performing vertical aggregation of input features for model {model:s}"
             )
 
             if (
@@ -992,9 +978,7 @@ class RFTraining(object):
                 )
             ):
                 self.logger.info(
-                    "Model {} has same vertical aggregation settings as {}, hence just copy aggregated 2D fields".format(
-                        model, modelnames[im - 1]
-                    )
+                    f"Model {model} has same vertical aggregation settings as {modelnames[im - 1]}, hence just copy aggregated 2D fields"
                 )
                 features_VERT_AGG[model] = features_VERT_AGG[modelnames[im - 1]].copy()
             else:
@@ -1068,7 +1052,7 @@ class RFTraining(object):
             scores[tagg] = {}
             for model in modelnames:
                 scores[tagg][model] = {}
-                for feat in features_VERT_AGG[model].keys():
+                for feat in features_VERT_AGG[model]:
                     scores[tagg][model][feat] = []
 
         for k in K:
@@ -1098,8 +1082,8 @@ class RFTraining(object):
                     "RMSE"
                 ]
 
-                for feat in features_VERT_AGG[model].keys():
-                    self.logger.info("Shuffling feature: {}".format(feat))
+                for feat in features_VERT_AGG[model]:
+                    self.logger.info(f"Shuffling feature: {feat}")
                     # Shuffle input feature on test fraction, keep others untouched
                     x_test = features_VERT_AGG[model][test].copy()
                     x_test[feat] = np.random.permutation(x_test[feat].values)
@@ -1139,9 +1123,9 @@ class RFTraining(object):
         features_dic,
         intercomparison_configfile,
         output_folder,
-        reference_products=["CPCH", "RZC"],
-        bounds10=[0, 2, 10, 100],
-        bounds60=[0, 2, 10, 100],
+        reference_products=None,
+        bounds10=None,
+        bounds60=None,
         cross_val_type="years",
         K=5,
         years=None,
@@ -1203,6 +1187,12 @@ class RFTraining(object):
         """
 
         # dict of statistics to compute for every score over the K-fold crossval,
+        if bounds60 is None:
+            bounds60 = [0, 2, 10, 100]
+        if bounds10 is None:
+            bounds10 = [0, 2, 10, 100]
+        if reference_products is None:
+            reference_products = ["CPCH", "RZC"]
         stats = {
             "mean": np.nanmean,
             "std": np.nanstd,
@@ -1215,7 +1205,7 @@ class RFTraining(object):
         modelnames = list(features_dic.keys())
         keysconfig = list(config.keys())
 
-        if not all([m in keysconfig for m in modelnames]):
+        if not all(m in keysconfig for m in modelnames):
             raise ValueError(
                 "Keys in features_dic are not all present in intercomparison config file!"
             )
@@ -1239,7 +1229,7 @@ class RFTraining(object):
         #######################################################################
         # Read data
         #######################################################################
-        self.logger.info("Reading input data from {}".format(self.input_location))
+        self.logger.info(f"Reading input data from {self.input_location}")
         radartab = pd.read_parquet(str(Path(self.input_location, "radar_x0y0.parquet")))
         refertab = pd.read_parquet(
             str(Path(self.input_location, "reference_x0y0.parquet"))
@@ -1252,9 +1242,9 @@ class RFTraining(object):
         grp_time = grp["grp_time"]
         grp_hourly = grp_time[60]
         native_time_res = grp["native_time_res"]
-        precip_col = [
+        precip_col = next(
             col for col in gaugetab.columns if "RRE" in col and "ADJ" not in col
-        ][0]
+        )
 
         #######################################################################
         # Filter time
@@ -1295,10 +1285,10 @@ class RFTraining(object):
         )
         for f in features:
             if "zh" in f:
-                self.logger.info("Computing derived variable {:s}".format(f))
+                self.logger.info(f"Computing derived variable {f:s}")
                 radartab[f] = 10 ** (0.1 * radartab[f.replace("zh", "ZH")])
             elif "zv" in f:
-                self.logger.info("Computing derived variable {:s}".format(f))
+                self.logger.info(f"Computing derived variable {f:s}")
                 radartab[f] = 10 ** (0.1 * radartab[f.replace("zv", "ZV")])
             if "DIST_TO_RAD" in f:
                 info_radar = constants.RADARS
@@ -1320,9 +1310,7 @@ class RFTraining(object):
         regressors = {}
         for model in modelnames:
             self.logger.info(
-                "Performing vertical aggregation of input features for model {:s}".format(
-                    model
-                )
+                f"Performing vertical aggregation of input features for model {model:s}"
             )
 
             vweights = 10 ** (
@@ -1417,7 +1405,7 @@ class RFTraining(object):
 
             if station_scores:
                 # for station scores we will limit the output to test data only
-                for timeagg in all_station_scores.keys():
+                for timeagg in all_station_scores:
                     all_station_scores[timeagg][model] = {
                         "solid": {},
                         "liquid": {},
@@ -1481,7 +1469,7 @@ class RFTraining(object):
 
             # Fit every regression model
             for model in modelnames:
-                self.logger.info("Checking model {:s}".format(model))
+                self.logger.info(f"Checking model {model:s}")
                 self.logger.info("Evaluating test error")
                 self.logger.info("at native time")
 
@@ -1507,7 +1495,7 @@ class RFTraining(object):
                                 ),
                             )
                         )
-                        self.logger.info("Saving model to {:s}".format(out_name))
+                        self.logger.info(f"Saving model to {out_name:s}")
                         pickle.dump(regressors[model], open(out_name, "wb"))
 
                 else:
@@ -1548,7 +1536,7 @@ class RFTraining(object):
 
                 if station_scores:
                     self.logger.info(
-                        "Calculating station performances for model {}".format(model)
+                        f"Calculating station performances for model {model}"
                     )
 
                     stations_60 = np.array(
@@ -1560,7 +1548,7 @@ class RFTraining(object):
                         index=scores_all["all"].keys(),
                     )
 
-                    for timeagg in all_station_scores.keys():
+                    for timeagg in all_station_scores:
                         all_station_scores[timeagg][model]["all"][k] = df.copy()
                         all_station_scores[timeagg][model]["liquid"][k] = df.copy()
                         all_station_scores[timeagg][model]["solid"][k] = df.copy()
@@ -1586,7 +1574,7 @@ class RFTraining(object):
 
                             del scores_all_10, scores_all_60
                         except Exception:
-                            self.logger.info("No performance score for {}".format(sta))
+                            self.logger.info(f"No performance score for {sta}")
                         try:
                             scores_liquid_10 = perfscores(
                                 R_pred_10[liq_10_test & sta_idx],
@@ -1605,9 +1593,7 @@ class RFTraining(object):
                             ] = scores_liquid_60
                         except Exception:
                             self.logger.info(
-                                "No performance score for liquid precip for {}".format(
-                                    sta
-                                )
+                                f"No performance score for liquid precip for {sta}"
                             )
                         try:
                             scores_solid_10 = perfscores(
@@ -1627,9 +1613,7 @@ class RFTraining(object):
                             ] = scores_solid_60
                         except Exception:
                             self.logger.info(
-                                "No performance score for solid precip for {}".format(
-                                    sta
-                                )
+                                f"No performance score for solid precip for {sta}"
                             )
 
                 # train
@@ -1682,10 +1666,10 @@ class RFTraining(object):
                 all_scores["60min"][model]["train"]["all"].append(scores_all)
 
         # Compute statistics after the 5-fold cross validation
-        for agg in all_scores.keys():
-            for model in all_scores[agg].keys():
-                for veriftype in all_scores[agg][model].keys():
-                    for preciptype in all_scores[agg][model][veriftype].keys():
+        for agg in all_scores:
+            for model in all_scores[agg]:
+                for veriftype in all_scores[agg][model]:
+                    for preciptype in all_scores[agg][model][veriftype]:
                         bounds = list(
                             all_scores[agg][model][veriftype][preciptype][0].keys()
                         )
@@ -1712,16 +1696,16 @@ class RFTraining(object):
                                     score
                                 ] = {}
 
-                                for stat in stats.keys():
+                                for stat in stats:
                                     sdata = stats[stat](datasc)
                                     all_stats[agg][model][veriftype][preciptype][bound][
                                         score
                                     ][stat] = sdata
 
         if station_scores:
-            for agg in all_station_scores.keys():
-                for model in all_station_scores[agg].keys():
-                    for preciptype in all_station_scores[agg][model].keys():
+            for agg in all_station_scores:
+                for model in all_station_scores[agg]:
+                    for preciptype in all_station_scores[agg][model]:
                         df = pd.DataFrame(columns=gaugetab["STATION"].unique())
                         perfs = {
                             "RMSE": df.copy(),
@@ -1733,10 +1717,8 @@ class RFTraining(object):
                             "mref": df.copy(),
                         }
                         all_station_stats[agg][model][preciptype] = {}
-                        for score in perfs.keys():
-                            for kidx in all_station_scores[agg][model][
-                                preciptype
-                            ].keys():
+                        for score in perfs:
+                            for kidx in all_station_scores[agg][model][preciptype]:
                                 df_dummy = all_station_scores[agg][model][preciptype][
                                     kidx
                                 ].copy()
@@ -1769,7 +1751,5 @@ class RFTraining(object):
             name_file = str(Path(output_folder, "all_station_stats.p"))
             pickle.dump(all_station_stats, open(name_file, "wb"))
 
-        self.logger.info(
-            "Finished script and saved all scores to {}".format(output_folder)
-        )
+        self.logger.info(f"Finished script and saved all scores to {output_folder}")
         return all_scores, all_stats

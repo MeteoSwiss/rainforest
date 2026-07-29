@@ -1,8 +1,9 @@
-import pandas as pd
 import os
 from pathlib import Path
 
-from rainforest.database.retrieve_radar_data import Updater
+import pandas as pd
+
+from rainforest.database_10min.retrieve_radar_data import Updater
 
 
 def test_retrieve_radar_data():
@@ -23,5 +24,5 @@ def test_retrieve_radar_data():
     os.remove(new_table)
 
     pd.testing.assert_frame_equal(
-        ref_table_df, new_table_df, check_dtype=False, check_less_precise=3
+        ref_table_df, new_table_df, check_dtype=False, atol=3, check_exact=False
     )

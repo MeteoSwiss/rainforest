@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main function to evaluate QPE runs with gauge data
 
@@ -10,25 +9,28 @@ December 2019
 """
 
 # global imports
-import logging
-import numpy as np
 import copy
 import datetime
+import logging
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+
+from ..common.graphics import qpe_scatterplot, score_plot
+from ..common.io_data import read_cart
+from ..common.lookup import get_lookup
+from ..common.retrieve_data import retrieve_CPCCV
 
 # Local imports
 from ..common.utils import (
-    read_df,
     get_qpe_files,
     get_qpe_files_multiple_dirs,
+    nearest_time,
     perfscores,
+    read_df,
+    timestamp_from_datetime,
 )
-from ..common.utils import timestamp_from_datetime, nearest_time
-from ..common.lookup import get_lookup
-from ..common.io_data import read_cart
-from ..common.graphics import score_plot, qpe_scatterplot
-from ..common.retrieve_data import retrieve_CPCCV
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,8 +42,8 @@ def evaluation(
     outputfolder="./",
     t0=None,
     t1=None,
-    bounds10=[0, 2, 10, 100],
-    bounds60=[0, 1, 10, 100],
+    bounds10=None,
+    bounds60=None,
 ):
     """
     PErforms an evaluation of QPE products with reference gauge data
@@ -73,19 +75,23 @@ def evaluation(
 
     """
 
+    if bounds60 is None:
+        bounds60 = [0, 1, 10, 100]
+    if bounds10 is None:
+        bounds10 = [0, 2, 10, 100]
     if type(qpefolder) is list:
         logging.info("Getting all files from multiple qpe folders")
         tmp = get_qpe_files_multiple_dirs(
             qpefolder, time_agg=10, list_models=list_models
         )
     else:
-        logging.info("Getting all files from qpe folder {:s}".format(qpefolder))
+        logging.info(f"Getting all files from qpe folder {qpefolder:s}")
         tmp = get_qpe_files(qpefolder, time_agg=10, list_models=list_models)
 
     # Get only timesteps where at least 2 files are available during 10 min period
     qpe_files10 = copy.deepcopy(tmp)
-    for k in tmp.keys():
-        for m in tmp[k].keys():
+    for k in tmp:
+        for m in tmp[k]:
             if len(tmp[k][m]) < 2:
                 del qpe_files10[k][m]
 
@@ -98,13 +104,13 @@ def evaluation(
         if nmodels[i] == max(nmodels):
             qpe_files10_filt[k] = qpe_files10[k]
 
-    models = list(list(qpe_files10_filt.values())[0].keys())
+    models = list(next(iter(qpe_files10_filt.values())).keys())
     if list_models is None:
         list_models = nmodels
 
-    tsteps = sorted(list(qpe_files10_filt.keys()))
+    tsteps = sorted(qpe_files10_filt.keys())
 
-    logging.info("Reading gauge data from pattern {:s}".format(gaugepattern))
+    logging.info(f"Reading gauge data from pattern {gaugepattern:s}")
     df = read_df(gaugepattern)
 
     logging.info("Converting to pandas dataframe...")
@@ -123,7 +129,7 @@ def evaluation(
     precip_ref = np.zeros((len(tsteps), len(stations)))
 
     for i, tstep in enumerate(tsteps):  # Loop on timesteps
-        logging.info("Reading timestep {:d}/{:d}".format(i + 1, len(tsteps)))
+        logging.info(f"Reading timestep {i + 1:d}/{len(tsteps):d}")
         #  Get reference precip
         tstamp = timestamp_from_datetime(tstep)
         measures_10 = df[df["TIMESTAMP"] == tstamp]

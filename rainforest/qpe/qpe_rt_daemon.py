@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main function to compute the QPE estimations on the Swiss grid
 
@@ -12,28 +11,28 @@ Modified by D. Wolfensberger and R. Gugerli
 December 2022
 """
 
-import warnings
-import time
-import numpy as np
 import datetime
-from pathlib import Path
-import os
-import glob
 import fnmatch
-import re
+import glob
 import importlib.util
-import pandas as pd
-from scipy.ndimage import gaussian_filter
-from pyart.aux_io.odim_h5_writer import write_odim_grid_h5
-from ..common.logger import get_qpe_rt_logger
-from ..common import constants
-from ..common.lookup import get_lookup
-from ..common.utils import split_by_time, envyaml
-from ..common.radarprocessing import Radar, HZT_hourly_to_5min
-from ..common.io_data import save_gif
-from .qpe_utils import disaggregate
-from .qpe_utils import pol_to_cart, qpe_to_chgrid, outlier_removal
+import os
+import re
+import time
+import warnings
+from pathlib import Path
 
+import numpy as np
+import pandas as pd
+from pyart.aux_io.odim_h5_writer import write_odim_grid_h5
+from scipy.ndimage import gaussian_filter
+
+from ..common import constants
+from ..common.io_data import save_gif
+from ..common.logger import get_qpe_rt_logger
+from ..common.lookup import get_lookup
+from ..common.radarprocessing import HZT_hourly_to_5min, Radar
+from ..common.utils import envyaml, split_by_time
+from .qpe_utils import disaggregate, outlier_removal, pol_to_cart, qpe_to_chgrid
 
 _PYSTEPS_AVAILABLE = importlib.util.find_spec("pysteps") is None
 
@@ -50,7 +49,7 @@ NBINS_Y = len(Y_QPE_CENTERS)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class QPEProcessor_RT_daemon(object):
+class QPEProcessor_RT_daemon:
     def __init__(self, config_file, models, log_dir="/srn/las/log/", verbose=False):
         """
         Creates a QPEProcessor object which can be used to compute QPE
@@ -109,9 +108,9 @@ class QPEProcessor_RT_daemon(object):
         self.cosmo_var = []
         # keys of this dict are the variable used for the RF models, their values
         # is a list of lists with 1. the vertical weighting beta parameters to be used, 2. if visib_weighting is used or not
-        for k in self.models.keys():
+        for k in self.models:
             for var in self.models[k].variables:
-                if var not in self.model_weights_per_var.keys():
+                if var not in self.model_weights_per_var:
                     self.model_weights_per_var[var] = []
                 if models[k].beta not in self.model_weights_per_var[var]:
                     self.model_weights_per_var[var].append(
@@ -452,7 +451,7 @@ class QPEProcessor_RT_daemon(object):
 
         """
 
-        for model in self.models.keys():
+        for model in self.models:
             if self.config["ADVECTION_CORRECTION"]:
                 model += "_AC"
             if not os.path.exists(Path(output_folder, model)):
@@ -480,7 +479,7 @@ class QPEProcessor_RT_daemon(object):
 
             # Get lead time file
             if it == 0:
-                for k in self.models.keys():
+                for k in self.models:
                     tL_x_file = f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_xprev.npy"
                     tL_qpe_file = f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_qpeprev.npy"
                     one_file_missing = False
@@ -509,7 +508,7 @@ class QPEProcessor_RT_daemon(object):
             rf_features_cart = {}
             weights_cart = {}
 
-            for var in self.model_weights_per_var.keys():
+            for var in self.model_weights_per_var:
                 for weight in self.model_weights_per_var[var]:
                     if weight not in list(rf_features_cart.keys()):
                         rf_features_cart[weight] = {}
@@ -517,7 +516,7 @@ class QPEProcessor_RT_daemon(object):
                     rf_features_cart[weight][var] = np.zeros((NBINS_X, NBINS_Y))
 
                     # add weights
-                    if weight not in weights_cart.keys():
+                    if weight not in weights_cart:
                         weights_cart[weight] = np.zeros((NBINS_X, NBINS_Y))
 
             # Get HZT temperature for all radars for this timestamp
@@ -590,12 +589,12 @@ class QPEProcessor_RT_daemon(object):
 
                 for rad in self.config["RADARS"]:  # Loop on radars, A,D,L,P,W
                     # If there is no radar file for the specific radar, continue to next radar
-                    if rad not in radobjects.keys():
+                    if rad not in radobjects:
                         self.logger.info(
                             f"Processing radar {rad} - no data for this timestep!"
                         )
                         continue
-                    elif sweep not in radobjects[rad].radsweeps.keys():
+                    elif sweep not in radobjects[rad].radsweeps:
                         self.logger.info(
                             f"Processing sweep {sweep} of {rad} - no data for this timestep!"
                         )
@@ -610,7 +609,7 @@ class QPEProcessor_RT_daemon(object):
                             radobjects[rad].get_field(sweep, "ZH"), np.nan
                         )
 
-                        for var in self.model_weights_per_var.keys():
+                        for var in self.model_weights_per_var:
                             # These variables are computed differently
                             if "RADAR_prop" in var or var == "HEIGHT":
                                 continue
@@ -624,7 +623,7 @@ class QPEProcessor_RT_daemon(object):
                             np.isnan(ZH), ZH < self.config["ZH_THRESHOLD"]
                         )
 
-                        for var in datasweep.keys():
+                        for var in datasweep:
                             # Because add.at does not support nan we replace by zero
                             datasweep[var][invalid] = 0
 
@@ -657,7 +656,7 @@ class QPEProcessor_RT_daemon(object):
                             np.isfinite(ZH[idx_polar[0], idx_polar[1]]), idx_ch
                         )
 
-                        for weight in rf_features_cart.keys():
+                        for weight in rf_features_cart:
                             beta, visibweighting = weight
 
                             # Compute altitude weighting
@@ -666,7 +665,7 @@ class QPEProcessor_RT_daemon(object):
                             if visibweighting:
                                 W *= visib_radsweep / 100
 
-                            for var in rf_features_cart[weight].keys():
+                            for var in rf_features_cart[weight]:
                                 if var == "HEIGHT":  # precomputed in lookup tables
                                     var_radsweep = self.rad_heights[rad][sweep]
                                 elif var == "VISIB":
@@ -678,7 +677,7 @@ class QPEProcessor_RT_daemon(object):
                                         continue
                                     var_radsweep = isvalidzh_radsweep
                                 else:
-                                    if var in datasweep.keys():
+                                    if var in datasweep:
                                         # Compute variable integrated over QPE grid for rad/sweep
                                         var_radsweep = pol_to_cart(
                                             datasweep[var][idx_polar[0], idx_polar[1]],
@@ -711,12 +710,11 @@ class QPEProcessor_RT_daemon(object):
                     except Exception as err:
                         self.logger.error(f"Could not compute sweep {sweep}")
                         self.logger.error(err)
-                        pass
 
             """Part four - RF prediction"""
             # Get QPE estimate
             # X: current time step; X_prev: previous timestep (t-5min)
-            for k in self.models.keys():
+            for k in self.models:
                 model = self.models[k]
                 X = []
                 for v in model.variables:
@@ -730,7 +728,7 @@ class QPEProcessor_RT_daemon(object):
 
                 X = np.array(X).T
 
-                if (it == 0) or (k not in X_prev.keys()):
+                if (it == 0) or (k not in X_prev):
                     X_prev[k] = X
 
                 # Take average between current timestep and t-5min
@@ -753,7 +751,6 @@ class QPEProcessor_RT_daemon(object):
                 except Exception as err:
                     self.logger.error("Model inference failed!")
                     self.logger.error(f"Error is {err}")
-                    pass
 
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
                 if self.config["SAVE_NON_POSTPROCESSED_DATA"]:
@@ -790,7 +787,7 @@ class QPEProcessor_RT_daemon(object):
                     f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_xprev", X
                 )
 
-                if (it == 0) or (k not in qpe_prev.keys()):
+                if (it == 0) or (k not in qpe_prev):
                     qpe_prev[k] = qpe
                     # Because this is only the lead time, we go out here:
                     self.logger.info(

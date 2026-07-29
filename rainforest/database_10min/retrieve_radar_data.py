@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main routine for retrieving radar data
 This is meant to be run as a command line command from a slurm script
@@ -12,22 +11,19 @@ so you should never have to call it manually
 
 """
 
-import numpy as np
-import pandas as pd
-import dask.dataframe as dd
 import datetime
-import logging
 import gc
-
+import logging
 import os
-
 from collections import OrderedDict
 from optparse import OptionParser
 
+import dask.dataframe as dd
+import numpy as np
+import pandas as pd
+
 from rainforest.common import constants
 from rainforest.common.lookup import get_lookup
-from rainforest.common.utils import split_by_time, read_task_file, envyaml
-from rainforest.common.utils import aggregate_multi, nested_dict_values
 from rainforest.common.radarprocessing import (
     HZT_hourly_to_5min,
     Radar,
@@ -35,17 +31,24 @@ from rainforest.common.radarprocessing import (
     hydroClass_single_over_iso,
 )
 from rainforest.common.retrieve_data import (
-    retrieve_hzt_prod,
-    retrieve_prod,
     get_COSMO_T,
     get_COSMO_variables,
+    retrieve_hzt_prod,
+    retrieve_prod,
+)
+from rainforest.common.utils import (
+    aggregate_multi,
+    envyaml,
+    nested_dict_values,
+    read_task_file,
+    split_by_time,
 )
 
 logging.basicConfig(level=logging.INFO)
 IGNORE_ERRORS = True
 
 
-class Updater(object):
+class Updater:
     def __init__(self, task_file, config_file, output_folder, debug=False):
         """
         Creates an Updater  class instance that allows to add new radar data
@@ -81,8 +84,8 @@ class Updater(object):
         self.radars = self.radar_cfg["RADARS"]
         self.radar_variables = self.radar_cfg["RADAR_VARIABLES"]
         self.radar_variables.append("TCOUNT")
-        self.cosmo_variables = self.radar_cfg["COSMO_VARIABLES"]
-        self.other_variables = self.radar_cfg["OTHER_VARIABLES"]
+        self.cosmo_variables = self.radar_cfg.get("COSMO_VARIABLES", [])
+        self.other_variables = self.radar_cfg.get("OTHER_VARIABLES", [])
         self.temp_ref = self.radar_cfg["TEMP_REF"]
         self.agg_methods = self.radar_cfg["AGGREGATION_METHODS"]
         self.neighb_x = self.radar_cfg["NEIGHBOURS_X"]
@@ -222,10 +225,8 @@ class Updater(object):
             self.downloaded_files.extend(nested_dict_values(files_rad))
         except Exception:
             logging.error(
-                """Retrieval for radar {:s} at timesteps {:s}-{:s}
-                      failed""".format(
-                    radar, str(start_time), str(end_time)
-                )
+                f"""Retrieval for radar {radar:s} at timesteps {start_time!s:s}-{end_time!s:s}
+                      failed"""
             )
         return files_rad
 
@@ -249,12 +250,9 @@ class Updater(object):
             self.downloaded_files.extend(nested_dict_values(files_hzt))
 
         except Exception:
-            raise
             logging.error(
-                """Retrieval of hzt files at timesteps {:s}-{:s}
-                      failed""".format(
-                    str(start_time), str(end_time)
-                )
+                f"""Retrieval of hzt files at timesteps {start_time!s:s}-{end_time!s:s}
+                      failed"""
             )
 
         return files_hzt
@@ -299,16 +297,16 @@ class Updater(object):
         for sweep in radar_object.sweeps:
             ZH = radsweeps[sweep]
             for j, sta in enumerate(list_stations):
-                if sta not in lut_coords.keys():
+                if sta not in lut_coords:
                     # Station not visible from given radar for that sweep
                     continue
-                if sweep not in lut_coords[sta].keys():
+                if sweep not in lut_coords[sta]:
                     # Station not visible from given radar for that sweep
                     continue
                 for x in self.neighb_x:
                     for y in self.neighb_y:
                         strneighb = str(x) + str(y)
-                        if strneighb not in lut_coords[sta][sweep].keys():
+                        if strneighb not in lut_coords[sta][sweep]:
                             continue
                         if not len(lut_coords[sta][sweep][strneighb]):
                             continue
@@ -320,9 +318,7 @@ class Updater(object):
         #################
         if not valid_data:
             logging.info(
-                "No need to process radar {:s} no measurement above stations...".format(
-                    radar
-                )
+                f"No need to process radar {radar:s} no measurement above stations..."
             )
             return all_data
 
@@ -352,10 +348,10 @@ class Updater(object):
             for j, sta in enumerate(list_stations):
                 idx0_col = (sweep - 1) * ncols_by_sweep
 
-                if sta not in lut_coords.keys():
+                if sta not in lut_coords:
                     # Station not visible from given radar for all sweeps
                     continue
-                if sweep not in lut_coords[sta].keys():
+                if sweep not in lut_coords[sta]:
                     # Station not visible from given radar for that sweep
                     continue
 
@@ -409,7 +405,7 @@ class Updater(object):
                     for x in self.neighb_x:
                         for y in self.neighb_y:
                             strneighb = str(x) + str(y)
-                            if strneighb not in lut_coords[sta][sweep].keys():
+                            if strneighb not in lut_coords[sta][sweep]:
                                 continue
                             if not len(lut_coords[sta][sweep][strneighb]):
                                 continue
@@ -522,12 +518,12 @@ class Updater(object):
                 if i == 0:
                     hzt_files = self.retrieve_iso0_files(tstart, tend)
                     # Interpolate between timesteps
-                    hztfields = HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)
+                    hztfields = HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)[0]
                 elif tstart > np.max(list(hztfields.keys())):
                     hzt_files = self.retrieve_iso0_files(tstart, tend)
                     # Interpolate between timesteps
                     hztfields.update(
-                        HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)
+                        HZT_hourly_to_5min(tstart, hzt_files, tsteps_min=5)[0]
                     )
 
             # Create array for one timestep
@@ -539,7 +535,7 @@ class Updater(object):
                 visible_stations = list(self.lut["coords"][r].keys())
                 if not np.any(np.isin(stations_to_get, visible_stations)):
                     logging.info(
-                        "No need to process radar {:s} for these stations...".format(r)
+                        f"No need to process radar {r:s} for these stations..."
                     )
                     continue
 
@@ -571,6 +567,9 @@ class Updater(object):
                             status_file,
                             vpr_file,
                             temp_ref=self.temp_ref,
+                            metranet_reader=self.radar_cfg.get(
+                                "METRANET_READER", "python"
+                            ),
                         )
 
                         # Add ISO0_HEIGHT and height_over_iso0 to radar object
@@ -604,11 +603,9 @@ class Updater(object):
                 except Exception as e:
                     logging.error(e)
                     logging.error(
-                        """Data retrieval for radar {:s} and timestep
-                                    {:s} failed, assigning missing data
-                                    """.format(
-                            r, str(tstep)
-                        )
+                        f"""Data retrieval for radar {r:s} and timestep
+                                    {tstep!s:s} failed, assigning missing data
+                                    """
                     )
 
                     empty = (
@@ -679,7 +676,7 @@ class Updater(object):
                     save_output = False
 
             if save_output and len(all_data_daily):
-                logging.info("Saving new table for day {:s}".format(str(current_day)))
+                logging.info(f"Saving new table for day {current_day!s:s}")
                 name = self.output_folder + current_day + ".parquet"
 
                 # Check if a file already exists
@@ -697,7 +694,7 @@ class Updater(object):
                         data_col = data[:, c]
                         # Check required column type
                         isin_listcols = [
-                            c == col.split("_")[0] for c in constants.COL_TYPES.keys()
+                            c == col.split("_")[0] for c in constants.COL_TYPES
                         ]
                         if any(isin_listcols):
                             idx = np.where(isin_listcols)[0][0]
@@ -760,14 +757,7 @@ class Updater(object):
                 fstat = self.output_folder + "summary.txt"
                 f = open(fstat, "a")
                 f.write(
-                    "{};{};{};{};{};{}\n".format(
-                        current_day,
-                        all_timesteps[0],
-                        all_timesteps[-1],
-                        len(all_timesteps),
-                        n_rows,
-                        self.taskfile,
-                    )
+                    f"{current_day};{all_timesteps[0]};{all_timesteps[-1]};{len(all_timesteps)};{n_rows};{self.taskfile}\n"
                 )
                 f.close()
                 del n_rows
@@ -950,10 +940,10 @@ class Updater(object):
                     os.remove(f)
                 except PermissionError as e:
                     logging.error(e)
-                    logging.error("Could not delete file {:s}".format(f))
+                    logging.error(f"Could not delete file {f:s}")
 
 
-def _data_at_station(radar_object, variables, idx, methods=["mean"], tidx=None):
+def _data_at_station(radar_object, variables, idx, methods=None, tidx=None):
     """
     Gets polar data at the location of a station, using the indexes of the
     lookup table
@@ -974,11 +964,13 @@ def _data_at_station(radar_object, variables, idx, methods=["mean"], tidx=None):
         in the corresponding 10 min gauge period, 1 = first, 2 = second
     """
 
+    if methods is None:
+        methods = ["mean"]
     out = []
 
     if "TCOUNT" in variables:
         # Get first variable to compute TCOUNT (number of valid obs used in aggregation)
-        firstvar = list(radar_object.fields.values())[0]["data"]
+        firstvar = next(iter(radar_object.fields.values()))["data"]
         firstvar = firstvar[idx[:, 0], idx[:, 1]]
 
     if "max" in methods or "min" in methods:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Command line script to prepare input features and train RF models
 
@@ -7,17 +6,18 @@ see :ref:`rf_train`
 """
 
 # Global imports
-import sys
-import os
 import datetime
-import logging
 import json
-from pathlib import Path
+import logging
+import os
+import sys
 from optparse import OptionParser
+from pathlib import Path
+
+from rainforest.common import constants
 
 # Local imports
 from rainforest.ml.trainer import RFTraining
-from rainforest.common import constants
 
 logging.basicConfig(level=logging.INFO)
 script_path = os.path.dirname(os.path.realpath(__file__))
@@ -42,9 +42,7 @@ def main():
         dest="dbfolder",
         type=str,
         default=constants.FOLDER_DATABASE,
-        help="Path of the database main folder, default is {:s}".format(
-            constants.FOLDER_DATABASE
-        ),
+        help=f"Path of the database main folder, default is {constants.FOLDER_DATABASE:s}",
         metavar="DBFOLDER",
     )
 
@@ -142,7 +140,7 @@ def main():
         + "If set to 0, will not perform cross-validation (i.e. no test error)",
     )
 
-    (options, args) = parser.parse_args()
+    (options, _args) = parser.parse_args()
 
     if options.start is not None:
         options.start = datetime.datetime.strptime(options.start, "%Y%m%d%H%M")
@@ -157,12 +155,12 @@ def main():
 
     options.cv = int(options.cv)
 
-    logging.info("Output folder will be {:s}".format(options.outputfolder))
+    logging.info(f"Output folder will be {options.outputfolder:s}")
 
     if options.inputfolder is None:
         options.inputfolder = str(Path(options.dbfolder, "rf_input_data"))
 
-    logging.info("Folder with RF input data will be {:s}".format(options.inputfolder))
+    logging.info(f"Folder with RF input data will be {options.inputfolder:s}")
 
     dic_models = {}
 
@@ -174,9 +172,7 @@ def main():
     else:
         if "default" in options.rfmodels:
             logging.info(
-                'Found at least one "default" alias in models {:s}, assuming they are all aliases'.format(
-                    options.rfmodels
-                )
+                f'Found at least one "default" alias in models {options.rfmodels:s}, assuming they are all aliases'
             )
             options.rfmodels = options.rfmodels.split(",")
             for opt in options.rfmodels:  # Add aliases here if needed
@@ -260,9 +256,7 @@ def main():
 
     input_location = str(Path(options.dbfolder, "rf_input_data"))
     logging.info(
-        "Assuming that input data for RF training is in folder {:s}".format(
-            input_location
-        )
+        f"Assuming that input data for RF training is in folder {input_location:s}"
     )
     logging.info(
         "If not available in this folder, they will be computed and stored there"

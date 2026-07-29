@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main function to compute the QPE estimations on the Swiss grid
 
@@ -11,29 +10,38 @@ December 2019
 Modified by D. Wolfensberger and R. Gugerli
 December 2022
 """
-import warnings
-import pickle
-import numpy as np
+
 import datetime
-from pathlib import Path
-import os
 import importlib.util
-from ..common.logger import get_logger
-from ..common import constants
-from ..common.retrieve_data import (
-    retrieve_prod,
-    retrieve_hzt_prod,
-    retrieve_prod_RT,
-    retrieve_hzt_RT,
-)
-from ..common.lookup import get_lookup
-from ..common.utils import split_by_time, envyaml
-from ..common.radarprocessing import Radar, HZT_hourly_to_5min
-from ..common.io_data import save_gif
-from .qpe_utils import disaggregate, features_to_chgrid, pol_to_cart_valid
-from .qpe_utils import pol_to_cart, qpe_to_chgrid, outlier_removal
-from scipy.ndimage import gaussian_filter
+import os
+import pickle
+import warnings
+from pathlib import Path
+
+import numpy as np
 from pyart.aux_io.odim_h5_writer import write_odim_grid_h5
+from scipy.ndimage import gaussian_filter
+
+from ..common import constants
+from ..common.io_data import save_gif
+from ..common.logger import get_logger
+from ..common.lookup import get_lookup
+from ..common.radarprocessing import HZT_hourly_to_5min, Radar
+from ..common.retrieve_data import (
+    retrieve_hzt_prod,
+    retrieve_hzt_RT,
+    retrieve_prod,
+    retrieve_prod_RT,
+)
+from ..common.utils import envyaml, split_by_time
+from .qpe_utils import (
+    disaggregate,
+    features_to_chgrid,
+    outlier_removal,
+    pol_to_cart,
+    pol_to_cart_valid,
+    qpe_to_chgrid,
+)
 
 _PYSTEPS_AVAILABLE = importlib.util.find_spec("pysteps") is None
 warnings.filterwarnings("ignore")
@@ -49,7 +57,7 @@ NBINS_Y = len(Y_QPE_CENTERS)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
-class QPEProcessor(object):
+class QPEProcessor:
     def __init__(self, config_file, models, rt=False, verbose=True):
         """
         Creates a QPEProcessor object which can be used to compute QPE
@@ -107,9 +115,9 @@ class QPEProcessor(object):
         self.cosmo_var = []
         # keys of this dict are the variable used for the RF models, their values
         # is a list of lists with 1. the vertical weighting beta parameters to be used, 2. if visib_weighting is used or not
-        for k in self.models.keys():
+        for k in self.models:
             for var in self.models[k].variables:
-                if var not in self.model_weights_per_var.keys():
+                if var not in self.model_weights_per_var:
                     self.model_weights_per_var[var] = []
                 if models[k].beta not in self.model_weights_per_var[var]:
                     self.model_weights_per_var[var].append(
@@ -405,7 +413,7 @@ class QPEProcessor(object):
 
             # Get lead time file in RT mode
             if i == 0 and self.rt:
-                for k in self.models.keys():
+                for k in self.models:
                     tL_x_file = f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_xprev.npy"
                     tL_qpe_file = f"{self.config['TMP_FOLDER']}/{k}_{ct.strftime(basename)}_qpeprev.npy"
                     one_file_missing = False
@@ -436,7 +444,7 @@ class QPEProcessor(object):
             rf_features_cart = {}
             weights_cart = {}
 
-            for var in self.model_weights_per_var.keys():
+            for var in self.model_weights_per_var:
                 for weight in self.model_weights_per_var[var]:
                     if weight not in list(rf_features_cart.keys()):
                         rf_features_cart[weight] = {}
@@ -444,7 +452,7 @@ class QPEProcessor(object):
                     rf_features_cart[weight][var] = np.zeros((NBINS_X, NBINS_Y))
 
                     # add weights
-                    if weight not in weights_cart.keys():
+                    if weight not in weights_cart:
                         weights_cart[weight] = np.zeros((NBINS_X, NBINS_Y))
 
             # Get COSMO temperature for all radars for this timestamp
@@ -456,7 +464,7 @@ class QPEProcessor(object):
                                 ct, self.files_hzt, tsteps_min=timestep
                             )
                             self.logger.info(
-                                f'Interpolating HZT fields for timestep {ct.strftime("%Y%m%d%H%M")}'
+                                f"Interpolating HZT fields for timestep {ct.strftime('%Y%m%d%H%M')}"
                             )
                             self.logger.debug("Saving temporary HZT data to cache")
 
@@ -527,9 +535,8 @@ class QPEProcessor(object):
                     continue
                 radobjects[rad].compute_kdp(self.config["KDP_PARAMETERS"])
 
-                if test_mode:
-                    if "ISO0_HEIGHT" in self.cosmo_var:
-                        hzt_cosmo_fields = pickle.load(open(self.files_hzt[t1], "rb"))
+                if test_mode and "ISO0_HEIGHT" in self.cosmo_var:
+                    hzt_cosmo_fields = pickle.load(open(self.files_hzt[t1], "rb"))
 
                 # Add temperature indication to radar object
                 if "ISO0_HEIGHT" in self.cosmo_var:
@@ -549,6 +556,9 @@ class QPEProcessor(object):
                     )
 
             self.logger.info("Processing all sweeps of all radars")
+            rf_features_cart_unweighted = (
+                {}
+            )  # Used to store unweighted features if config requires, it is a dict of dict of dict with keys [radar][sweep][variable]
             for sweep in self.config["SWEEPS"]:  # Loop on sweeps
                 if not self.rt:
                     self.logger.info("---")
@@ -556,12 +566,12 @@ class QPEProcessor(object):
 
                 for rad in self.config["RADARS"]:  # Loop on radars, A,D,L,P,W
                     # If there is no radar file for the specific radar, continue to next radar
-                    if rad not in radobjects.keys():
+                    if rad not in radobjects:
                         self.logger.info(
                             f"Processing radar {rad} - no data for this timestep!"
                         )
                         continue
-                    elif sweep not in radobjects[rad].radsweeps.keys():
+                    elif sweep not in radobjects[rad].radsweeps:
                         self.logger.info(
                             f"Processing sweep {sweep} of radar {rad} - no data for this timestep!"
                         )
@@ -577,7 +587,7 @@ class QPEProcessor(object):
                             radobjects[rad].get_field(sweep, "ZH"), np.nan
                         )
 
-                        for var in self.model_weights_per_var.keys():
+                        for var in self.model_weights_per_var:
                             # These variables are computed differently
                             if "RADAR_prop" in var or var == "HEIGHT":
                                 continue
@@ -594,7 +604,7 @@ class QPEProcessor(object):
                             np.isnan(ZH), ZH < self.config["ZH_THRESHOLD"]
                         )
 
-                        for var in datasweep.keys():
+                        for var in datasweep:
                             # Because add.at does not support nan we replace by zero
                             if var not in ["VISIB", "ISO0_HEIGHT", "HEIGHT"]:
                                 datasweep[var][invalid] = np.nan
@@ -633,7 +643,7 @@ class QPEProcessor(object):
                             np.isfinite(ZH[idx_polar[0], idx_polar[1]]).astype(int),
                             idx_ch,
                         )
-                        for weight in rf_features_cart.keys():
+                        for weight in rf_features_cart:
                             beta, visibweighting = weight
                             # Compute altitude weighting
                             W = 10 ** (beta * (self.rad_heights[rad][sweep] / 1000.0))
@@ -641,26 +651,43 @@ class QPEProcessor(object):
                             if visibweighting:
                                 W *= visib_radsweep / 100
 
-                            for var in rf_features_cart[weight].keys():
-                                if var == "HEIGHT":  # precomputed in lookup tables
+                            for var in rf_features_cart[weight]:
+                                if var == "HEIGHT":
                                     var_radsweep = self.rad_heights[rad][sweep]
+
                                 elif var == "VISIB":
                                     var_radsweep = visib_radsweep
+
                                 elif "RADAR_prop_" in var:
-                                    if (
-                                        var[-1] != rad
-                                    ):  # Can update RADAR_prop only for the current radar
+                                    if var[-1] != rad:
                                         continue
                                     var_radsweep = isvalidzh_radsweep
+
                                 else:
-                                    if var in datasweep.keys():
-                                        # Compute variable integrated over QPE grid for rad/sweep
+                                    if var in datasweep:
                                         var_radsweep = pol_to_cart(
                                             datasweep[var][idx_polar[0], idx_polar[1]],
                                             idx_ch,
                                         )
+                                    else:
+                                        continue
 
-                                # Do a weighted update of the rf_features_cart array
+                                # Save unweighted Cartesian field, once per radar/sweep/variable
+                                if self.config.get("SAVE_UNWEIGHTED_FEATURES", False):
+                                    rf_features_cart_unweighted.setdefault(rad, {})
+                                    rf_features_cart_unweighted[rad].setdefault(
+                                        sweep, {}
+                                    )
+
+                                    if (
+                                        var
+                                        not in rf_features_cart_unweighted[rad][sweep]
+                                    ):
+                                        rf_features_cart_unweighted[rad][sweep][
+                                            var
+                                        ] = var_radsweep.copy()
+
+                                # Existing weighted update
                                 rf_features_cart[weight][var] = np.nansum(
                                     np.dstack(
                                         (
@@ -681,13 +708,26 @@ class QPEProcessor(object):
                     except Exception as err:
                         self.logger.error(f"Could not compute sweep {sweep}")
                         self.logger.error(f"Error is {err}")
-                        pass
+
+            if len(rf_features_cart_unweighted):
+                filepath = os.path.join(output_folder, "UNWEIGHTED_FEATURES")
+                os.makedirs(filepath, exist_ok=True)
+                print(f"Writing file {os.path.join(filepath, tstr)}")
+                np.savez_compressed(
+                    os.path.join(filepath, tstr),
+                    **{
+                        f"{rad}_sweep{sweep}_{var}": arr
+                        for rad, sweeps in rf_features_cart_unweighted.items()
+                        for sweep, variables in sweeps.items()
+                        for var, arr in variables.items()
+                    },
+                )
 
             """Part four - RF prediction"""
             self.logger.info("Applying RF model to retrieve predictions")
             # Get QPE estimate
             # X: current time step; X_prev: previous timestep (t-5min)
-            for k in self.models.keys():
+            for k in self.models:
                 model = self.models[k]
                 X = []
                 for v in model.variables:
@@ -700,7 +740,7 @@ class QPEProcessor(object):
                     X.append(dat.ravel())
 
                 X = np.array(X).T
-                if i == 0 or (self.rt and (k not in X_prev.keys())):
+                if i == 0 or (self.rt and (k not in X_prev)):
                     X_prev[k] = X
 
                 # Take average between current timestep and t-5min
@@ -733,7 +773,6 @@ class QPEProcessor(object):
                 except Exception as err:
                     self.logger.error("Model inference failed!")
                     self.logger.error(f"Error is {err}")
-                    pass
 
                 qpe = np.reshape(qpe, (NBINS_X, NBINS_Y))
                 if self.config["SAVE_NON_POSTPROCESSED_DATA"]:
@@ -773,7 +812,7 @@ class QPEProcessor(object):
                         qpe,
                     )
 
-                if i == 0 or (k not in X_prev.keys()):
+                if i == 0 or (k not in X_prev):
                     qpe_prev[k] = qpe
                     # Because this is only the lead time, we go out here:
                     self.logger.info(
@@ -798,11 +837,9 @@ class QPEProcessor(object):
                     self.save_output(qpe_ac, ct, filepath + tstr)
 
                 """Part six - Save main output"""
-                filepath = output_folder + "/" + k
-                if not os.path.exists(filepath):
-                    os.mkdir(filepath)
-                filepath += "/" + tstr
-                self.save_output(qpe, ct, filepath)
+                filepath = os.path.join(output_folder, k)
+                os.makedirs(filepath, exist_ok=True)
+                self.save_output(qpe, ct, os.path.join(filepath, tstr))
 
                 if self.config["SAVE_NON_POSTPROCESSED_DATA"]:
                     # Coding of folders (0 not applied, 1 applied)
@@ -810,26 +847,17 @@ class QPEProcessor(object):
                     # O: outlier removal
                     # G: Gaussian smoothing
 
-                    filepath = output_folder + "/" + k + "_T0O0G0/"
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)
-                    self.save_output(qpe_no_temp, ct, filepath + tstr)
+                    outputs = [
+                        ("_T0O0G0", qpe_no_temp),
+                        ("_T1O0G0", qpe_no_pp),
+                        ("_T1O1G0", outlier_removal(qpe_no_pp)),
+                        (
+                            "_T1O0G1",
+                            gaussian_filter(qpe_no_pp, self.config["GAUSSIAN_SIGMA"]),
+                        ),
+                    ]
 
-                    filepath = output_folder + "/" + k + "_T1O0G0/"
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)
-                    self.save_output(qpe_no_pp, ct, filepath + tstr)
-
-                    # With outlier removal (O1), but without Gaussian smoothing (G0)
-                    filepath = output_folder + "/" + k + "_T1O1G0/"
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)
-                    qpe_temp = outlier_removal(qpe_no_pp)
-                    self.save_output(qpe_temp, ct, filepath + tstr)
-
-                    # Without outlier removal (O0), but without Gaussian smoothing (G1)
-                    filepath = output_folder + "/" + k + "_T1O0G1/"
-                    if not os.path.exists(filepath):
-                        os.mkdir(filepath)
-                    qpe_temp = gaussian_filter(qpe_no_pp, self.config["GAUSSIAN_SIGMA"])
-                    self.save_output(qpe_temp, ct, filepath + tstr)
+                    for suffix, data in outputs:
+                        filepath = os.path.join(output_folder, f"{k}{suffix}")
+                        os.makedirs(filepath, exist_ok=True)
+                        self.save_output(data, ct, os.path.join(filepath, tstr))

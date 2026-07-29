@@ -1,37 +1,35 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Dec 16 17:38:52 2019
 @author: wolfensb, gugerlir
 """
 
-
-import numpy as np
-from scipy.spatial import KDTree
-from scipy.spatial.distance import cdist
-from textwrap import dedent
 import datetime
 import logging
+from textwrap import dedent
 
-from pyart.retrieve import kdp_leastsquare_single_window
-from pyart.retrieve import hydroclass_semisupervised
-from pyart.retrieve import compute_noisedBZ
-from pyart.correct import smooth_phidp_single_window
-from pyart.correct import calculate_attenuation_zphi
-from pyart.aux_io import read_metranet, read_cartesian_metranet
-from pyart.testing import make_empty_ppi_radar
+import numpy as np
+from pyart.aux_io import read_cartesian_metranet, read_metranet
 from pyart.core.transforms import antenna_vectors_to_cartesian
+from pyart.correct import calculate_attenuation_zphi, smooth_phidp_single_window
+from pyart.retrieve import (
+    compute_noisedBZ,
+    hydroclass_semisupervised,
+    kdp_leastsquare_single_window,
+)
+from pyart.testing import make_empty_ppi_radar
+from scipy.spatial import KDTree
+from scipy.spatial.distance import cdist
 
-from .utils import sweepnumber_fromfile, rename_fields
+from . import constants, wgs84_ch1903
 from .io_data import read_status, read_vpr
-from . import constants
-from . import wgs84_ch1903
 from .lookup import get_lookup
+from .utils import rename_fields, sweepnumber_fromfile
 
 logger = logging.getLogger(__name__)
 
 
-class Radar(object):
+class Radar:
     """
     A class that contains polar radar data and performs some pre-processing
     before adding that data to the database or computing the QPE product
@@ -46,7 +44,7 @@ class Radar(object):
         statusfile=None,
         vprfile=None,
         temp_ref="TAIR",
-        metranet_reader="C",
+        metranet_reader="python",
     ):
         """
         Creates an Radar class instance
@@ -90,8 +88,7 @@ class Radar(object):
                 self.radsweeps[sweep] = radinstance
                 self.sweeps.append(sweep)
             except Exception:
-                logger.error("Could not read file {:s}".format(f))
-                pass
+                logger.error(f"Could not read file {f:s}")
 
         self.radname = radname
 
@@ -104,14 +101,12 @@ class Radar(object):
                 self.compute_noise()
             except Exception:
                 logger.error("Could not compute noise from status file!")
-                pass
 
         if vprfile is not None:
             try:
                 self.vpr = read_vpr(vprfile, self.radname)
             except Exception:
                 logger.error("Could not add vpr file!")
-                pass
 
         # To get a variable to define the temperature reference
         self.temp_ref = temp_ref
@@ -226,7 +221,6 @@ class Radar(object):
                 # default noise
                 noisedBADU_h = constants.NOISE_100
                 noisedBADU_v = constants.NOISE_100
-                pass
 
             noisedBZ_h = compute_noisedBZ(
                 radsweep.nrays,
@@ -565,9 +559,7 @@ def HZT_hourly_to_5min(time, filelist, tsteps_min=5):
     if time.minute != 0:
         # Minutes are set to 0 below, here is only a notification
         logger.info(
-            "ISO0_HEIGHT: Temporal interpolation, timestamp {} set to HH:00".format(
-                time
-            )
+            f"ISO0_HEIGHT: Temporal interpolation, timestamp {time} set to HH:00"
         )
 
     tstamp_hzt0 = datetime.datetime(
@@ -585,9 +577,7 @@ def HZT_hourly_to_5min(time, filelist, tsteps_min=5):
 
     # Giving info about which files are used
     logger.info(
-        "ISO0_HEIGHT: Temporal interpolation between {} and {}".format(
-            filelist[tstamp_hzt0], filelist[tstamp_hzt1]
-        )
+        f"ISO0_HEIGHT: Temporal interpolation between {filelist[tstamp_hzt0]} and {filelist[tstamp_hzt1]}"
     )
 
     # Get the incremental difference for e.g. 5min steps (divided by 12):
@@ -607,7 +597,7 @@ def HZT_hourly_to_5min(time, filelist, tsteps_min=5):
     return hzt, files_used
 
 
-def HZT_cartesian_to_polar(hzt, radar, sweeps=range(0, 20)):
+def HZT_cartesian_to_polar(hzt, radar, sweeps=range(20)):
     """
     Transform a Cartesian HZT object (height of freezing level) to a polar
     Radar object with the freezing level at every gate on the Rad4Alp

@@ -12,7 +12,7 @@ pyart_mch
 pyarrow
 pandas
 pyshp
-pyspark==3.3.4
+pyspark
 pysteps
 python_dateutil
 pytz
@@ -20,3 +20,4 @@ PyYAML
 scikit_learn
 xmltodict
 cartopy
+xlrd

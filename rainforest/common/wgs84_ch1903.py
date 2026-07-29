@@ -1,4 +1,4 @@
-class GPSConverter(object):
+class GPSConverter:
     """
     GPS Converter class which is able to perform convertions between the
     CH1903 and WGS84 system.

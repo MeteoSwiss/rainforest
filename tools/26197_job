@@ -1,0 +1,9 @@
+#!/bin/sh
+#SBATCH -N 1     # nodes requested
+#SBATCH -c 1      # cores requested
+#SBATCH --mem-per-cpu 64g # memory in mbytes
+#SBATCH -t 23:59:59  # time requested in hour:minute:second
+#SBATCH --partition=postproc
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=daniel.wolfensberger@meteoswiss.ch
+qpe_compute -s 202607161555 -e 202607161600 -m '{"RF_dualpol_":"RFO_BETA_-0.5_BC_spline.p"}' -o /scratch/mch/wolfensb/content/rfo_recompute/26197 -c /users/wolfensb/github_repos/rainforest/rainforest/qpe/default_config.yml

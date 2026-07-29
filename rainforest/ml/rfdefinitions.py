@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Class declarations and reading functions
 required to unpickle trained RandomForest models
@@ -11,22 +10,21 @@ December 2019
 """
 
 # Global imports
-import pickle
 import gzip
-import numpy as np
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error
+import logging
 import os
-from scipy.interpolate import UnivariateSpline
+import pickle
 from pathlib import Path
+
 import mlflow
 import mlflow.sklearn
-import logging
-import mlflow
+import numpy as np
+from scipy.interpolate import UnivariateSpline
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
 
 # Local imports
 from ..common.object_storage import ObjectStorage
-
 
 logging.getLogger().setLevel(logging.INFO)
 ObjStorage = ObjectStorage()
@@ -65,7 +63,7 @@ class RandomForestRegressorBC(RandomForestRegressor):
         visib_weighting,
         degree=1,
         bctype="cdf",
-        metadata={},
+        metadata=None,
         n_estimators=100,
         criterion="squared_error",
         max_depth=None,
@@ -82,6 +80,8 @@ class RandomForestRegressorBC(RandomForestRegressor):
         verbose=0,
         warm_start=False,
     ):
+        if metadata is None:
+            metadata = {}
         super().__init__(
             n_estimators=n_estimators,
             criterion=criterion,
@@ -260,7 +260,7 @@ def read_rf(rf_name="", filepath="", mlflow_runid=None):
     if mlflow_runid is not None:
         artifact_path = "rf_gzipped_pickle_model/rf.pkl.gz"
         logging.info(
-            f'Downloading model from MLFlow at {os.getenv("MLFLOW_TRACKING_URI")}'
+            f"Downloading model from MLFlow at {os.getenv('MLFLOW_TRACKING_URI')}"
         )
         logging.info(f"Run id: {mlflow_runid}, artifact: {artifact_path}")
         is_compressed = artifact_path.endswith(".gz")
@@ -285,7 +285,7 @@ def read_rf(rf_name="", filepath="", mlflow_runid=None):
         rf_name = ObjStorage.check_file(rf_name)
 
     if not os.path.exists(rf_name):
-        raise IOError("RF model {:s} does not exist!".format(rf_name))
+        raise OSError(f"RF model {rf_name:s} does not exist!")
 
     if is_compressed:
         with gzip.open(open(rf_name, "rb")) as f:

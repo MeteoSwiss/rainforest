@@ -1,10 +1,11 @@
-import os
-import numpy as np
 import datetime
-from pyart.testing import make_empty_grid
+import os
+
+import numpy as np
 from pyart.aux_io.odim_h5 import proj4_to_dict
-from scipy.signal import convolve2d
+from pyart.testing import make_empty_grid
 from scipy.ndimage import map_coordinates
+from scipy.signal import convolve2d
 
 try:
     import pysteps
@@ -13,9 +14,9 @@ try:
 except ImportError:
     _PYSTEPS_AVAILABLE = False
 
-from ..common.utils import get_version
 from ..common import constants
 from ..common.add_at import add_at_64, add_at_int
+from ..common.utils import get_version
 
 ###############################################################################
 # Centerpoints of all QPE grid cells
@@ -178,7 +179,7 @@ def qpe_to_chgrid(qpe, time, missing_files, used_hzt_files=None, precision=2):
         [1, NBINS_X, NBINS_Y],
         [
             [0, 0],
-            [1000 * np.min(X_QPE_CENTERS), 1000 * np.max(X_QPE_CENTERS)],
+            [1000 * np.max(X_QPE_CENTERS), 1000 * np.min(X_QPE_CENTERS)],
             [1000 * np.min(Y_QPE_CENTERS), 1000 * np.max(Y_QPE_CENTERS)],
         ],
     )
@@ -304,7 +305,7 @@ def disaggregate(
     )
     oflow_method = pysteps.motion.get_method("LK")
     V1 = oflow_method(np.log(R))
-    Rd = np.zeros((R[0].shape))
+    Rd = np.zeros(R[0].shape)
 
     for i in range(1 + int(T / t)):
         pos1 = (y - i / T * V1[1], x - i / T * V1[0])

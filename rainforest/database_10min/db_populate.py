@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Command line script to add new data to the database
 
@@ -7,16 +6,17 @@ see :doc:`db_cmd`
 """
 
 # Global imports
-import sys
-import os
 import datetime
 import logging
-from pathlib import Path
+import os
+import sys
 from optparse import OptionParser
+from pathlib import Path
+
+from rainforest.common import constants
 
 # Local imports
 from rainforest.database_10min.database import Database
-from rainforest.common import constants
 
 logging.basicConfig(level=logging.INFO)
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -85,7 +85,7 @@ def main():
         + "default = '/store/msrad/radar/radar_database/gauge/*.csv.gz', IMPORTANT you have to put this statement into quotes (due to wildcard)!",
     )
 
-    (options, args) = parser.parse_args()
+    (options, _args) = parser.parse_args()
 
     if options.type not in ["gauge", "radar", "reference"]:
         raise ValueError("Type (-t) must be either 'radar', 'gauge' or 'reference'")

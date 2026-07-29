@@ -1,5 +1,5 @@
 NO_DATA_FILL: -9999
-TMP_FOLDER: '/scratch/${USER}/temp/'
+TMP_FOLDER: '/scratch/mch/${USER}/temp/'
 GAUGE_RETRIEVAL:
     VARIABLES : ['tre200s0','prestas0','ure200s0','rre150z0','dkl010z0','fkl010z0']
     STATIONS : 'all'
