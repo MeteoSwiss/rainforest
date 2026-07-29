@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 
 Class to extract the station data from the QPE maps and
@@ -7,23 +6,24 @@ assemble one DataFrame with 10min estimates of gauges and RFmodels
 
 """
 
-import numpy as np
-import pandas as pd
-from pathlib import Path
-import dask
-import dask.dataframe as dd
 import copy
-import pickle
 import datetime
-import yaml
 import logging
 import os
+import pickle
 import sys
+from pathlib import Path
 
+import dask
+import dask.dataframe as dd
+import numpy as np
+import pandas as pd
+import yaml
+
+from ..common.io_data import read_cart
+from ..common.lookup import get_lookup
 from ..common.retrieve_data import retrieve_prod
 from ..common.utils import envyaml, get_qpe_files_multiple_dirs
-from ..common.lookup import get_lookup
-from ..common.io_data import read_cart
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 logging.getLogger().setLevel(logging.INFO)
@@ -105,8 +105,8 @@ def get_QPE_filelist(qpefolder, time_conditions, modellist):
 
     # Get only timesteps where at least 2 files are available during 10 min period
     qpe_files10 = copy.deepcopy(tmp)
-    for k in tmp.keys():
-        for m in tmp[k].keys():
+    for k in tmp:
+        for m in tmp[k]:
             if "T0" not in m:  # if a RF model without temporal aggregation is included
                 if len(tmp[k][m]) < time_conditions["file_tol"]:
                     del qpe_files10[k][m]
@@ -126,7 +126,7 @@ def get_QPE_filelist(qpefolder, time_conditions, modellist):
     return qpe_files10_filt
 
 
-class compileMapEstimates(object):
+class compileMapEstimates:
     def __init__(
         self,
         config_file,
@@ -150,7 +150,7 @@ class compileMapEstimates(object):
             self.configfile = dir_path + "/default_config.yml"
 
         # Check if there are already some data compiled:
-        if "FILE_10MIN" in config.keys():
+        if "FILE_10MIN" in config:
             if os.path.exists(config["FILE_10MIN"]):
                 if overwrite:
                     logging.info("Overwriting existing compilation of model estimates")
@@ -178,7 +178,7 @@ class compileMapEstimates(object):
             config (dic): Dictionnary with the setup for the evaluation
         """
 
-        if ("MAINFOLDER" not in config["PATHS"].keys()) or (
+        if ("MAINFOLDER" not in config["PATHS"]) or (
             not os.path.exists(config["PATHS"]["MAINFOLDER"])
         ):
             logging.error(
@@ -204,7 +204,7 @@ class compileMapEstimates(object):
                     "Creating subfolder /results/ to save the plots and performance scores."
                 )
 
-        if ("GAUGEFOLDER" not in config["PATHS"].keys()) or (
+        if ("GAUGEFOLDER" not in config["PATHS"]) or (
             not os.path.exists(config["PATHS"]["GAUGEFOLDER"])
         ):
             logging.error(
@@ -214,7 +214,7 @@ class compileMapEstimates(object):
         else:
             self.gaugefolder = config["PATHS"]["GAUGEFOLDER"]
 
-        if "TIME_START" not in config.keys():
+        if "TIME_START" not in config:
             logging.error("No starting time was defined, please check.")
         else:
             try:
@@ -226,7 +226,7 @@ class compileMapEstimates(object):
                     "Starting time is not valid, please check that the format corresponds to YYYYMMDDHHMM."
                 )
 
-        if "TIME_END" not in config.keys():
+        if "TIME_END" not in config:
             logging.error("No ending time was defined, please check.")
         else:
             try:
@@ -238,13 +238,13 @@ class compileMapEstimates(object):
                     "Ending time is not valid, please check that the format corresponds to YYYYMMDDHHMM."
                 )
 
-        if "RF_MODELS" in config.keys():
+        if "RF_MODELS" in config:
             self.modellist = config["RF_MODELS"]
         else:
             logging.error("Please define a model to evaluate :)")
             sys.exit()
 
-        if "REFERENCES" in config.keys():
+        if "REFERENCES" in config:
             self.references = list(config["REFERENCES"])
         else:
             self.references = None
@@ -259,31 +259,27 @@ class compileMapEstimates(object):
         # Check if the RF-models are there
         for model in self.modellist:
             self.model_files = {}
-            path = self.qpefolder + "{}".format(model)
+            path = self.qpefolder + f"{model}"
             if not os.path.exists(path) or (len(os.listdir(path)) == 0):
-                logging.info("Extracting {} files from archive".format(model))
+                logging.info(f"Extracting {model} files from archive")
                 try:
-                    path = self.qpefolder + "{}".format(model)
+                    path = self.qpefolder + f"{model}"
                     self.model_files[model] = retrieve_prod(
                         path + "/", self.tstart, self.tend, model
                     )
-                    logging.info(
-                        "Model data: {} taken from file archive!".format(model)
-                    )
+                    logging.info(f"Model data: {model} taken from file archive!")
                 except Exception:
                     logging.error(
-                        "No QPE maps available for {}, please check path or produce QPE maps".format(
-                            model
-                        )
+                        f"No QPE maps available for {model}, please check path or produce QPE maps"
                     )
 
         # Check for reference data
         if self.references:
             self.ref_files = {}
             for ref in self.references:
-                path = self.qpefolder + "{}".format(ref)
+                path = self.qpefolder + f"{ref}"
                 if not os.path.exists(path) or (len(os.listdir(path)) == 0):
-                    logging.info("Extracting {} files from archive".format(ref))
+                    logging.info(f"Extracting {ref} files from archive")
                     if (ref == "CPC") or (ref == "CPCH"):
                         path = self.qpefolder
                         self.ref_files[ref] = retrieve_prod(
@@ -295,13 +291,11 @@ class compileMapEstimates(object):
                             path, self.tstart, self.tend, ref, pattern="*60.801.gif"
                         )
                     else:
-                        path = self.qpefolder + "{}".format(ref)
+                        path = self.qpefolder + f"{ref}"
                         self.ref_files[ref] = retrieve_prod(
                             path + "/", self.tstart, self.tend, ref
                         )
                 self.modellist.append(ref)
-
-        return
 
     def extractEstimatesFromMaps(
         self, slf_stations=False, tagg_hourly=True, save_output=True
@@ -409,8 +403,8 @@ class compileMapEstimates(object):
             # Get QPE precip
             for m in list_models:
                 if (i == 0) or (i == len(tstamps_10min) - 1):
-                    logging.info("Processing model {} and timestep {}".format(m, tstep))
-                if tstep in qpe_files10_filt.keys():
+                    logging.info(f"Processing model {m} and timestep {tstep}")
+                if tstep in qpe_files10_filt:
                     for f in qpe_files10_filt[tstep][m]:
                         data = read_cart(f)
                         # if len(np.shape(data)) == 3:
@@ -422,9 +416,7 @@ class compileMapEstimates(object):
                                 ]
                             except Exception:
                                 logging.info(
-                                    "Could not extract value for model {}, timestep {} and station {}".format(
-                                        m, tstep, s
-                                    )
+                                    f"Could not extract value for model {m}, timestep {tstep} and station {s}"
                                 )
                                 continue
                     precip_qpe[m][i] /= len(qpe_files10_filt[tstep][m])
@@ -473,7 +465,7 @@ class compileMapEstimates(object):
                 datetime.datetime.strftime(self.tstart, "%Y%m%d%H%M"),
                 datetime.datetime.strftime(self.tend, "%Y%m%d%H%M"),
             )
-            logging.info("Saving {}".format(save_file))
+            logging.info(f"Saving {save_file}")
             pickle.dump(precip_qpe, open(save_file, "wb"))
 
             # Add path to config file
@@ -487,7 +479,7 @@ class compileMapEstimates(object):
 
             # Convert to hourly estimates
             logging.info("Converting 10min estimates to hourly estimates")
-            for model in precip_qpe.keys():
+            for model in precip_qpe:
                 precip_60min[model] = pd.DataFrame(
                     columns=precip_qpe[model].columns, index=tstamps_60min
                 )
@@ -510,7 +502,6 @@ class compileMapEstimates(object):
                                 ].mean()
 
             if cpc60:
-                pass
                 # TODO
                 precip_60min["CPC60"] = self._get_cpc60(tstamps_60min)
 
@@ -522,11 +513,9 @@ class compileMapEstimates(object):
                     datetime.datetime.strftime(self.tstart, "%Y%m%d%H%M"),
                     datetime.datetime.strftime(self.tend, "%Y%m%d%H%M"),
                 )
-                logging.info("Saving {}".format(save_file_60))
+                logging.info(f"Saving {save_file_60}")
                 pickle.dump(precip_60min, open(save_file_60, "wb"))
 
                 # Update config file
                 with open(self.configfile, "a") as yamlfile:
                     yaml.safe_dump({"FILE_60MIN": save_file_60}, yamlfile)
-
-        return

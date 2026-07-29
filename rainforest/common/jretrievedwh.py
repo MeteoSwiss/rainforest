@@ -41,19 +41,18 @@ with urllib.request.urlopen(urllib.request.Request(
 """
 
 import argparse
-import numpy as np
 import logging
 import os
 import sys
-import pandas as pd
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import List, Dict, Union
+
+import numpy as np
+import pandas as pd
 
 from rainforest.common.object_storage import ObjectStorage
-
 
 # Set environment variable 'LOGLEVEL=DEBUG' to see the URLs
 LOGLEVEL = os.environ.get("LOGLEVEL", "CRITICAL").upper()
@@ -65,8 +64,8 @@ NA_VALUE = 10000000.00  # value used by jretrieve for NA (missing value)
 ObjStorage = ObjectStorage()
 
 
-def parse_arguments(argv: List[str]) -> Dict[str, str]:
-    def fix_negative_coordinates(argv: List[str]) -> None:
+def parse_arguments(argv: list[str]) -> dict[str, str]:
+    def fix_negative_coordinates(argv: list[str]) -> None:
         """
         Fix case of coordinates starting with a negative value, e.g. '-l "-90,90,-180,180"',
         which will raise 'expected one argument'. It will be changed to
@@ -235,7 +234,7 @@ def parse_arguments(argv: List[str]) -> Dict[str, str]:
     parser.add_argument(
         "--profile-angle-freq-band",
         "--profile_angle_freq_band",
-        help="Profile-Angle-Freq parameter frequency " "{freq_value|freq_min,freq_max}",
+        help="Profile-Angle-Freq parameter frequency {freq_value|freq_min,freq_max}",
     )  # type=type_string_list
     parser.add_argument(
         "--profile-angle-freq-elevation",
@@ -246,8 +245,7 @@ def parse_arguments(argv: List[str]) -> Dict[str, str]:
     parser.add_argument(
         "--profile-angle-freq-azimut",
         "--profile_angle_freq_azimut",
-        help="Profile-Angle-Freq parameter azimut "
-        "{azimut_value|azimut_min,azimut_max}",
+        help="Profile-Angle-Freq parameter azimut {azimut_value|azimut_min,azimut_max}",
     )  # type=type_string_list
     parser.add_argument(
         "--level-nu",
@@ -366,7 +364,7 @@ def parse_arguments(argv: List[str]) -> Dict[str, str]:
     return vars(parser.parse_args(argv))
 
 
-def exec_conf_file() -> Dict[str, str]:
+def exec_conf_file() -> dict[str, str]:
     data_folder = os.environ["RAINFOREST_DATAPATH"]
     conf_file_path = str(Path(data_folder, "credentials", ".jretrievedwh-conf.py"))
     ObjStorage.check_file(conf_file_path)
@@ -384,12 +382,12 @@ def to_camel_case(snake_str: str) -> str:
 
 
 def retrieve(
-    args: Dict[str, str], cfg: Dict[str, str], return_body: bool = False
+    args: dict[str, str], cfg: dict[str, str], return_body: bool = False
 ) -> int:
     def extract_view_type(
-        params: Dict[str, str],
+        params: dict[str, str],
         param_name: str,
-        view_types: Union[List[str], Dict[str, str]],
+        view_types: list[str] | dict[str, str],
         modify_params=True,
     ):
         param_values = params.get(param_name)
@@ -423,7 +421,7 @@ def retrieve(
                         param_values = param_values[comma_pos + 1 :]
                         params[param_name] = param_values
 
-    def fix_parameter_values(params: Dict[str, str]):
+    def fix_parameter_values(params: dict[str, str]):
         aviation_bulletin_types = params.get("aviationBulletinTypes")
         if aviation_bulletin_types is not None:
             # 'TAF_LONG' must be 'TAF LONG'
@@ -474,10 +472,9 @@ def retrieve(
     show_records = (args.pop("show_records", "") or "").lower() == "true"  # type: bool
     host = args.pop("url")
     if not host:
-        host = (
-            cfg["jretrieve_url"]
-            if "jretrieve_url" in cfg
-            else "https://jretrieve-prod.apps.cp.meteoswiss.ch/jretrieve/api/v1"
+        host = cfg.get(
+            "jretrieve_url",
+            "https://jretrieve-prod.apps.cp.meteoswiss.ch/jretrieve/api/v1",
         )
     host = host.rstrip("/")
 
@@ -573,8 +570,7 @@ def retrieve(
                     )
                     if not params.get("headerDisabled"):
                         num_records -= 2
-                        if num_records < 0:
-                            num_records = 0
+                        num_records = max(num_records, 0)
                 sys.stdout.buffer.write(
                     b"records read: %d%s" % (num_records, os.linesep.encode())
                 )
@@ -592,7 +588,7 @@ def retrieve(
         return 0
 
 
-def main(argv: List[str] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv[1:]
     logger.debug("ARG " + " ".join(argv))
@@ -601,7 +597,7 @@ def main(argv: List[str] = None) -> int:
     return retrieve(args, cfg)
 
 
-def jretrievedwh_to_pandas(argv: List[str] = None) -> pd.DataFrame:
+def jretrievedwh_to_pandas(argv: list[str] | None = None) -> pd.DataFrame:
     if argv is None:
         argv = sys.argv[1:]
     logger.debug("ARG " + " ".join(argv))

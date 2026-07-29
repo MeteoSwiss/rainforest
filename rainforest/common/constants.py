@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Set of constants regarding MeteoSwiss radars and QPE
 
 """
 
-import os
-import pandas as pd
-import numpy as np
-import shapefile
-from pathlib import Path
-import glob
 import datetime
+import glob
+import os
+import socket
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import shapefile
 from scipy.stats import mode
 
-import socket
-
 from .object_storage import ObjectStorage
-
-ObjStorage = ObjectStorage()
 
 ###############
 # DATA
@@ -31,6 +28,8 @@ lut_boscacci_folder = str(Path(data_folder, "references", "lut_boscacci"))
 cosmo_coords_folder = str(Path(data_folder, "references", "coords_ICON"))
 radar_samples_folder = str(Path(data_folder, "references", "radar_samples"))
 rfmodels_folder = str(Path(data_folder, "rf_models"))
+
+ObjStorage = ObjectStorage(data_folder)
 
 
 ###############

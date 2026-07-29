@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Set of functions that can be useful
 
@@ -11,23 +10,25 @@ December 2019
 
 # Global imports
 import datetime
-import io
-import importlib.metadata as _importlib_metadata
-import os
-from collections import OrderedDict
-import numpy as np
-from scipy.stats import energy_distance
-from dateutil import parser
 import glob
-import yaml
-import dask.dataframe as dd
-import re
-import numbers
+import importlib.metadata as _importlib_metadata
+import io
 import logging
+import numbers
+import os
+import re
+from collections import OrderedDict
+
+import dask.dataframe as dd
+import numpy as np
+import yaml
+from dateutil import parser
+from scipy.stats import energy_distance
+
+from . import constants
 
 # Local imports
 from .wgs84_ch1903 import GPSConverter
-from . import constants
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ def envyaml(filename):
     pattern = "(\\$\\{[A-Za-z0-9]+\\})"
     file = open(filename, "r")
     filebuff = io.StringIO()
-    for mylist in file.readlines():
+    for mylist in file:
         matches = re.findall(pattern, mylist)
         for m in matches:
             mylist = mylist.replace(m, os.environ[m.replace("${", "").replace("}", "")])
@@ -121,7 +122,7 @@ def perfscores(est_data, ref_data, bounds=None, array=False):
 
     if bounds is not None:
         for i in range(len(bounds) - 1):
-            bound_str = "{:2.1f}-{:2.1f}".format(bounds[i], bounds[i + 1])
+            bound_str = f"{bounds[i]:2.1f}-{bounds[i + 1]:2.1f}"
             cond = np.logical_and(ref_data < bounds[i + 1], ref_data >= bounds[i])
             if np.sum(cond) > 0:
                 est = est_data[cond]
@@ -178,7 +179,7 @@ def split_by_time(files_rad):
     """Separate a list of files by their timestamp"""
     out = {}
     if isinstance(files_rad, dict):
-        for k in files_rad.keys():
+        for k in files_rad:
             out[k] = _split_by_time(files_rad[k])
     else:
         out = _split_by_time(files_rad)
@@ -190,12 +191,12 @@ def _split_by_time(files_rad):
 
     for f in files_rad:
         t = timefromfilename(f)
-        if t in out.keys():
+        if t in out:
             out[t].append(f)
         else:
             out[t] = [f]
     # Avoid lists with size 1
-    for k in out.keys():
+    for k in out:
         if len(out[k]) == 1:
             out[k] = out[k][0]
     return out
@@ -374,7 +375,7 @@ def quantile(data, weights, quantile):
     # TODO: Allow to specify the axis
     nd = data.ndim
     if nd == 0:
-        TypeError("data must have at least one dimension")
+        raise TypeError("data must have at least one dimension")
     elif nd == 1:
         return quantile_1D(data, weights, quantile)
     elif nd > 1:
@@ -438,7 +439,7 @@ def chunks(mylist, n):
     o = int(np.round(len(mylist) / n))
     out = []
     # For item i in a range that is a length of l,
-    for i in range(0, n):
+    for i in range(n):
         # Create an index range for l of n items:
         if i == n - 1:
             sub = mylist[i * o :]
@@ -474,7 +475,7 @@ def nested_dict_values(d):
     listvals = list(nested_dict_gen(d))
     listvals_unwrapped = []
     for value in listvals:
-        if isinstance(value, list) or isinstance(value, np.ndarray):
+        if isinstance(value, (list, np.ndarray)):
             for ll in value:
                 listvals_unwrapped.append(ll)
         else:
@@ -498,7 +499,7 @@ def nanadd_at(a, indices, b):
     mask = np.isfinite(b)
     b = b[mask]
     indices = indices[mask]
-    indices = tuple([indices[:, 0], indices[:, 1]])
+    indices = (indices[:, 0], indices[:, 1])
     return np.add.at(a, indices, b)
 
 
@@ -534,7 +535,7 @@ def rename_fields(data):
     """
     old_keys = list(data.fields.keys())
     for k in old_keys:
-        if k in constants.PYART_NAMES_MAPPING.keys():
+        if k in constants.PYART_NAMES_MAPPING:
             new_name = constants.PYART_NAMES_MAPPING[k]
             data.fields[new_name] = data.fields.pop(k)
 
@@ -666,9 +667,8 @@ def get_qpe_files(input_folder, t0=None, t1=None, time_agg=None, list_models=Non
     for sub in glob.glob(input_folder + "/*"):
         model = os.path.basename(sub)
 
-        if list_models is not None:
-            if model not in list_models:
-                continue
+        if list_models is not None and model not in list_models:
+            continue
 
         files = glob.glob(sub + "/*")
         for f in files:
@@ -680,16 +680,14 @@ def get_qpe_files(input_folder, t0=None, t1=None, time_agg=None, list_models=Non
                 if time_agg is not None:
                     t = nearest_time(t, time_agg)
 
-                if t0 is not None:
-                    if t < t0:
-                        continue
-                if t1 is not None:
-                    if t > t1:
-                        continue
+                if t0 is not None and t < t0:
+                    continue
+                if t1 is not None and t > t1:
+                    continue
 
-                if t not in all_files.keys():
+                if t not in all_files:
                     all_files[t] = {}
-                if model not in all_files[t].keys():
+                if model not in all_files[t]:
                     all_files[t][model] = []
 
                 all_files[t][model].append(f)
@@ -756,7 +754,7 @@ def get_qpe_files_multiple_dirs(
 
     # Get the filepaths and names according to model and timestep
     all_files = {}
-    for model in file_list.keys():
+    for model in file_list:
         for f in file_list[model]:
             try:
                 t = str(re.match(".*[a-zA-Z]([0-9]{9}).*", f)[1])
@@ -766,16 +764,14 @@ def get_qpe_files_multiple_dirs(
                 if time_agg is not None:
                     t = nearest_time(t, time_agg)
 
-                if t0 is not None:
-                    if t < t0:
-                        continue
-                if t1 is not None:
-                    if t > t1:
-                        continue
+                if t0 is not None and t < t0:
+                    continue
+                if t1 is not None and t > t1:
+                    continue
 
-                if t not in all_files.keys():
+                if t not in all_files:
                     all_files[t] = {}
-                if model not in all_files[t].keys():
+                if model not in all_files[t]:
                     all_files[t][model] = []
 
                 all_files[t][model].append(f)
@@ -808,5 +804,5 @@ def check_random_state(seed):
     if isinstance(seed, np.random.RandomState):
         return seed
     raise ValueError(
-        "%r cannot be used to seed a numpy.random.RandomState instance" % seed
+        f"{seed!r} cannot be used to seed a numpy.random.RandomState instance"
     )

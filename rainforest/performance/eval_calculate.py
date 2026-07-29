@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-    Class to calculate performance scores of different
-    QPE products
+Class to calculate performance scores of different
+QPE products
 
-    Rebecca Gugerli, EPFL-MeteoSwiss, February 2023
+Rebecca Gugerli, EPFL-MeteoSwiss, February 2023
 
 """
 
-import pandas as pd
-import numpy as np
-import pickle
-from typing import List
-import os
 import logging
-import pysteps.verification.detcontscores as detcontscores
+import os
+import pickle
 
-from ..common.utils import envyaml
+import numpy as np
+import pandas as pd
+from pysteps.verification import detcontscores
+
 from ..common.constants import METSTATIONS
-
+from ..common.utils import envyaml
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 logging.getLogger().setLevel(logging.INFO)
@@ -30,7 +28,7 @@ logging.getLogger().setLevel(logging.INFO)
 def calcScoresStations(
     precip_ref: pd.DataFrame,
     precip_est: pd.DataFrame,
-    threshold: List[float] = [0.1, 0.1],
+    threshold: list[float] | None = None,
 ) -> pd.DataFrame:
     """
     Computes the following scores for a given reference and estimation
@@ -56,6 +54,8 @@ def calcScoresStations(
         DataFrame object: Dataframe with stations as indices and scores as columns
     """
 
+    if threshold is None:
+        threshold = [0.1, 0.1]
     th_ref, th_est = threshold if isinstance(threshold, list) else [threshold] * 2
 
     score_names = [
@@ -116,7 +116,7 @@ def calcScoresStations(
                 10 * np.log10(sum_pred_db / sum_ref_db), decimals=4
             )
         else:
-            logging.info("No measurements for station {}".format(station_id))
+            logging.info(f"No measurements for station {station_id}")
             perf_scores.loc[
                 station_id, ["logBias", "RMSE", "corr_p", "scatter"]
             ] = np.nan
@@ -135,7 +135,7 @@ def calcScoresStations(
                 scores["scatter"], decimals=4
             )
         except Exception:
-            logging.info("Could not calculate scores for station {}".format(station_id))
+            logging.info(f"Could not calculate scores for station {station_id}")
             perf_scores.loc[station_id, ["RMSE", "corr_p", "scatter"]] = np.nan
 
     return perf_scores
@@ -162,7 +162,9 @@ def calcScoresSwitzerland_get_scorelist():
     return score_list
 
 
-def calcScoresSwitzerland(precip_ref, precip_pred, threshold=[0.1, 0.1]):
+def calcScoresSwitzerland(precip_ref, precip_pred, threshold=None):
+    if threshold is None:
+        threshold = [0.1, 0.1]
     if not isinstance(threshold, list):
         th_ref = threshold
         th_est = th_ref
@@ -233,7 +235,7 @@ def calcScoresSwitzerland(precip_ref, precip_pred, threshold=[0.1, 0.1]):
 # -----------------------------------------------------------
 
 
-class calcPerfscores(object):
+class calcPerfscores:
     def __init__(self, configfile=None, read_only=False):
         """
         Initiates the class to compute performance scores for RainForest models
@@ -253,7 +255,7 @@ class calcPerfscores(object):
 
         config = envyaml(configfile)
 
-        if "MAINFOLDER" in config["PATHS"].keys():
+        if "MAINFOLDER" in config["PATHS"]:
             self.mainfolder = config["PATHS"]["MAINFOLDER"]
             if not os.path.exists(self.mainfolder + "/results/"):
                 os.mkdir(self.mainfolder + "/results/")
@@ -274,12 +276,12 @@ class calcPerfscores(object):
 
         # Getting precip amounts
         self.precip = {}
-        if "FILE_10MIN" in config.keys():
+        if "FILE_10MIN" in config:
             self.precip["10min"] = pickle.load(open(config["FILE_10MIN"], "rb"))
         else:
             logging.info("Filepath to 10min QPE compilation is missing")
 
-        if "FILE_60MIN" in config.keys():
+        if "FILE_60MIN" in config:
             self.precip["60min"] = pickle.load(open(config["FILE_60MIN"], "rb"))
         else:
             logging.info("Filepath to hourly QPE compilation is missing")
@@ -319,34 +321,36 @@ class calcPerfscores(object):
     def saveTimeSeries_csv(
         self,
         pathOut,
-        modellist=["GAUGE", "RFO"],
-        timeagg=["10min", "60min"],
-        stations=["all"],
+        modellist=None,
+        timeagg=None,
+        stations=None,
     ):
+        if stations is None:
+            stations = ["all"]
+        if timeagg is None:
+            timeagg = ["10min", "60min"]
+        if modellist is None:
+            modellist = ["GAUGE", "RFO"]
         for model in modellist:
             for tagg in timeagg:
                 if stations[0] == "all":
-                    filename = "timeseries_{}_{}_{}_all_stations.csv".format(
-                        model, self.datestring, tagg
+                    filename = (
+                        f"timeseries_{model}_{self.datestring}_{tagg}_all_stations.csv"
                     )
                     stat_ids = self.precip[tagg][model].columns
                 else:
-                    filename = "timeseries_{}_{}_{}_selected_stations.csv".format(
-                        model, self.datestring, tagg
-                    )
+                    filename = f"timeseries_{model}_{self.datestring}_{tagg}_selected_stations.csv"
                     stat_ids = stations
 
-                logging.info("Saving timeseries: {}".format(pathOut + filename))
+                logging.info(f"Saving timeseries: {pathOut + filename}")
                 self.precip[tagg][model][stat_ids].to_csv(pathOut + filename, sep=";")
-
-        return
 
     def readScores(
         self,
         modellist,
         reference="GAUGE",
-        timeagg=["10min", "60min"],
-        doublecond=[0.1, 0.6],
+        timeagg=None,
+        doublecond=None,
     ):
         """
         Reads files and sorts them into a dictionnary with the following setup:
@@ -362,6 +366,10 @@ class calcPerfscores(object):
            Dictionary: DataFrame (see above)
         """
 
+        if doublecond is None:
+            doublecond = [0.1, 0.6]
+        if timeagg is None:
+            timeagg = ["10min", "60min"]
         scores = {}
         for tagg in timeagg:
             scores[tagg] = {}
@@ -377,15 +385,13 @@ class calcPerfscores(object):
                     )
                     try:
                         scores[tagg][ith][model] = pd.read_csv(
-                            self.mainfolder + "/results/{}".format(filename),
+                            self.mainfolder + f"/results/{filename}",
                             index_col=0,
                             sep=";",
                         )
                     except Exception:
                         logging.warning(
-                            "The following performance scores are not available {}".format(
-                                filename
-                            )
+                            f"The following performance scores are not available {filename}"
                         )
 
         return scores
@@ -394,8 +400,8 @@ class calcPerfscores(object):
         self,
         modellist,
         reference="GAUGE",
-        timeagg=["10min", "60min"],
-        doublecond=[0.1, 0.6],
+        timeagg=None,
+        doublecond=None,
     ):
         """
         Core of this class, it manages reference and estimates and calls
@@ -413,6 +419,10 @@ class calcPerfscores(object):
             DataFrame object: Dataframe with stations as indices and scores as columns
         """
 
+        if doublecond is None:
+            doublecond = [0.1, 0.6]
+        if timeagg is None:
+            timeagg = ["10min", "60min"]
         scores = {}
         scores_CH = {}
 
@@ -428,7 +438,7 @@ class calcPerfscores(object):
 
                 for model in modellist:
                     # Calculate score
-                    logging.info("Calculating scores for {}".format(model))
+                    logging.info(f"Calculating scores for {model}")
                     scores[tagg][ith][model] = calcScoresStations(
                         self.precip[tagg][reference],
                         self.precip[tagg][model],
@@ -443,7 +453,7 @@ class calcPerfscores(object):
                         model,
                     )
                     scores[tagg][ith][model].to_csv(
-                        self.mainfolder + "/results/{}".format(filename), sep=";"
+                        self.mainfolder + f"/results/{filename}", sep=";"
                     )
 
                     # Switzerland
@@ -466,7 +476,7 @@ class calcPerfscores(object):
                     self.datestring, tagg, str(ith).replace(".", "_")
                 )
                 scores_CH[tagg][ith].to_csv(
-                    self.mainfolder + "/results/{}".format(filename), sep=";"
+                    self.mainfolder + f"/results/{filename}", sep=";"
                 )
 
         return scores

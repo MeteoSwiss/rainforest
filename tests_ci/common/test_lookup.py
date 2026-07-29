@@ -2,14 +2,14 @@
 import os
 from pathlib import Path
 
-from rainforest.common.lookup import get_lookup, calc_lookup
+from rainforest.common.lookup import calc_lookup, get_lookup
 
 LOOKUP_FOLDER = Path(os.environ["RAINFOREST_DATAPATH"], "references", "lookup_data")
 
 
 def test_read_lookup():
     lut_station = get_lookup("station_to_rad", "A")
-    assert "OTL" in lut_station[2].keys()
+    assert "OTL" in lut_station[2]
 
 
 def test_calc_lookup():

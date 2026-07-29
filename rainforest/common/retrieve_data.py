@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Functions to retrieve MeteoSwiss products from the archives
 
@@ -9,21 +8,21 @@ daniel.wolfensberger@epfl.ch, rebecca.gugerli@epfl.ch
 December 2019, July 2022
 """
 
-
-import numpy as np
-import os
-import zipfile
 import datetime
-import glob
-import subprocess
-from io import BytesIO
 import fnmatch
+import glob
+import os
 import re
-from warnings import warn
-import netCDF4
+import subprocess
+import zipfile
+from io import BytesIO
 from textwrap import dedent
+from warnings import warn
 
+import netCDF4
+import numpy as np
 import pandas as pd  # function used in retrieve_hzt_prod
+
 from . import constants
 from . import io_data as io  # avoid circular
 from .lookup import get_lookup
@@ -308,9 +307,7 @@ def _retrieve_hzt_prod_daily(folder_out, start_time, end_time, pattern_type="she
     # Only unzip if at least one file does not exist
     if len(files_to_retrieve.strip()) > 0:
         print("Unzippping: " + files_to_retrieve)
-        cmd = 'unzip -j -o -qq "{:s}" {:s} -d {:s}'.format(
-            folder_in + name_zipfile, files_to_retrieve, folder_out
-        )
+        cmd = f'unzip -j -o -qq "{folder_in + name_zipfile:s}" {files_to_retrieve:s} -d {folder_out:s}'
         subprocess.call(cmd, shell=True)
 
     files = sorted(
@@ -486,9 +483,7 @@ def get_COSMO_variables(
     tmp_name = tmp_folder + os.path.basename(grb) + "_filtered"
 
     cmd_filter = {
-        "{:s} {:s} --force -s {:s} -o {:s}".format(
-            constants.FILTER_COMMAND, grb, list_variables, tmp_name
-        )
+        f"{constants.FILTER_COMMAND:s} {grb:s} --force -s {list_variables:s} -o {tmp_name:s}"
     }
 
     subprocess.call(cmd_filter, shell=True)
@@ -507,7 +502,7 @@ def get_COSMO_variables(
     # Interpolate for all radars and sweeps
     var_at_radar = {}
     for r in radar:
-        lut_rad = get_lookup("cosmo{:s}_to_rad".format(cosmo_version), r)
+        lut_rad = get_lookup(f"cosmo{cosmo_version:s}_to_rad", r)
         var_at_radar[r] = {}
         for v in variables:
             data = np.squeeze(file_COSMO.variables[v][:])
@@ -870,11 +865,11 @@ def retrieve_CPCCV(time, stations):
     match = np.where((time <= all_tend) & (time >= all_tstart))[0]
 
     if not len(match):
-        print("Could not find CPC.CV file for time {:s}".format(time))
+        print(f"Could not find CPC.CV file for time {time:s}")
         return (
-            np.zeros((len(stations))) + np.nan,
-            np.zeros((len(stations))) + np.nan,
-            np.zeros((len(stations))) + np.nan,
+            np.zeros(len(stations)) + np.nan,
+            np.zeros(len(stations)) + np.nan,
+            np.zeros(len(stations)) + np.nan,
         )
 
     data = io.read_xls(files[match[0]])

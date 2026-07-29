@@ -1,6 +1,7 @@
-import pandas as pd
 import os
 from pathlib import Path
+
+import pandas as pd
 
 from rainforest.database_10min.retrieve_radar_data import Updater
 

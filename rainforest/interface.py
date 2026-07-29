@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Command line interface to the database
 
 
 """
 
-
 # Global imports
 import datetime
+import json
 import os
-import numpy as np
+import subprocess
 from pathlib import Path
+
+import numpy as np
+import yaml
+from prompt_toolkit import print_formatted_text
+from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.shortcuts import prompt
 from prompt_toolkit.styles import Style
-from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit import print_formatted_text
-import json
-import yaml
-import subprocess
+
+from rainforest.common import constants
 
 # Local imports
 from rainforest.database.database import Database, DataFrameWithInfo
-from rainforest.common import constants
 
 print = print_formatted_text
 
@@ -41,7 +41,7 @@ def prompt_check(promptext, check, **kwargs):
 def check_input(inpt, check):
     try:
         if isinstance(check, list):
-            assert any([check_input(inpt, c) for c in check])
+            assert any(check_input(inpt, c) for c in check)
         else:
             if "%Y" in check:  # datetime input
                 datetime.datetime.strptime(inpt, check)
@@ -200,7 +200,7 @@ QPE menu
                         print("Invalid number of rows, using 10", style=style_warning)
                         nrows = 10
 
-                    if nametab not in dbase.tables.keys():
+                    if nametab not in dbase.tables:
                         print(
                             "Table name {:s} is not in loaded table names: {:s}".format(
                                 nametab, ",".join(list(dbase.tables.keys()))
@@ -391,13 +391,11 @@ QPE menu
                         file = open(fname, "w")
                         file.write(constants.SLURM_HEADER_PY)
                         file.write(
-                            "qpe_compute -s {:s} -e {:s} -o {:s} -c {:s} -m '{:s}'".format(
-                                t0, t1, o, c, m
-                            )
+                            f"qpe_compute -s {t0:s} -e {t1:s} -o {o:s} -c {c:s} -m '{m:s}'"
                         )
                         file.close()
                         print("Submitting job")
-                        subprocess.call("sbatch {:s}".format(fname), shell=True)
+                        subprocess.call(f"sbatch {fname:s}", shell=True)
 
                 elif code == "plot":
                     i = prompt_check(
@@ -447,19 +445,17 @@ QPE menu
                     txt = "Specify which models (i.e. subfolders in the qpefolder you want to use, must be comma separated e.g. dualpol,hpol,RZC, leave empty to use all available: "
                     models = prompt_check(txt, [str, ""], default="")
 
-                    cmd = "qpe_plot -i {:s} -o {:s} -S {:s} -x {:s} -c {:s} -y {:s} -v {:s} -V {:s} -t {:s}".format(
-                        i, o, shp, xlim, cbar, ylim, vmin, vmax, trans
-                    )
+                    cmd = f"qpe_plot -i {i:s} -o {o:s} -S {shp:s} -x {xlim:s} -c {cbar:s} -y {ylim:s} -v {vmin:s} -V {vmax:s} -t {trans:s}"
                     if s != "":
-                        cmd += " -s {:s}".format(s)
+                        cmd += f" -s {s:s}"
                     if e != "":
-                        cmd += " -e {:s}".format(e)
+                        cmd += f" -e {e:s}"
                     if fig != "":
-                        cmd += "-f {:s}".format(fig)
+                        cmd += f"-f {fig:s}"
                     if disp != "":
-                        cmd += "-d {:s}".format(disp)
+                        cmd += f"-d {disp:s}"
                     if models != "":
-                        cmd += "-m {:s}".format(models)
+                        cmd += f"-m {models:s}"
 
                     print(
                         "You want to plot a series of QPE realizations with the following parameters..."
@@ -498,9 +494,8 @@ QPE menu
                         file.write(cmd)
                         file.close()
                         print("Submitting job")
-                        subprocess.call("sbatch {:s}".format(fname), shell=True)
+                        subprocess.call(f"sbatch {fname:s}", shell=True)
 
         except KeyboardInterrupt:
             current_menu = "main"
             print(title1, style=style)
-            pass

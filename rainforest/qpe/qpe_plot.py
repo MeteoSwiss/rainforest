@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Command line script to display QPE realisazions
 
@@ -7,12 +6,13 @@ see :ref:`qpe_plot`
 """
 
 # Global imports
-import sys
-import os
 import datetime
 import logging
-import matplotlib.pyplot as plt
+import os
+import sys
 from optparse import OptionParser
+
+import matplotlib.pyplot as plt
 
 # Local imports
 from ..common.graphics import qpe_plot
@@ -167,7 +167,7 @@ def main():
         default=None,
     )
 
-    (options, args) = parser.parse_args()
+    (options, _args) = parser.parse_args()
 
     if options.start is not None:
         options.start = datetime.datetime.strptime(options.start, "%Y%m%d%H%M")

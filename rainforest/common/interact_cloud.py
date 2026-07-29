@@ -1,6 +1,6 @@
 # Global imports
-import logging
 import glob
+import logging
 from optparse import OptionParser
 
 # Local imports
@@ -58,7 +58,7 @@ def main():
         metavar="KEY",
     )
 
-    (options, args) = parser.parse_args()
+    (options, _args) = parser.parse_args()
 
     if options.action not in ["delete", "download", "upload", "list"]:
         raise ValueError(
@@ -66,29 +66,27 @@ def main():
         )
 
     if options.action == "download":
-        logging.info("Output folder will be {:s}".format(options.outputfolder))
+        logging.info(f"Output folder will be {options.outputfolder:s}")
 
     objstorage = ObjectStorage(aws_key=options.key)
 
     if options.action == "download":
         logging.info(
-            "Downloading file {:s} to directory {:s}".format(
-                options.name, options.outputfolder
-            )
+            f"Downloading file {options.name:s} to directory {options.outputfolder:s}"
         )
         objstorage.download_file(options.name, options.outputfolder, options.bucket)
     elif options.action == "upload":
         files = glob.glob(options.name)
         for f in files:
-            logging.info("Uploading file {:s}".format(f))
+            logging.info(f"Uploading file {f:s}")
             objstorage.upload_file(f, options.bucket)
     elif options.action == "delete":
-        logging.info("Deleting file {:s}".format(options.name))
+        logging.info(f"Deleting file {options.name:s}")
         objstorage.delete_file(options.name, options.bucket)
     elif options.action == "list":
-        logging.info("Listing files from bucket {:s}".format(options.bucket))
+        logging.info(f"Listing files from bucket {options.bucket:s}")
         listfiles = objstorage.list_files(options.bucket)
         print(listfiles)
     elif options.action == "rsync":
-        logging.info("Rsync of local files with bucket {:s}".format(options.bucket))
+        logging.info(f"Rsync of local files with bucket {options.bucket:s}")
         objstorage.rsync_cloud(bucket=options.bucket)

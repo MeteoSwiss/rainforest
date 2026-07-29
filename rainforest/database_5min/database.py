@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main class to update the RADAR/STATION database and run queries to retrieve
 specific data
@@ -9,28 +8,32 @@ Note that I use spark because there is currently no way to use SQL queries
 with dask
 """
 
-from pyspark import SparkConf
-from pyspark import SparkContext
-from pyspark.sql import SparkSession
-from collections import defaultdict
-
-# Global imports
-import glob
-import yaml
-import logging
-
-import os
-import textwrap
-import numpy as np
-import subprocess
-from datetime import datetime, timezone
 import copy
 import fnmatch
 
+# Global imports
+import glob
+import logging
+import os
+import subprocess
+import textwrap
+from collections import defaultdict
+from datetime import datetime, timezone
+
+import numpy as np
+import yaml
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
+
 # Local imports
 from ..common import constants
-from ..common.utils import chunks, timestamp_from_datestr
-from ..common.utils import dict_flatten, read_df, envyaml
+from ..common.utils import (
+    chunks,
+    dict_flatten,
+    envyaml,
+    read_df,
+    timestamp_from_datestr,
+)
 
 # This could benefit from some tweaks especially if the database becomes larger
 conf = SparkConf()
@@ -79,7 +82,7 @@ class DataFrameWithInfo:
             ------------------------
             Dimension: {rows} x {len(cols)}
             Time interval: {t0} - {t1}
-            Columns: {', '.join(cols)}
+            Columns: {", ".join(cols)}
             """
         return self._info
 
@@ -88,7 +91,7 @@ class DataFrameWithInfo:
         self._info = value
 
 
-class Database(object):
+class Database:
     def __init__(self, config_file=None):
         """
         Creates a Database instance that can be used to load data, update
@@ -301,7 +304,6 @@ class Database(object):
             old_data_ok = True  # valid data present
         except Exception:
             old_data_ok = False
-            pass
 
         # Check existence of config file
         mdata_path = output_folder + "/.mdata.yml"
@@ -309,7 +311,6 @@ class Database(object):
             old_config = envyaml(mdata_path)
         except Exception:
             old_config = None
-            pass
 
         overwrite = 1  # default
 
@@ -334,7 +335,7 @@ class Database(object):
                 tstamp_end = int(timestamp_from_datestr(t1.strftime("%Y%m%d%H%M%S")))
 
                 if tstamp_start > tstamp_start_old or tstamp_end < tstamp_end_old:
-                    warning = """
+                    warning = f"""
                     IMPORTANT: A previous set of tables was found in the indicated output folder
                     corresponding to a different configuration file. If you continue, the old data
                     will be replaced by the newly generated data, if they have the same timestamps.
@@ -345,13 +346,10 @@ class Database(object):
                     (2) change the current config file to match the config file of the old data
                     (which is stored in the file .mdata.yaml in the specified output folder)
                     (3) Rerun retrieval of station data to overlap the time period
-                    covered by the old data ({:s} - {:s}) and rerun the radar retrieval
+                    covered by the old data ({datetime.fromtimestamp(tstamp_start_old, timezone.utc)!s:s} - {datetime.fromtimestamp(tstamp_end_old, timezone.utc)!s:s}) and rerun the radar retrieval
 
                     Press enter to continue, q to quit ...
-                    """.format(
-                        str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
-                        str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)),
-                    )
+                    """
                     userinput = input(textwrap.dedent(warning))
                     if userinput == "q":
                         raise KeyboardInterrupt()
@@ -373,9 +371,9 @@ class Database(object):
         # Get current folder
         cwd = os.path.dirname(os.path.realpath(__file__))
         for i, stations in enumerate(stations_sub):
-            fname = tmp_folder + "/getdata_station_{:d}.job".format(i)
+            fname = tmp_folder + f"/getdata_station_{i:d}.job"
             file = open(fname, "w")
-            logging.info("Writing task file {:s}".format(fname))
+            logging.info(f"Writing task file {fname:s}")
             file.write(self.config["SLURM_HEADER"].format("gauge", "gauge", "GAUGE"))
             file.write(self.config["PYTHON_HEADER"])
             file.write(
@@ -392,8 +390,8 @@ class Database(object):
                 )
             )
             file.close()
-            logging.info("Submitting job {:d}".format(i))
-            subprocess.call("sbatch {:s}".format(fname), shell=True)
+            logging.info(f"Submitting job {i:d}")
+            subprocess.call(f"sbatch {fname:s}", shell=True)
         logging.info(
             """All jobs have been submitted, please wait a few hours
                      for completion..."""
@@ -427,13 +425,11 @@ class Database(object):
         except Exception:
             raise ValueError("Need to provide a config file to update data")
 
-        if gauge_table_name not in self.tables.keys():
+        if gauge_table_name not in self.tables:
             raise ValueError(
-                """No table with name {:s} was found in the
+                f"""No table with name {gauge_table_name:s} was found in the
                              loaded tables, make sure to add that table
-                             with load_tables first""".format(
-                    gauge_table_name
-                )
+                             with load_tables first"""
             )
 
         if "REFERENCE_RETRIEVAL" in self.config:
@@ -451,14 +447,11 @@ class Database(object):
             old_data_ok = True  # valid data present
         except Exception:
             old_data_ok = False
-            pass
 
         logging.info("Loading data... (may take a while)")
 
         if t0 is not None and t1 is not None and t1 > t0:
-            logging.info(
-                "Limiting myself to time period {:s} - {:s}".format(str(t0), str(t1))
-            )
+            logging.info(f"Limiting myself to time period {t0!s:s} - {t1!s:s}")
             if not isinstance(t0, datetime):
                 tstamp_start = int(timestamp_from_datestr(t0))
                 tstamp_end = int(timestamp_from_datestr(t1))
@@ -493,7 +486,6 @@ class Database(object):
             old_config = envyaml(mdata_path)
         except Exception:
             old_config = None
-            pass
 
         overwrite = 1  # default
         if old_config and old_data_ok:
@@ -515,7 +507,7 @@ class Database(object):
                 tstamp_end = int(np.max(tab["TIMESTAMP"]))
 
                 if tstamp_start > tstamp_start_old or tstamp_end < tstamp_end_old:
-                    warning = """
+                    warning = f"""
                     IMPORTANT: A previous set of tables was found in the indicated output folder
                     corresponding to a different configuration file. If you continue, the old data
                     will be replaced by the newly generated data, if they have the same timestamps.
@@ -526,13 +518,10 @@ class Database(object):
                     (2) change the current config file to match the config file of the old data
                     (which is stored in the file .mdata.yaml in the specified output folder)
                     (3) Rerun retrieval of station data to overlap the time period
-                    covered by the old data ({:s} - {:s}) and rerun the radar retrieval
+                    covered by the old data ({datetime.fromtimestamp(tstamp_start_old, timezone.utc)!s:s} - {datetime.fromtimestamp(tstamp_end_old, timezone.utc)!s:s}) and rerun the radar retrieval
 
                     Press enter to continue, q to quit ...
-                    """.format(
-                        str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
-                        str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)),
-                    )
+                    """
                     userinput = input(textwrap.dedent(warning))
                     if userinput == "q":
                         raise KeyboardInterrupt()
@@ -583,9 +572,7 @@ class Database(object):
                 tt = dt.timetuple()
                 current_day = str(tt.tm_year) + str(tt.tm_yday)
                 if current_day in days_to_process:
-                    logging.warning(
-                        "Day {:s} was already computed, ignoring it...".format(f)
-                    )
+                    logging.warning(f"Day {f:s} was already computed, ignoring it...")
                     days_to_process.remove(current_day)
 
         days_per_job = max([1, len(days_to_process) // num_jobs + 1])
@@ -596,7 +583,7 @@ class Database(object):
 
         # Create task files
         task_files = []
-        name_file = tmp_folder + "task_file_reference_{:d}".format(current_job)
+        name_file = tmp_folder + f"task_file_reference_{current_job:d}"
         task_files.append(name_file)
         ftask = open(name_file, "w")
 
@@ -621,8 +608,8 @@ class Database(object):
                 current_job += 1
                 ftask.close()
 
-                name_file = tmp_folder + "task_file_reference_{:d}".format(current_job)
-                logging.info("Writing task file {:s}".format(name_file))
+                name_file = tmp_folder + f"task_file_reference_{current_job:d}"
+                logging.info(f"Writing task file {name_file:s}")
                 task_files.append(name_file)
                 # Open new task file
                 ftask = open(name_file, "w")
@@ -639,27 +626,19 @@ class Database(object):
         tf = tmp_folder + "task_file_reference_${SLURM_ARRAY_TASK_ID}"
 
         # Create job file
-        fname = tmp_folder + "/getdata_reference_{:d}_{:d}.job".format(
-            0, len(task_files) - 1
-        )
+        fname = tmp_folder + f"/getdata_reference_{0:d}_{len(task_files) - 1:d}.job"
         logging.info(f"Writing job file {fname}")
         file = open(fname, "w")
         file.write(self.config["SLURM_HEADER"].format("ref", "ref", "REF"))
-        file.write(
-            "#SBATCH --array={:d}-{:d}%{:d}\n\n".format(
-                0, len(task_files), max_simul_jobs
-            )
-        )
+        file.write(f"#SBATCH --array={0:d}-{len(task_files):d}%{max_simul_jobs:d}\n\n")
         file.write(self.config["PYTHON_HEADER"])
         file.write(
-            "python -u {:s}/retrieve_reference_data_5min.py -c {:s} -t {:s} -o {:s} \n".format(
-                cwd, self.config_file, tf, output_folder
-            )
+            f"python -u {cwd:s}/retrieve_reference_data_5min.py -c {self.config_file:s} -t {tf:s} -o {output_folder:s} \n"
         )
         file.close()
 
-        logging.info("Submitting job {}".format(fname))
-        subprocess.call("sbatch {:s}".format(fname), shell=True)
+        logging.info(f"Submitting job {fname}")
+        subprocess.call(f"sbatch {fname:s}", shell=True)
 
     def update_radar_data(self, gauge_table_name, output_folder, t0=None, t1=None):
         """
@@ -690,13 +669,11 @@ class Database(object):
         except Exception:
             raise ValueError("Need to provide a config file to update data")
 
-        if gauge_table_name not in self.tables.keys():
+        if gauge_table_name not in self.tables:
             raise ValueError(
-                """No table with name {:s} was found in the
+                f"""No table with name {gauge_table_name:s} was found in the
                              loaded tables, make sure to add that table
-                             with load_tables first""".format(
-                    gauge_table_name
-                )
+                             with load_tables first"""
             )
 
         if "RADAR_RETRIEVAL" in self.config:
@@ -715,9 +692,7 @@ class Database(object):
         tab["TIMESTAMP"] = tab["TIMESTAMP"].astype(float).astype(int)
 
         if t0 is not None and t1 is not None and t1 > t0:
-            logging.info(
-                "Limiting myself to time period {:s} - {:s}".format(str(t0), str(t1))
-            )
+            logging.info(f"Limiting myself to time period {t0!s:s} - {t1!s:s}")
             if not isinstance(t0, datetime):
                 tstamp_start = int(timestamp_from_datestr(t0))
                 tstamp_end = int(timestamp_from_datestr(t1))
@@ -742,7 +717,6 @@ class Database(object):
             old_data_ok = True  # valid data present
         except Exception:
             old_data_ok = False
-            pass
 
         # Check existence of config file
         mdata_path = output_folder + "/.mdata.yml"
@@ -750,7 +724,6 @@ class Database(object):
             old_config = envyaml(mdata_path)
         except Exception:
             old_config = None
-            pass
 
         overwrite = 1  # default
         if old_config and old_data_ok:
@@ -771,7 +744,7 @@ class Database(object):
                 tstamp_end = int(np.max(tab["TIMESTAMP"]))
 
                 if tstamp_start > tstamp_start_old or tstamp_end < tstamp_end_old:
-                    warning = """
+                    warning = f"""
                     IMPORTANT: A previous set of tables was found in the indicated output folder
                     corresponding to a different configuration file. If you continue, the old data
                     will be replaced by the newly generated data, if they have the same timestamps.
@@ -782,13 +755,10 @@ class Database(object):
                     (2) change the current config file to match the config file of the old data
                     (which is stored in the file .mdata.yaml in the specified output folder)
                     (3) Rerun retrieval of station data to overlap the time period
-                    covered by the old data ({:s} - {:s}) and rerun the radar retrieval
+                    covered by the old data ({datetime.fromtimestamp(tstamp_start_old, timezone.utc)!s:s} - {datetime.fromtimestamp(tstamp_end_old, timezone.utc)!s:s}) and rerun the radar retrieval
 
                     Press enter to continue, q to quit ...
-                    """.format(
-                        str(datetime.fromtimestamp(tstamp_start_old, timezone.utc)),
-                        str(datetime.fromtimestamp(tstamp_end_old, timezone.utc)),
-                    )
+                    """
                     userinput = input(textwrap.dedent(warning))
                     if userinput == "q":
                         raise KeyboardInterrupt()
@@ -838,9 +808,7 @@ class Database(object):
                 current_day = str(tt.tm_year) + str(tt.tm_yday)
 
                 if current_day in days_to_process:
-                    logging.warning(
-                        "Day {:s} was already computed, ignoring it...".format(f)
-                    )
+                    logging.warning(f"Day {f:s} was already computed, ignoring it...")
                     days_to_process.remove(current_day)
 
         days_per_job = max([1, len(days_to_process) // num_jobs + 1])
@@ -852,7 +820,7 @@ class Database(object):
         logging.info("Writing task files")
         # Create task files
         task_files = []
-        name_file = tmp_folder + "task_file_radar_{:d}".format(current_job)
+        name_file = tmp_folder + f"task_file_radar_{current_job:d}"
         task_files.append(name_file)
         ftask = open(name_file, "w")
 
@@ -878,8 +846,8 @@ class Database(object):
                 current_job += 1
                 ftask.close()
 
-                name_file = tmp_folder + "task_file_radar_{:d}".format(current_job)
-                logging.info("Writing task file {:s}".format(name_file))
+                name_file = tmp_folder + f"task_file_radar_{current_job:d}"
+                logging.info(f"Writing task file {name_file:s}")
 
                 task_files.append(name_file)
                 ftask = open(name_file, "w")
@@ -897,27 +865,19 @@ class Database(object):
         tf = tmp_folder + task_files[0].split("/")[-1][0:15] + "_${SLURM_ARRAY_TASK_ID}"
 
         # Create job file
-        fname = tmp_folder + "/getdata_radar_{:d}_{:d}.job".format(
-            0, len(task_files) - 1
-        )
+        fname = tmp_folder + f"/getdata_radar_{0:d}_{len(task_files) - 1:d}.job"
         logging.info(f"Writing job file {fname}")
         file = open(fname, "w")
         file.write(self.config["SLURM_HEADER"].format("rad", "rad", "RAD"))
-        file.write(
-            "#SBATCH --array={:d}-{:d}%{:d}\n\n".format(
-                0, len(task_files), max_simul_jobs
-            )
-        )
+        file.write(f"#SBATCH --array={0:d}-{len(task_files):d}%{max_simul_jobs:d}\n\n")
         file.write(self.config["PYTHON_HEADER"])
         file.write(
-            "python -u {:s}/retrieve_radar_data_5min.py -c {:s} -t {:s} -o {:s} \n".format(
-                cwd, self.config_file, tf, output_folder
-            )
+            f"python -u {cwd:s}/retrieve_radar_data_5min.py -c {self.config_file:s} -t {tf:s} -o {output_folder:s} \n"
         )
         file.close()
 
-        logging.info("Submitting job {}".format(fname))
-        subprocess.call("sbatch {:s}".format(fname), shell=True)
+        logging.info(f"Submitting job {fname}")
+        subprocess.call(f"sbatch {fname:s}", shell=True)
 
 
 def _compare_config(config1, config2, keys=None):
@@ -946,20 +906,18 @@ def _compare_config(config1, config2, keys=None):
     c2 = dict_flatten(config2)
 
     try:
-        for k in c1.keys():
+        for k in c1:
             if k not in keys:
                 continue
-            notimportant = any([knd in k for knd in keys_no_data])
-            if not notimportant:
-                if c1[k] != c2[k]:
-                    return False
-        for k in c2.keys():
+            notimportant = any(knd in k for knd in keys_no_data)
+            if not notimportant and c1[k] != c2[k]:
+                return False
+        for k in c2:
             if k not in keys:
                 continue
-            notimportant = any([knd in k for knd in keys_no_data])
-            if not notimportant:
-                if c1[k] != c2[k]:
-                    return False
+            notimportant = any(knd in k for knd in keys_no_data)
+            if not notimportant and c1[k] != c2[k]:
+                return False
         return True
     except Exception:
         return False
@@ -981,7 +939,7 @@ def _n_running_jobs(user="$USER", job_name="getdata*"):
     Number of jobs as an integer
     """
 
-    out = subprocess.check_output("squeue -u {:s}".format(user), shell=True)
+    out = subprocess.check_output(f"squeue -u {user:s}", shell=True)
 
     out = out.decode("utf-8").split("\n")
 

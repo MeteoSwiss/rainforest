@@ -1,15 +1,15 @@
 # Global imports
-import boto3
 import glob
-from pathlib import Path
 import os
-from botocore.config import Config
 import socket
+from pathlib import Path
+
+import boto3
+from botocore.config import Config
 
 # These two env variables need to be defined to avoid MissingContentLength error
 os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
 os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
-
 
 ###############
 # S3 ACCESS
@@ -17,7 +17,7 @@ os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
 ENDPOINT_URL = "https://s3.pub1.infomaniak.cloud"
 
 
-class ObjectStorage(object):
+class ObjectStorage:
     def __init__(self, aws_key=None, aws_secret=None):
         """
         Creates an ObjectStorage instance
@@ -68,9 +68,7 @@ class ObjectStorage(object):
         if not os.path.exists(filename):
             if not self.aws_defined:
                 raise FileNotFoundError(
-                    "File {:s} not found and AWS_KEY env variable not defined: retrieval from cloud IMPOSSIBLE.".format(
-                        filename
-                    )
+                    f"File {filename:s} not found and AWS_KEY env variable not defined: retrieval from cloud IMPOSSIBLE."
                 )
             print("File was not found, retrieving it from Object Storage")
             key = os.path.basename(filename)
@@ -87,11 +85,13 @@ class ObjectStorage(object):
         bucket : str
             Name of the bucket to clean
         """
-        objects = self.client.list_objects_v2(Bucket=bucket)
+        paginator = self.client.get_paginator("list_objects_v2")
 
         all_keys = []
-        for object in objects["Contents"]:
-            all_keys.append(object["Key"])
+        for page in paginator.paginate(Bucket=bucket):
+            for obj in page.get("Contents", []):
+                all_keys.append(obj["Key"])
+
         return all_keys
 
     def clean_bucket(self, bucket="rainforest-ci"):
@@ -104,7 +104,7 @@ class ObjectStorage(object):
             Name of the bucket to clean
         """
         objects = self.client.list_objects_v2(Bucket=bucket)
-        print("Bucket contains {:d} objects".format(len(objects)))
+        print(f"Bucket contains {len(objects):d} objects")
         userinput = input(
             "Are you sure wou want to delete all content from the bucket y/n? "
         )
@@ -170,7 +170,7 @@ class ObjectStorage(object):
         self, rainforest_data_folder=None, bucket="rainforest-ci", overwrite=False
     ):
         """
-        Uploads all files within a given folder
+        Uploads all files within a given folder to the rainforest-ci S3 storage
 
         Parameters
         ----------
@@ -206,8 +206,8 @@ class ObjectStorage(object):
             print("No files need to be sync with cloud, terminating...")
         else:
             for i, f in enumerate(all_files_to_upload):
-                print("Uploading file {:s}".format(f))
-                print("Progress: {:d}/{:d}".format(i, len(all_files_to_upload)))
+                print(f"Uploading file {f:s}")
+                print(f"Progress: {i:d}/{len(all_files_to_upload):d}")
                 self.upload_file(f)
 
         print("Done")

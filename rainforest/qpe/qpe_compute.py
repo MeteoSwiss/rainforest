@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Command line script for the RandomForest QPE
 
@@ -7,18 +6,19 @@ see :ref:`qpe_compute`
 """
 
 # Global imports
+import argparse
+import datetime
 import json
 import os
-import datetime
-from pathlib import Path
-import argparse
-
-# Local imports
-from rainforest.qpe.qpe import QPEProcessor
-from rainforest.ml.rfdefinitions import read_rf
 
 # Suppress certain warnings
 import warnings
+from pathlib import Path
+
+from rainforest.ml.rfdefinitions import read_rf
+
+# Local imports
+from rainforest.qpe.qpe import QPEProcessor
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -126,7 +126,7 @@ def main():
         args.config = str(Path(script_path, "default_config.yml"))
 
     args.models = json.loads(args.models)
-    for k in args.models.keys():
+    for k in args.models:
         if args.mlflow_model:
             args.models[k] = read_rf(mlflow_runid=args.models[k])
         elif args.modelpath is None:

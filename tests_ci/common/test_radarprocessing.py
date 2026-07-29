@@ -1,8 +1,10 @@
-from rainforest.common.radarprocessing import Radar
-from rainforest.common.object_storage import ObjectStorage
-from pathlib import Path
-import pyart
 import os
+from pathlib import Path
+
+import pyart
+
+from rainforest.common.object_storage import ObjectStorage
+from rainforest.common.radarprocessing import Radar
 
 
 def test_radarprocessing():
@@ -36,7 +38,7 @@ def test_radarprocessing():
     radar.compute_kdp(dscfg)
 
     assert list(radar.radsweeps.keys()) == list(range(1, 6))
-    assert "KDP" in radar.radsweeps[1].fields.keys()
-    assert "NH" in radar.radsweeps[1].fields.keys()
-    assert "ZH_VISIB" in radar.radsweeps[1].fields.keys()
-    assert "ISO0_HEIGHT" in radar.radsweeps[1].fields.keys()
+    assert "KDP" in radar.radsweeps[1].fields
+    assert "NH" in radar.radsweeps[1].fields
+    assert "ZH_VISIB" in radar.radsweeps[1].fields
+    assert "ISO0_HEIGHT" in radar.radsweeps[1].fields

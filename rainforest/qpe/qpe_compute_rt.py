@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Command line script for the RandomForest QPE
 
@@ -9,15 +8,16 @@ see :ref:`qpe_compute`
 # Global imports
 import json
 import os
-from pathlib import Path
-from optparse import OptionParser
-
-# Local imports
-from rainforest.qpe.qpe_real_time import QPEProcessor
-from rainforest.ml.rfdefinitions import read_rf
 
 # Suppress certain warnings
 import warnings
+from optparse import OptionParser
+from pathlib import Path
+
+from rainforest.ml.rfdefinitions import read_rf
+
+# Local imports
+from rainforest.qpe.qpe_real_time import QPEProcessor
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -67,14 +67,14 @@ def main():
         metavar="MODELPATHS",
     )
 
-    (options, args) = parser.parse_args()
+    (options, _args) = parser.parse_args()
 
     if options.config is None:
         script_path = os.path.dirname(os.path.realpath(__file__))
         options.config = str(Path(script_path, "default_config.yml"))
 
     options.models = json.loads(options.models)
-    for k in options.models.keys():
+    for k in options.models:
         if options.modelpath is None:
             options.models[k] = read_rf(options.models[k])
         else:

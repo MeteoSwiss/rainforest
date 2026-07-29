@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Set of functions to display QPE precipitation data and verification scores
 
 """
+
 # Global imports
+import os
+from collections import OrderedDict
+
 import matplotlib as mpl
-from matplotlib.colors import Normalize, ListedColormap, BoundaryNorm
 import matplotlib.pyplot as plt
 import numpy as np
-from collections import OrderedDict
-import os
+from matplotlib.colors import BoundaryNorm, ListedColormap, Normalize
 
 # Local imports
 from . import constants
 from .utils import nested_dict_values
-
 
 REFCOLORS = OrderedDict()
 REFCOLORS["RZC"] = "k"
@@ -29,7 +29,7 @@ def _autolabel(ax, rects):
     for rect in rects:
         height = rect.get_height()
         ax.annotate(
-            "{:3.2f}".format(height),
+            f"{height:3.2f}",
             rotation=90 + 180 * (height < 0),
             xy=(rect.get_x() + rect.get_width() / 2, height),
             xytext=(
@@ -478,7 +478,7 @@ def score_plot(scores, title_prefix="", figsize=(10, 5)):
 
     models_reordered = []
     colors = []
-    for m in REFCOLORS.keys():
+    for m in REFCOLORS:
         if m in models:
             models_reordered.append(m)
             colors.append(REFCOLORS[m])
@@ -559,7 +559,7 @@ def qpe_scatterplot(qpe_est, ref, title_prefix="", figsize=(10, 7.5)):
     models = list(qpe_est.keys())
 
     models_reordered = []
-    for m in REFCOLORS.keys():
+    for m in REFCOLORS:
         if m in models:
             models_reordered.append(m)
     for m in models:
@@ -699,7 +699,6 @@ def plot_crossval_stats(stats, output_folder):
 
         except Exception:
             success = False
-            pass
 
     # convert to array
     data = np.reshape(list(nested_dict_values(stats)), all_dims)
@@ -728,7 +727,7 @@ def plot_crossval_stats(stats, output_folder):
     )
 
     models_reordered = []
-    for m in REFCOLORS.keys():
+    for m in REFCOLORS:
         if m in qpetype:
             models_reordered.append(m)
     for m in qpetype:
@@ -741,7 +740,7 @@ def plot_crossval_stats(stats, output_folder):
     colors = []
     idx = 0
     for i, q in enumerate(qpetype):
-        if q in REFCOLORS.keys():
+        if q in REFCOLORS:
             c = REFCOLORS[q]
         else:
             c = "C" + str(idx)
@@ -772,7 +771,7 @@ def plot_crossval_stats(stats, output_folder):
 
                     ax[i].set_xticks(x)
                     ax[i].set_xticklabels(scoretype, rotation=65)
-                    ax[i].set_ylabel("precip: {:s}".format(p))
+                    ax[i].set_ylabel(f"precip: {p:s}")
 
                 fig.legend(qpetype)
                 plt.suptitle(
@@ -781,5 +780,5 @@ def plot_crossval_stats(stats, output_folder):
                     )
                 )
 
-                nfile = "{:s}_{:s}_{:s}".format(v, a, b) + ".png"
+                nfile = f"{v:s}_{a:s}_{b:s}" + ".png"
                 plt.savefig(output_folder + "/" + nfile, dpi=300, bbox_inches="tight")

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Thu Feb 13 16:50:09 2020
 
 @author: wolfensb
 """
 
-import os
-from pathlib import Path
 import datetime
+import os
 import subprocess
+from pathlib import Path
+
 from rainforest.common.retrieve_data import retrieve_prod
 
 ##################
@@ -44,9 +44,7 @@ for d in days:
     end = datetime.datetime.strptime(d, dformat) + datetime.timedelta(days=1)
     end = datetime.datetime.strftime(end, "%Y%m%d%H%M")
     f.write(
-        "qpe_compute -s {:s} -e {:s} -m '{:s}' -o {:s} -c {:s}".format(
-            start, end, models, folder, config
-        )
+        f"qpe_compute -s {start:s} -e {end:s} -m '{models:s}' -o {folder:s} -c {config:s}"
     )
     f.close()
     subprocess.call("sbatch {:s}".format(d + "_job"), shell=True)

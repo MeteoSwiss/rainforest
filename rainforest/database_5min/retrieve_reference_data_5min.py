@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main routine for retrieving reference MeteoSwiss data (e.g. CPC, RZC, POH, etc)
 This is meant to be run as a command line command from a slurm script
@@ -14,20 +13,21 @@ Daniel Wolfensberger, LTE-MeteoSwiss, 2020
 Rebecca Gugerli, LTE-MeteoSwiss, 2022
 """
 
-import numpy as np
-import pandas as pd
 import datetime
 import logging
-import dask.dataframe as dd
 import os
 from collections import OrderedDict
 from optparse import OptionParser
 
+import dask.dataframe as dd
+import numpy as np
+import pandas as pd
+
 from rainforest.common import constants
-from rainforest.common.lookup import get_lookup
-from rainforest.common.utils import read_task_file, envyaml, nested_dict_values
-from rainforest.common.retrieve_data import retrieve_prod, retrieve_CPCCV
 from rainforest.common.io_data import read_cart
+from rainforest.common.lookup import get_lookup
+from rainforest.common.retrieve_data import retrieve_CPCCV, retrieve_prod
+from rainforest.common.utils import envyaml, nested_dict_values, read_task_file
 
 logging.basicConfig(level=logging.INFO)
 
@@ -41,7 +41,7 @@ except ImportError:
 IGNORE_ERRORS = True
 
 
-class Updater(object):
+class Updater:
     def __init__(self, task_file, config_file, output_folder, debug=False):
         """
         Creates an Updater  class instance that allows to add new reference
@@ -133,10 +133,8 @@ class Updater(object):
 
             except Exception as e:
                 logging.error(
-                    """Retrieval for product {:s} at timesteps {:s}-{:s}
-                          failed""".format(
-                        prod, str(start_time), str(end_time)
-                    )
+                    f"""Retrieval for product {prod:s} at timesteps {start_time!s:s}-{end_time!s:s}
+                          failed"""
                 )
                 logging.error(f"Error is {e}")
                 files_allproducts[prod] = []
@@ -202,7 +200,7 @@ class Updater(object):
 
         for i, tstep in enumerate(all_timesteps):
             logging.info(
-                f"Processing timestep {str(tstep)} ({(100*i/len(all_timesteps)):.2f}%) \n"
+                f"Processing timestep {tstep!s} ({(100 * i / len(all_timesteps)):.2f}%) \n"
             )
 
             # Set t-start -5 minutes to get all the files between, e.g., H:01 and H:10 and log at H:10
@@ -223,7 +221,7 @@ class Updater(object):
             if hour_of_year != current_hour:
                 current_hour = hour_of_year
                 if include_cpccv:
-                    logging.info("Retrieving product CPC.CV {}".format(current_hour))
+                    logging.info(f"Retrieving product CPC.CV {current_hour}")
 
                     # CPC.CV only contains a measurement every full hour
                     tstep_xls = datetime.datetime.strptime(current_hour, "%Y%m%d%H")
@@ -294,7 +292,7 @@ class Updater(object):
                     for sta in stations_to_get:  # Loop on stations
                         for nx in self.neighb_x:
                             for ny in self.neighb_y:
-                                strnb = "{:d}{:d}".format(nx, ny)
+                                strnb = f"{nx:d}{ny:d}"
                                 # Get idx of Cart pixel in 2D map
                                 idx = lut_cart[sta][strnb]
                                 data_prod[idx_row] = mv[idx_slice_mv, idx[0], idx[1]]
@@ -322,7 +320,7 @@ class Updater(object):
                     for sta in stations_to_get:  # Loop on stations
                         for nx in self.neighb_x:
                             for ny in self.neighb_y:
-                                strnb = "{:d}{:d}".format(nx, ny)
+                                strnb = f"{nx:d}{ny:d}"
                                 # Get idx of Cart pixel in 2D map
                                 idx = lut_cart[sta][strnb]
                                 data_prod[idx_row] = proddata[idx[0], idx[1]]
@@ -332,7 +330,7 @@ class Updater(object):
                     data_prod[np.isnan(data_prod)] = fill_value
                 data_allprod[:, j] = data_prod
             # Clear files
-            for prod in allfiles.keys():
+            for prod in allfiles:
                 for f in allfiles[prod]:
                     try:
                         os.remove(f)
@@ -361,7 +359,7 @@ class Updater(object):
                     save_output = False
 
             if save_output and len(data_cst):
-                logging.info("Saving new table for day {:s}".format(str(current_day)))
+                logging.info(f"Saving new table for day {current_day!s:s}")
                 name = self.output_folder + current_day + ".parquet"
 
                 # Check if a file already exists
@@ -377,7 +375,7 @@ class Updater(object):
 
                 for c, col in enumerate(colnames):
                     data_col = all_data[:, c]
-                    isin_listcols = [col in c for c in constants.COL_TYPES.keys()]
+                    isin_listcols = [col in c for c in constants.COL_TYPES]
                     if any(isin_listcols):
                         idx = np.where(isin_listcols)[0][0]
                         coltype = list(constants.COL_TYPES.values())[idx]
@@ -406,7 +404,7 @@ class Updater(object):
                     dic_cpccv = OrderedDict()
                     for c, col in enumerate(colnames_cpccv):
                         data_col = all_data_cpccv[:, c]
-                        isin_listcols = [col in c for c in constants.COL_TYPES.keys()]
+                        isin_listcols = [col in c for c in constants.COL_TYPES]
                         if any(isin_listcols):
                             idx = np.where(isin_listcols)[0][0]
                             coltype = list(constants.COL_TYPES.values())[idx]
@@ -468,7 +466,7 @@ class Updater(object):
                     os.remove(f)
                 except PermissionError as e:
                     logging.error(e)
-                    logging.error("Could not delete file {:s}".format(f))
+                    logging.error(f"Could not delete file {f:s}")
 
 
 if __name__ == "__main__":

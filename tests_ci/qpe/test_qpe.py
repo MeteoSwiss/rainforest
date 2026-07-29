@@ -1,12 +1,13 @@
-import os
-from pathlib import Path
 import datetime
-import numpy as np
+import os
 import shutil
+from pathlib import Path
+
+import numpy as np
 import pyart
 
-from rainforest.qpe import QPEProcessor
 from rainforest.ml.rfdefinitions import read_rf
+from rainforest.qpe import QPEProcessor
 
 
 def test_qpe():
@@ -22,22 +23,18 @@ def test_qpe():
     t1 = datetime.datetime(2022, 9, 28, 5, 10).replace(tzinfo=datetime.timezone.utc)
     tstr = "%y%j%H%M"
 
-    for model in filename.keys():
+    for model in filename:
         models = {}
         models[model] = read_rf(filename[model])
         print(str(Path(cwd, "test_config.yml")))
         qpeproc = QPEProcessor(str(Path(cwd, "test_config.yml")), models)
-        qpeproc.compute(
-            cwd, t0, t1, basename="{}{}".format(names[model], tstr), test_mode=True
-        )
+        qpeproc.compute(cwd, t0, t1, basename=f"{names[model]}{tstr}", test_mode=True)
         qpe = pyart.aux_io.read_odim_grid_h5(
             str(
                 Path(
                     cwd,
                     model,
-                    datetime.datetime.strftime(
-                        t1, "{}{}.h5".format(names[model], tstr)
-                    ),
+                    datetime.datetime.strftime(t1, f"{names[model]}{tstr}.h5"),
                 )
             )
         )
