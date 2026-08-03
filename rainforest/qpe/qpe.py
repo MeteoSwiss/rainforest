@@ -324,7 +324,7 @@ class QPEProcessor:
                     filepath,
                     grid,
                     time_ref="end",
-                    undefined_value=0,
+                    undefined_value=0.0,
                     odim_convention="ODIM_H5/V2_3",
                 )
 
