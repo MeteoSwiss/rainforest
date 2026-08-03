@@ -21,7 +21,7 @@ from .object_storage import ObjectStorage
 # DATA
 ###############
 
-data_folder = os.environ["RAINFOREST_DATAPATH"]
+data_folder = os.getenv("RAINFOREST_DATAPATH", "/tmp/rainforest_data/")
 metadata_folder = str(Path(data_folder, "references", "metadata"))
 lut_folder = str(Path(data_folder, "references", "lookup_data"))
 lut_boscacci_folder = str(Path(data_folder, "references", "lut_boscacci"))
