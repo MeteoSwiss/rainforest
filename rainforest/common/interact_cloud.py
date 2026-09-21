@@ -1,92 +1,151 @@
+#!/usr/bin/env python3
+"""
+Command line interface for Rainforest S3 object storage.
+"""
+
 # Global imports
+import argparse
 import glob
 import logging
-from optparse import OptionParser
 
 # Local imports
 from rainforest.common.object_storage import ObjectStorage
 
 
-def main():
-    parser = OptionParser()
+logging.basicConfig(level=logging.INFO)
 
-    parser.add_option(
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Manage files on the Rainforest S3 object storage.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    parser.add_argument(
         "-b",
         "--bucket",
-        dest="bucket",
         type=str,
         default="rainforest",
-        help="Bucket on the s3 storage, should be 'rainforest'",
+        help="Bucket on the S3 storage.",
         metavar="BUCKET",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-a",
         "--action",
-        dest="action",
-        type=str,
-        help="Action to perform: either 'list', upload', 'download', 'rsync', or 'delete'",
-        metavar="NAME",
+        choices=["list", "upload", "download", "delete", "rsync"],
+        required=True,
+        help="Action to perform.",
+        metavar="ACTION",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-n",
         "--name",
-        dest="name",
         type=str,
-        help="Name of the file to download, upload or delete, wildcards are accepted only if action == 'upload'",
+        default=None,
+        help=(
+            "Name of the file to download, upload, or delete. "
+            "Wildcards are accepted for uploads."
+        ),
         metavar="NAME",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-o",
         "--outputfolder",
-        dest="outputfolder",
         type=str,
         default="./",
-        help="Only used if action = 'download', defines the directory where the downloaded file is stored, default is current directory.",
+        help=(
+            "Directory where downloaded files are stored. "
+            "Only used with --action download."
+        ),
         metavar="OUTPUT",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-k",
         "--key",
-        dest="key",
         type=str,
         default=None,
-        help="The AWS API key to use to access the S3 cloud, only needed if the env variable AWS_KEY is not defined.",
+        help=(
+            "AWS API key used to access the S3 storage. "
+            "Only needed if the AWS_KEY environment variable is not defined."
+        ),
         metavar="KEY",
     )
 
-    (options, _args) = parser.parse_args()
+    return parser.parse_args()
 
-    if options.action not in ["delete", "download", "upload", "list"]:
-        raise ValueError(
-            "Invalid action, should be either 'list', 'upload', 'download' or 'delete'"
-        )
 
-    if options.action == "download":
-        logging.info(f"Output folder will be {options.outputfolder:s}")
+def main():
+    args = parse_args()
 
-    objstorage = ObjectStorage(aws_key=options.key)
+    # --name is required for these actions
+    if args.action in ["download", "upload", "delete"] and args.name is None:
+        raise ValueError(f"--name/-n is required when action is '{args.action}'")
 
-    if options.action == "download":
+    objstorage = ObjectStorage(aws_key=args.key)
+
+    if args.action == "download":
         logging.info(
-            f"Downloading file {options.name:s} to directory {options.outputfolder:s}"
+            "Downloading file %s to directory %s",
+            args.name,
+            args.outputfolder,
         )
-        objstorage.download_file(options.name, options.outputfolder, options.bucket)
-    elif options.action == "upload":
-        files = glob.glob(options.name)
-        for f in files:
-            logging.info(f"Uploading file {f:s}")
-            objstorage.upload_file(f, options.bucket)
-    elif options.action == "delete":
-        logging.info(f"Deleting file {options.name:s}")
-        objstorage.delete_file(options.name, options.bucket)
-    elif options.action == "list":
-        logging.info(f"Listing files from bucket {options.bucket:s}")
-        listfiles = objstorage.list_files(options.bucket)
-        print(listfiles)
-    elif options.action == "rsync":
-        logging.info(f"Rsync of local files with bucket {options.bucket:s}")
-        objstorage.rsync_cloud(bucket=options.bucket)
+
+        objstorage.download_file(
+            args.name,
+            args.outputfolder,
+            args.bucket,
+        )
+
+    elif args.action == "upload":
+        files = glob.glob(args.name)
+
+        if not files:
+            logging.warning(
+                "No files found matching pattern: %s",
+                args.name,
+            )
+
+        for filename in files:
+            logging.info("Uploading file %s", filename)
+
+            objstorage.upload_file(
+                filename,
+                args.bucket,
+            )
+
+    elif args.action == "delete":
+        logging.info("Deleting file %s", args.name)
+
+        objstorage.delete_file(
+            args.name,
+            args.bucket,
+        )
+
+    elif args.action == "list":
+        logging.info(
+            "Listing files from bucket %s",
+            args.bucket,
+        )
+
+        files = objstorage.list_files(args.bucket)
+
+        for filename in files:
+            print(filename)
+
+    elif args.action == "rsync":
+        logging.info(
+            "Rsync of local files with bucket %s",
+            args.bucket,
+        )
+
+        objstorage.rsync_cloud(
+            bucket=args.bucket,
+        )
+
+
+if __name__ == "__main__":
+    main()

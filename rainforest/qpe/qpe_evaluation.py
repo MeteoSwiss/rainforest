@@ -1,131 +1,178 @@
 #!/usr/bin/env python3
 """
 Command line script to evaluate a set of QPE realizations using gauge data
-as reference
+as reference.
 
-see :ref:`qpe_evaluation`
+See :ref:`qpe_evaluation`
 """
 
+import argparse
 import datetime
 import os
-from optparse import OptionParser
 
 from rainforest.qpe.evaluation import evaluation
 
 
-def main():
-    parser = OptionParser()
+def parse_datetime(value):
+    """Parse a datetime in YYYYMMDDHHMM format."""
+    try:
+        return datetime.datetime.strptime(value, "%Y%m%d%H%M")
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"Invalid datetime '{value}'. Expected format: YYYYMMDDHHMM"
+        ) from exc
 
-    parser.add_option(
+
+def parse_bounds(value):
+    """Parse comma-separated precipitation bounds."""
+    try:
+        bounds = [int(u.strip()) for u in value.split(",")]
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"Invalid bounds '{value}'. Expected comma-separated integers, "
+            "e.g. 0,2,10,200"
+        ) from exc
+
+    if len(bounds) < 2:
+        raise argparse.ArgumentTypeError("At least two bounds must be specified.")
+
+    if bounds != sorted(bounds):
+        raise argparse.ArgumentTypeError("Bounds must be in increasing order.")
+
+    return bounds
+
+
+def parse_models(value):
+    """Parse comma-separated model names."""
+    return [model.strip() for model in value.split(",") if model.strip()]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Evaluate a set of QPE realizations using gauge data " "as reference."
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    parser.add_argument(
         "-q",
         "--qpefolder",
-        dest="qpefolder",
         type=str,
-        help="Path of the folder where QPE data is stored",
+        required=True,
+        help="Path of the folder where QPE data are stored.",
         metavar="QPEFOLDER",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-g",
         "--gaugepattern",
-        dest="gaugepattern",
         type=str,
-        help="Path pattern (with wildcards) of the gauge data (from database) to be used, "
-        + "default = '/store/msrad/radar/radar_database_v2/gauge/*.csv.gz', IMPORTANT you have to put this statement into quotes (due to wildcard)!",
-        metavar="GAUGEFOLDER",
         default="/store/msrad/radar/radar_database_v2/gauge/*.csv.gz",
+        help=(
+            "Path pattern, including wildcards, of the gauge data from "
+            "the database. Patterns containing wildcards should be quoted."
+        ),
+        metavar="GAUGEPATTERN",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-o",
         "--output",
         dest="outputfolder",
         type=str,
-        help="Path of the output folder",
+        required=True,
+        help="Path of the output folder.",
         metavar="OUTPUT",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-s",
         "--start",
-        dest="start",
-        type=str,
-        help="Specify the start time in the format YYYYddmmHHMM, optional: "
-        + "if not provided entire timerange in qpe folder will be used",
-        metavar="START",
+        type=parse_datetime,
         default=None,
+        help=(
+            "Start time in YYYYMMDDHHMM format. If omitted, the entire "
+            "time range available in the QPE folder is used."
+        ),
+        metavar="START",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-e",
         "--end",
-        dest="end",
-        type=str,
-        help="Specify the end time in the format YYYYddmmHHMM, optional: "
-        + "if not provided entire timerange in qpe folder will be used",
-        metavar="END",
+        type=parse_datetime,
         default=None,
+        help=(
+            "End time in YYYYMMDDHHMM format. If omitted, the entire "
+            "time range available in the QPE folder is used."
+        ),
+        metavar="END",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-b",
         "--b10",
-        dest="b10",
-        type=str,
-        help="Specify which precipitation ranges you want to use at the 10 min resolution, "
-        + " as a comma separated string, e.g. 0,1,10,200 will separate the results, in the ranges [0,1),[1,10),[10,200(",
-        metavar="b10",
-        default="0,2,10,200",
+        type=parse_bounds,
+        default=[0, 2, 10, 200],
+        help=(
+            "Precipitation bounds for the 10-minute resolution, given as "
+            "comma-separated values. For example, 0,2,10,200 defines "
+            "[0,2), [2,10), and [10,200)."
+        ),
+        metavar="BOUNDS",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-B",
         "--b60",
-        dest="b60",
-        type=str,
-        help="Specify which precipitation ranges you want to use at the 60 min resolution, "
-        + " as a comma separated string, e.g. 0,1,10,200 will separate the results, in the ranges [0,2),[2,10),[10,200(",
-        metavar="END",
-        default="0,2,10,200",
+        type=parse_bounds,
+        default=[0, 2, 10, 200],
+        help=(
+            "Precipitation bounds for the 60-minute resolution, given as "
+            "comma-separated values. For example, 0,2,10,200 defines "
+            "[0,2), [2,10), and [10,200)."
+        ),
+        metavar="BOUNDS",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-m",
         "--models",
-        dest="models",
-        type=str,
-        help="Specify which models (i.e. subfolders in the qpefolder you want to use, default is to use all available, must be comma separated and put into quotes, e.g. 'dualpol,hpol,RZC'",
-        metavar="MODELS",
+        type=parse_models,
         default=None,
+        help=(
+            "Comma-separated list of QPE models (subfolders in qpefolder) "
+            "to evaluate. If omitted, all available models are used. "
+            "Example: 'dualpol,hpol,RZC'."
+        ),
+        metavar="MODELS",
     )
 
-    (options, _args) = parser.parse_args()
+    return parser.parse_args()
 
-    options.b10 = [int(u) for u in options.b10.split(",")]
-    options.b60 = [int(u) for u in options.b60.split(",")]
 
-    if not os.path.exists(options.outputfolder):
-        os.makedirs(options.outputfolder)
+def main():
+    args = parse_args()
 
-    if options.models is not None:
-        options.models = options.models.split(",")
-        options.models = [m.strip() for m in options.models]
+    # Create output directory if necessary
+    os.makedirs(args.outputfolder, exist_ok=True)
 
-    if options.outputfolder[-1] != "/":
-        options.outputfolder += "/"
-
-    if options.start is not None:
-        options.start = datetime.datetime.strptime(options.start, "%Y%m%d%H%M")
-    if options.end is not None:
-        options.end = datetime.datetime.strptime(options.end, "%Y%m%d%H%M")
+    # The evaluation routine expects a trailing slash
+    if not args.outputfolder.endswith("/"):
+        args.outputfolder += "/"
 
     evaluation(
-        options.qpefolder,
-        options.gaugepattern,
-        list_models=options.models,
-        outputfolder=options.outputfolder,
-        t0=options.start,
-        t1=options.end,
-        bounds10=options.b10,
-        bounds60=options.b60,
+        args.qpefolder,
+        args.gaugepattern,
+        list_models=args.models,
+        outputfolder=args.outputfolder,
+        t0=args.start,
+        t1=args.end,
+        bounds10=args.b10,
+        bounds60=args.b60,
     )
+
+
+if __name__ == "__main__":
+    main()
