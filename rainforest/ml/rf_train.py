@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-Command line script to prepare input features and train RF models
+Command line script to prepare input features and train RF models.
 
-see :ref:`rf_train`
+See :ref:`rf_train`
 """
 
 # Global imports
+import argparse
 import datetime
 import json
 import logging
 import os
 import sys
-from optparse import OptionParser
 from pathlib import Path
 
 from rainforest.common import constants
@@ -19,164 +19,191 @@ from rainforest.common import constants
 # Local imports
 from rainforest.ml.trainer import RFTraining
 
+
 logging.basicConfig(level=logging.INFO)
 script_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(script_path)
 
 
-def main():
-    parser = OptionParser()
-    parser.add_option(
+def parse_datetime(value):
+    """Parse a datetime in YYYYMMDDHHMM format."""
+    try:
+        return datetime.datetime.strptime(value, "%Y%m%d%H%M")
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"Invalid datetime '{value}'. Expected format: YYYYMMDDHHMM"
+        ) from exc
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Prepare input features and train Random Forest models.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    parser.add_argument(
         "-o",
         "--outputfolder",
-        dest="outputfolder",
         type=str,
         default=None,
-        help="Path of the output folder, default is the ml/rf_models folder in the current library",
+        help=(
+            "Path of the output folder. By default, the 'rf_models' "
+            "folder in the current library is used."
+        ),
         metavar="OUTPUT",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-d",
         "--dbfolder",
-        dest="dbfolder",
         type=str,
         default=constants.FOLDER_DATABASE,
-        help=f"Path of the database main folder, default is {constants.FOLDER_DATABASE:s}",
+        help="Path of the database main folder.",
         metavar="DBFOLDER",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-i",
         "--inputfolder",
-        dest="inputfolder",
         type=str,
         default=None,
-        help="Path where the homogeneized input files for the RF algorithm are stored, default is the subfolder 'rf_input_data' within the database folder",
-        metavar="DBFOLDER",
+        help=(
+            "Path where the homogenized input files for the RF algorithm "
+            "are stored. By default, 'rf_input_data' within the database "
+            "folder is used."
+        ),
+        metavar="INPUTFOLDER",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-s",
         "--start",
-        dest="start",
-        type=str,
-        help="Specify the start time in the format YYYYddmmHHMM, if not provided the first timestamp in the database will be used",
-        metavar="START",
+        type=parse_datetime,
         default=None,
+        help=(
+            "Start time in YYYYMMDDHHMM format. If not provided, the first "
+            "timestamp in the database will be used."
+        ),
+        metavar="START",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-e",
         "--end",
-        dest="end",
-        type=str,
-        help="Specify the end time in the format YYYYddmmHHMM, if not provided the last timestamp in the database will be used",
-        metavar="END",
+        type=parse_datetime,
         default=None,
+        help=(
+            "End time in YYYYMMDDHHMM format. If not provided, the last "
+            "timestamp in the database will be used."
+        ),
+        metavar="END",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-c",
         "--config",
-        dest="config",
         type=str,
         default=None,
-        help="Path of the config file, the default will be default_config.yml in the ml module",
+        help=(
+            "Path of the config file. By default, default_config.yml "
+            "in the ml module is used."
+        ),
         metavar="CONFIG",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-r",
         "--rfmodels",
-        dest="rfmodels",
         type=str,
         default=None,
-        help="Specify which models you want to use in the form of a json line of a dict, the keys are names you give to the models, the values the input features they require"
-        + ', for example \'{"RF_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","T", "HEIGHT","VISIB_mean"]}\''
-        + ", please note the double and single quotes, which are required"
-        + "IMPORTANT: if no model is provided only the ml input data will be recomputed from the database, but no model will be computed"
-        + "To simplify six aliases are proposed: "
-        + '"dualpol_default" = \'{"RF_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\''
-        + '"vpol_default" = \'{"RF_vpol": ["RADAR", "zv_VISIB_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\''
-        + '"hpol_default" = \'{"RF_hpol": ["RADAR", "zh_VISIB_mean","SW_mean", "T", "HEIGHT","VISIB_mean"]}\''
-        + '"RFO_default" = \'{"RFO_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean","KDP_mean","RHOHV_mean","SW_mean", "ISO0_HEIGHT", "HEIGHT","VISIB_mean"]}\''
-        + '"RFO_default_vpol" = \'{"RFO_vpol": ["RADAR", "zv_VISIB_mean","SW_mean", "ISO0_HEIGHT", "HEIGHT","VISIB_mean"]}\''
-        + '"RFO_default_hpol" = \'{"RFO_hpol": ["RADAR", "zh_VISIB_mean","SW_mean", "ISO0_HEIGHT", "HEIGHT","VISIB_mean"]}\''
-        + 'You can combine them for example "vpol_default, hpol_default, dualpol_default, will compute all three"',
+        help=(
+            "Models to train. This can either be a JSON dictionary or a "
+            "comma-separated list of predefined aliases. "
+            "Available aliases: dualpol_default, vpol_default, hpol_default, "
+            "RFO_default, RFO_default_vpol, RFO_default_hpol. "
+            "If omitted, input data are generated but no model is trained. "
+            "Example JSON: "
+            '\'{"RF_dualpol": ["RADAR", "zh_VISIB_mean", "zv_VISIB_mean", '
+            '"KDP_mean", "RHOHV_mean", "T", "HEIGHT", "VISIB_mean"]}\''
+        ),
         metavar="MODELS",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-g",
-        "--generate_inputs",
-        dest="generate_inputs",
-        type=int,
-        default=1,
-        help="If set to 1 (default), the input parquet files (homogeneized tables) for the ml routines will be recomputed from the current database rows"
-        + "This takes a bit of time but is needed if you updated the database and want to use the new data in the training",
-        metavar="MODELS",
+        "--generate-inputs",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Generate/recompute the homogenized parquet input files from "
+            "the current database rows. Use --no-generate-inputs to disable."
+        ),
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-l",
         "--logmlflow",
-        type="choice",
         choices=["none", "metrics", "all"],
-        dest="logmlflow",
         default="none",
-        help="Specify the logging mode for MLFlow. Choices are:"
-        + " 'none' (default, no logging), 'metrics' (log metrics only),"
-        + " or 'all' (log metrics and model)."
-        + " To log to a remote ML server, the environment variable MLFLOW_TRACKING_URI needs to be set.",
+        help=(
+            "MLFlow logging mode: 'none' for no logging, 'metrics' for "
+            "metrics only, or 'all' for metrics and model. For remote "
+            "logging, MLFLOW_TRACKING_URI must be set."
+        ),
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-C",
         "--cv",
-        dest="cv",
+        type=int,
         default=0,
-        help="Number of folds for cross-validation, when running fit function."
-        + "If set to 0, will not perform cross-validation (i.e. no test error)",
+        help=(
+            "Number of folds for cross-validation when fitting models. "
+            "Set to 0 to disable cross-validation."
+        ),
+        metavar="FOLDS",
     )
 
-    (options, _args) = parser.parse_args()
+    return parser.parse_args()
 
-    if options.start is not None:
-        options.start = datetime.datetime.strptime(options.start, "%Y%m%d%H%M")
-    if options.end is not None:
-        options.end = datetime.datetime.strptime(options.end, "%Y%m%d%H%M")
+
+def main():
+    options = parse_args()
+
+    if options.cv < 0:
+        raise ValueError("--cv must be >= 0")
 
     if options.outputfolder is None:
         options.outputfolder = str(Path(script_path, "rf_models"))
 
-    if not os.path.exists(options.outputfolder):
-        os.makedirs(options.outputfolder)
+    os.makedirs(options.outputfolder, exist_ok=True)
 
-    options.cv = int(options.cv)
-
-    logging.info(f"Output folder will be {options.outputfolder:s}")
+    logging.info("Output folder will be %s", options.outputfolder)
 
     if options.inputfolder is None:
         options.inputfolder = str(Path(options.dbfolder, "rf_input_data"))
 
-    logging.info(f"Folder with RF input data will be {options.inputfolder:s}")
+    logging.info(
+        "Folder with RF input data will be %s",
+        options.inputfolder,
+    )
+
+    # Whether or not to only generate new input data (no training)
+    only_regenerate = options.rfmodels is None
 
     dic_models = {}
 
-    only_regenerate = (
-        False  # Whether or not to only generate new input data (no training)
-    )
-    if options.rfmodels is None:
-        only_regenerate = True
-    else:
+    if not only_regenerate:
         if "default" in options.rfmodels:
             logging.info(
-                f'Found at least one "default" alias in models {options.rfmodels:s}, assuming they are all aliases'
+                'Found at least one "default" alias in models %s, '
+                "assuming they are all aliases",
+                options.rfmodels,
             )
-            options.rfmodels = options.rfmodels.split(",")
-            for opt in options.rfmodels:  # Add aliases here if needed
-                opt = opt.strip()
+
+            aliases = [x.strip() for x in options.rfmodels.split(",")]
+
+            for opt in aliases:
                 if opt == "dualpol_default":
                     dic_models["RF_dualpol"] = [
                         "RADAR",
@@ -189,6 +216,7 @@ def main():
                         "HEIGHT",
                         "VISIB_mean",
                     ]
+
                 elif opt == "hpol_default":
                     dic_models["RF_hpol"] = [
                         "RADAR",
@@ -198,8 +226,9 @@ def main():
                         "HEIGHT",
                         "VISIB_mean",
                     ]
+
                 elif opt == "vpol_default":
-                    dic_models["RF_hpol"] = [
+                    dic_models["RF_vpol"] = [
                         "RADAR",
                         "zv_VISIB_mean",
                         "SW_mean",
@@ -207,6 +236,7 @@ def main():
                         "HEIGHT",
                         "VISIB_mean",
                     ]
+
                 elif opt == "RFO_default":
                     dic_models["RFO"] = [
                         "RADAR",
@@ -219,6 +249,7 @@ def main():
                         "HEIGHT",
                         "VISIB_mean",
                     ]
+
                 elif opt == "RFO_default_hpol":
                     dic_models["RFO_hpol"] = [
                         "RADAR",
@@ -228,8 +259,9 @@ def main():
                         "HEIGHT",
                         "VISIB_mean",
                     ]
+
                 elif opt == "RFO_default_vpol":
-                    dic_models["RFO_hpol"] = [
+                    dic_models["RFO_vpol"] = [
                         "RADAR",
                         "zv_VISIB_mean",
                         "SW_mean",
@@ -238,28 +270,33 @@ def main():
                         "VISIB_mean",
                     ]
 
+                else:
+                    raise ValueError(f"Unknown RF model alias: {opt}")
+
         else:
-            dic_models = json.loads(options.rfmodels)
+            try:
+                dic_models = json.loads(options.rfmodels)
+            except json.JSONDecodeError as exc:
+                raise ValueError("Could not parse --rfmodels as JSON") from exc
 
     options.rfmodels = dic_models
 
     if only_regenerate:
         logging.info(
-            "No model was given, only the input parquet files will be regenerated"
+            "No model was given; only the input parquet files " "will be regenerated"
         )
 
     if options.config is None:
-        default_config_path = str(Path(script_path, "default_config.yml"))
-        options.config = default_config_path
+        options.config = str(Path(script_path, "default_config.yml"))
 
-    logging.info("Starting randomForest training, leave the script running!")
+    logging.info("Starting Random Forest training, leave the script running!")
 
-    input_location = str(Path(options.dbfolder, "rf_input_data"))
     logging.info(
-        f"Assuming that input data for RF training is in folder {input_location:s}"
+        "Assuming that input data for RF training is in folder %s",
+        options.inputfolder,
     )
     logging.info(
-        "If not available in this folder, they will be computed and stored there"
+        "If not available in this folder, they will be computed " "and stored there"
     )
 
     rf = RFTraining(
@@ -271,7 +308,11 @@ def main():
 
     if not only_regenerate:
         rf.fit_models(
-            options.config, options.rfmodels, options.start, options.end, cv=options.cv
+            options.config,
+            options.rfmodels,
+            options.start,
+            options.end,
+            cv=options.cv,
         )
 
 
