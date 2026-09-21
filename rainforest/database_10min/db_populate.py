@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Command line script to add new data to the database
+Command line script to add new data to the database.
 
-see :doc:`db_cmd`
+See :doc:`db_cmd`
 """
 
 # Global imports
+import argparse
 import datetime
 import logging
 import os
 import sys
-from optparse import OptionParser
 from pathlib import Path
 
 from rainforest.common import constants
@@ -18,114 +18,154 @@ from rainforest.common import constants
 # Local imports
 from rainforest.database_10min.database import Database
 
+
 logging.basicConfig(level=logging.INFO)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path)
 
 
-def main():
-    parser = OptionParser()
+def parse_datetime(value):
+    """Parse a datetime in YYYYMMDDHHMM format."""
+    try:
+        return datetime.datetime.strptime(value, "%Y%m%d%H%M")
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(
+            f"Invalid datetime '{value}'. Expected format: YYYYMMDDHHMM"
+        ) from exc
 
-    parser.add_option(
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Add new data to the 5-minute radar database.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+
+    parser.add_argument(
         "-t",
         "--type",
         dest="type",
-        type=str,
-        help="Type of table to populate, either 'gauge', 'reference' or 'radar'",
+        choices=["gauge", "reference", "radar"],
+        required=True,
+        help="Type of table to populate",
         metavar="TYPE",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-o",
         "--outputfolder",
-        dest="outputfolder",
         type=str,
         default=None,
-        help="Path of the output folder, default is /store/msrad/radar/radar_database/<type>",
+        help=(
+            "Path of the output folder. If not specified, "
+            "FOLDER_DATABASE_5min/<type> is used."
+        ),
         metavar="OUTPUT",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-s",
         "--start",
-        dest="start",
-        type=str,
-        help="Specify the start time in the format YYYYddmmHHMM, it is mandatory only if type == 'gauge', otherwise if not provided, will be inferred from gauge data",
-        metavar="START",
+        type=parse_datetime,
         default=None,
+        help=(
+            "Start time in YYYYMMDDHHMM format. Mandatory for type 'gauge'. "
+            "For other types it can be inferred from gauge data."
+        ),
+        metavar="START",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-e",
         "--end",
-        dest="end",
-        type=str,
-        help="Specify the end time in the format YYYYddmmHHMM, it is mandatory only if type == 'gauge', otherwise if not provided, will be inferred from gauge data",
-        metavar="END",
+        type=parse_datetime,
         default=None,
+        help=(
+            "End time in YYYYMMDDHHMM format. Mandatory for type 'gauge'. "
+            "For other types it can be inferred from gauge data."
+        ),
+        metavar="END",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-c",
         "--config",
-        dest="config",
         type=str,
         default=None,
-        help="Path of the config file, the default will be default_config.yml in the database module",
+        help=(
+            "Path of the config file. If not specified, "
+            "default_config.yml in the database module is used."
+        ),
         metavar="CONFIG",
     )
 
-    parser.add_option(
+    parser.add_argument(
         "-g",
         "--gauge",
-        dest="gauge",
         type=str,
-        default="/store/msrad/radar/radar_database/gauge/*.csv.gz",
-        help="Needed only if type == reference or radar, path pattern (with wildcards) of the gauge data (from database) to be used, "
-        + "default = '/store/msrad/radar/radar_database/gauge/*.csv.gz', IMPORTANT you have to put this statement into quotes (due to wildcard)!",
+        default="/store/msrad/radar/radar_database_5min/gauge/*.csv.gz",
+        help=(
+            "Gauge data path pattern. Needed only for type 'reference' or "
+            "'radar'. Put patterns containing wildcards in quotes."
+        ),
+        metavar="PATTERN",
     )
 
-    (options, _args) = parser.parse_args()
+    return parser.parse_args()
 
-    if options.type not in ["gauge", "radar", "reference"]:
-        raise ValueError("Type (-t) must be either 'radar', 'gauge' or 'reference'")
-    if options.type == "gauge" and (options.end is None or options.start is None):
-        raise ValueError("Please enter start and time when type == 'gauge'")
 
-    if options.start is not None:
-        options.start = datetime.datetime.strptime(options.start, "%Y%m%d%H%M")
-    if options.end is not None:
-        options.end = datetime.datetime.strptime(options.end, "%Y%m%d%H%M")
+def main():
+    args = parse_args()
 
-    if options.outputfolder is None:
-        options.outputfolder = str(Path(constants.FOLDER_DATABASE, options.type))
+    # start/end are mandatory when updating gauge data
+    if args.type == "gauge" and (args.start is None or args.end is None):
+        raise ValueError("Please specify both --start and --end when --type=gauge")
 
-    if not os.path.exists(options.outputfolder):
-        os.makedirs(options.outputfolder)
+    # Set default output directory
+    if args.outputfolder is None:
+        args.outputfolder = str(Path(constants.FOLDER_DATABASE_5min, args.type))
 
-    if options.config is None:
+    os.makedirs(args.outputfolder, exist_ok=True)
+
+    # Set default config file
+    if args.config is None:
         script_path = os.path.dirname(os.path.realpath(__file__))
-        default_config_path = str(Path(script_path, "default_config.yml"))
-        options.config = default_config_path
+        args.config = str(Path(script_path, "default_config.yml"))
 
-    dbase = Database(config_file=options.config)
+    dbase = Database(config_file=args.config)
 
-    if options.type != "gauge":
+    if args.type != "gauge":
         logging.info("Trying to read gauge table...")
         try:
-            dbase.add_tables({"gauge": options.gauge})
+            dbase.add_tables({"gauge": args.gauge})
         except Exception:
-            logging.error("Could not read gauge table, please check -g pattern")
+            logging.error("Could not read gauge table, please check --gauge/-g pattern")
             raise
 
     logging.info("Starting database update, leave the script running!")
-    if options.type == "gauge":
-        dbase.update_station_data(options.start, options.end, options.outputfolder)
-    elif options.type == "reference":
+
+    if args.type == "gauge":
+        dbase.update_station_data(
+            args.start,
+            args.end,
+            args.outputfolder,
+        )
+
+    elif args.type == "reference":
         dbase.update_reference_data(
-            "gauge", options.outputfolder, options.start, options.end
+            "gauge",
+            args.outputfolder,
+            args.start,
+            args.end,
         )
-    elif options.type == "radar":
+
+    elif args.type == "radar":
         dbase.update_radar_data(
-            "gauge", options.outputfolder, options.start, options.end
+            "gauge",
+            args.outputfolder,
+            args.start,
+            args.end,
         )
+
+
+if __name__ == "__main__":
+    main()
